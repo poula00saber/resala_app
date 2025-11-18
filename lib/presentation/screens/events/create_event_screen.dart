@@ -1,10 +1,13 @@
 // ============================================
-// FILE: lib/screens/home/create_event_screen.dart
-// Copy this ENTIRE file
+// FILE: lib/presentation/screens/events/create_event_screen.dart
 // ============================================
 
 import 'package:flutter/material.dart';
-import 'package:resala/screens/themes/app_theme.dart';
+import 'package:provider/provider.dart';
+import '../../providers/event_provider.dart';
+import '../../themes/app_theme.dart';
+import '../../../core/constants/firebase_constants.dart';
+import '../../../core/utils/validators.dart';
 
 class CreateEventScreen extends StatefulWidget {
   const CreateEventScreen({super.key});
@@ -20,49 +23,38 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
   final TextEditingController _locationController = TextEditingController();
   final TextEditingController _dateController = TextEditingController();
 
-  String _selectedType = 'قافلة';
+  String _selectedType = FirebaseConstants.typeQafela;
   String? _selectedMeetingPlace;
   String? _selectedAdministrativeType;
 
   final List<String> _eventTypes = [
-    'قافلة',
-    'كرنفال',
-    'يوم عائلي',
-    'اجتماع',
-    'اداريات',
+    FirebaseConstants.typeQafela,
+    FirebaseConstants.typeKarnafal,
+    FirebaseConstants.typeFamilyDay,
+    FirebaseConstants.typeMeeting,
+    FirebaseConstants.typeAdministrative,
   ];
 
   final List<String> _meetingPlaces = [
-    'أونلاين',
-    'أوفلاين بالفرع',
-    'أوفلاين بالخارج',
+    FirebaseConstants.meetingOnline,
+    FirebaseConstants.meetingOfflineBranch,
+    FirebaseConstants.meetingOfflineExternal,
   ];
 
-  final List<String> _administrativeTypes = [
-    'اجتماع تخطيطي',
-    'مراجعة مالية',
-    'تقييم أداء',
-    'اجتماع طوارئ',
-    'اجتماع دوري',
-    'مراجعة مشاريع',
-    'تدريب إداري',
-    'اجتماع فريق',
-    'اجتماع مجلس إدارة',
-    'اجتماع لجنة',
-  ];
+  bool _isLoading = false;
 
   bool _needsLocation() {
-    return _selectedType == 'قافلة' ||
-        _selectedType == 'كرنفال' ||
-        _selectedType == 'يوم عائلي';
+    return _selectedType == FirebaseConstants.typeQafela ||
+        _selectedType == FirebaseConstants.typeKarnafal ||
+        _selectedType == FirebaseConstants.typeFamilyDay;
   }
 
   bool _needsMeetingPlace() {
-    return _selectedType == 'اجتماع';
+    return _selectedType == FirebaseConstants.typeMeeting;
   }
 
   bool _needsAdministrativeType() {
-    return _selectedType == 'اداريات';
+    return _selectedType == FirebaseConstants.typeAdministrative;
   }
 
   Future<void> _selectDate() async {
@@ -77,6 +69,41 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
         _dateController.text =
             "${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
       });
+    }
+  }
+
+  Future<void> _createEvent() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isLoading = true);
+
+    final eventProvider = Provider.of<EventProvider>(context, listen: false);
+
+    final eventId = await eventProvider.createEvent(
+      title: _titleController.text,
+      type: _selectedType,
+      date: _dateController.text,
+      description: _descriptionController.text,
+      location: _needsLocation() ? _locationController.text : null,
+      meetingPlace: _needsMeetingPlace() ? _selectedMeetingPlace : null,
+      administrativeType: _needsAdministrativeType()
+          ? _selectedAdministrativeType
+          : null,
+    );
+
+    setState(() => _isLoading = false);
+
+    if (mounted) {
+      if (eventId != null) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('تم إضافة الحدث بنجاح')));
+      } else {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('فشل إضافة الحدث')));
+      }
     }
   }
 
@@ -110,6 +137,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                       ),
                       const SizedBox(height: 20),
 
+                      // Title
                       TextFormField(
                         controller: _titleController,
                         decoration: const InputDecoration(
@@ -117,15 +145,12 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                           border: OutlineInputBorder(),
                           prefixIcon: Icon(Icons.event),
                         ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'يرجى إدخال عنوان الحدث';
-                          }
-                          return null;
-                        },
+                        validator: (value) =>
+                            Validators.validateRequired(value, 'عنوان الحدث'),
                       ),
                       const SizedBox(height: 16),
 
+                      // Event Type
                       DropdownButtonFormField<String>(
                         value: _selectedType,
                         decoration: const InputDecoration(
@@ -150,6 +175,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                       ),
                       const SizedBox(height: 16),
 
+                      // Conditional: Location
                       if (_needsLocation()) ...[
                         TextFormField(
                           controller: _locationController,
@@ -158,16 +184,13 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                             border: OutlineInputBorder(),
                             prefixIcon: Icon(Icons.location_on),
                           ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'يرجى إدخال المكان';
-                            }
-                            return null;
-                          },
+                          validator: (value) =>
+                              Validators.validateRequired(value, 'المكان'),
                         ),
                         const SizedBox(height: 16),
                       ],
 
+                      // Conditional: Meeting Place
                       if (_needsMeetingPlace()) ...[
                         DropdownButtonFormField<String>(
                           value: _selectedMeetingPlace,
@@ -187,16 +210,15 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                               _selectedMeetingPlace = newValue;
                             });
                           },
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'يرجى اختيار مكان الاجتماع';
-                            }
-                            return null;
-                          },
+                          validator: (value) => Validators.validateRequired(
+                            value,
+                            'مكان الاجتماع',
+                          ),
                         ),
                         const SizedBox(height: 16),
                       ],
 
+                      // Conditional: Administrative Type
                       if (_needsAdministrativeType()) ...[
                         DropdownButtonFormField<String>(
                           value: _selectedAdministrativeType,
@@ -205,7 +227,9 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                             border: OutlineInputBorder(),
                             prefixIcon: Icon(Icons.admin_panel_settings),
                           ),
-                          items: _administrativeTypes.map((String type) {
+                          items: FirebaseConstants.administrativeTypes.map((
+                            String type,
+                          ) {
                             return DropdownMenuItem<String>(
                               value: type,
                               child: Text(type),
@@ -216,16 +240,15 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                               _selectedAdministrativeType = newValue;
                             });
                           },
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'يرجى اختيار نوع الإدارية';
-                            }
-                            return null;
-                          },
+                          validator: (value) => Validators.validateRequired(
+                            value,
+                            'نوع الإدارية',
+                          ),
                         ),
                         const SizedBox(height: 16),
                       ],
 
+                      // Description
                       TextFormField(
                         controller: _descriptionController,
                         maxLines: 3,
@@ -234,15 +257,12 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                           border: OutlineInputBorder(),
                           alignLabelWithHint: true,
                         ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'يرجى إدخال وصف الحدث';
-                          }
-                          return null;
-                        },
+                        validator: (value) =>
+                            Validators.validateRequired(value, 'وصف الحدث'),
                       ),
                       const SizedBox(height: 16),
 
+                      // Date
                       TextFormField(
                         controller: _dateController,
                         readOnly: true,
@@ -252,24 +272,17 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                           prefixIcon: Icon(Icons.calendar_today),
                         ),
                         onTap: _selectDate,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'يرجى إدخال تاريخ الحدث';
-                          }
-                          return null;
-                        },
+                        validator: (value) =>
+                            Validators.validateRequired(value, 'تاريخ الحدث'),
                       ),
                       const SizedBox(height: 30),
 
+                      // Buttons
                       Row(
                         children: [
                           Expanded(
                             child: ElevatedButton(
-                              onPressed: () {
-                                if (_formKey.currentState!.validate()) {
-                                  _createEvent();
-                                }
-                              },
+                              onPressed: _isLoading ? null : _createEvent,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppTheme.primary,
                                 foregroundColor: Colors.white,
@@ -277,7 +290,16 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                                   vertical: 15,
                                 ),
                               ),
-                              child: const Text('حفظ الحدث'),
+                              child: _isLoading
+                                  ? const SizedBox(
+                                      height: 20,
+                                      width: 20,
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Text('حفظ الحدث'),
                             ),
                           ),
                           const SizedBox(width: 16),
@@ -305,34 +327,6 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
         ),
       ),
     );
-  }
-
-  void _createEvent() {
-    final newEvent = <String, dynamic>{
-      'id': DateTime.now().millisecondsSinceEpoch.toString(),
-      'title': _titleController.text,
-      'type': _selectedType,
-      'description': _descriptionController.text,
-      'date': _dateController.text,
-      'volunteers': [],
-    };
-
-    if (_needsLocation()) {
-      newEvent['location'] = _locationController.text;
-    }
-
-    if (_needsMeetingPlace()) {
-      newEvent['meetingPlace'] = _selectedMeetingPlace;
-    }
-
-    if (_needsAdministrativeType()) {
-      newEvent['administrativeType'] = _selectedAdministrativeType;
-    }
-
-    Navigator.pop(context, newEvent);
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('تم إضافة الحدث بنجاح')));
   }
 
   @override

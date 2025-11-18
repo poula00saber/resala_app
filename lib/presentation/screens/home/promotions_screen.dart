@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:resala/screens/themes/app_theme.dart';
+import 'package:resala/presentation/themes/app_theme.dart';
 
-class InterviewsScreen extends StatelessWidget {
-  const InterviewsScreen({super.key});
+class PromotionsScreen extends StatelessWidget {
+  const PromotionsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("مقابلات"),
+        title: const Text("ترقنبات"),
         backgroundColor: AppTheme.primary,
         foregroundColor: Colors.white,
       ),
@@ -16,7 +16,7 @@ class InterviewsScreen extends StatelessWidget {
         color: AppTheme.primary,
         child: const Center(
           child: Text(
-            "شاشة إدارة المقابلات",
+            "شاشة الترقيات",
             style: TextStyle(color: Colors.white, fontSize: 24),
           ),
         ),

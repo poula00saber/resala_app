@@ -1,10 +1,12 @@
 // ============================================
-// FILE: lib/screens/home/create_volunteer_screen.dart
-// Copy this ENTIRE file
+// FILE: lib/presentation/screens/volunteers/create_volunteer_screen.dart
 // ============================================
 
 import 'package:flutter/material.dart';
-import 'package:resala/screens/themes/app_theme.dart';
+import 'package:provider/provider.dart';
+import '../../providers/volunteer_provider.dart';
+import '../../themes/app_theme.dart';
+import '../../../core/utils/validators.dart';
 
 class CreateVolunteerScreen extends StatefulWidget {
   const CreateVolunteerScreen({super.key});
@@ -20,6 +22,48 @@ class _CreateVolunteerScreenState extends State<CreateVolunteerScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
   final TextEditingController _nationalIdController = TextEditingController();
+
+  bool _isLoading = false;
+
+  Future<void> _createVolunteer() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isLoading = true);
+
+    final volunteerProvider = Provider.of<VolunteerProvider>(
+      context,
+      listen: false,
+    );
+
+    // NEW VOLUNTEER IS AUTOMATICALLY MARKED AS hasInterview: false
+    final volunteerId = await volunteerProvider.createVolunteer(
+      name: _nameController.text,
+      phone: _phoneController.text,
+      email: _emailController.text,
+      address: _addressController.text,
+      nationalId: _nationalIdController.text.isEmpty
+          ? null
+          : _nationalIdController.text,
+      hasInterview: false, // 🔥 AUTOMATICALLY FALSE FOR NEW VOLUNTEERS
+    );
+
+    setState(() => _isLoading = false);
+
+    if (mounted) {
+      if (volunteerId != null) {
+        Navigator.pop(context, volunteerId);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('تم إضافة المتطوع بنجاح (لم يتم عمل مقابلة بعد)'),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('فشل إضافة المتطوع')));
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -49,6 +93,27 @@ class _CreateVolunteerScreenState extends State<CreateVolunteerScreen> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.orange[50],
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.orange),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.info_outline, color: Colors.orange[700]),
+                            const SizedBox(width: 12),
+                            const Expanded(
+                              child: Text(
+                                'سيتم إضافة المتطوع بحالة "لم يتم عمل مقابلة"',
+                                style: TextStyle(fontSize: 13),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                       const SizedBox(height: 20),
 
                       TextFormField(
@@ -58,12 +123,7 @@ class _CreateVolunteerScreenState extends State<CreateVolunteerScreen> {
                           border: OutlineInputBorder(),
                           prefixIcon: Icon(Icons.person),
                         ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'يرجى إدخال الاسم';
-                          }
-                          return null;
-                        },
+                        validator: Validators.validateName,
                       ),
                       const SizedBox(height: 16),
 
@@ -76,18 +136,7 @@ class _CreateVolunteerScreenState extends State<CreateVolunteerScreen> {
                           prefixIcon: Icon(Icons.phone),
                           hintText: '01xxxxxxxxx',
                         ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'يرجى إدخال رقم الهاتف';
-                          }
-                          if (value.length != 11) {
-                            return 'رقم الهاتف يجب أن يكون 11 رقم';
-                          }
-                          if (!value.startsWith('01')) {
-                            return 'رقم الهاتف يجب أن يبدأ بـ 01';
-                          }
-                          return null;
-                        },
+                        validator: Validators.validatePhone,
                       ),
                       const SizedBox(height: 16),
 
@@ -99,15 +148,7 @@ class _CreateVolunteerScreenState extends State<CreateVolunteerScreen> {
                           border: OutlineInputBorder(),
                           prefixIcon: Icon(Icons.email),
                         ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'يرجى إدخال البريد الإلكتروني';
-                          }
-                          if (!value.contains('@')) {
-                            return 'البريد الإلكتروني غير صحيح';
-                          }
-                          return null;
-                        },
+                        validator: Validators.validateEmail,
                       ),
                       const SizedBox(height: 16),
 
@@ -118,12 +159,8 @@ class _CreateVolunteerScreenState extends State<CreateVolunteerScreen> {
                           border: OutlineInputBorder(),
                           prefixIcon: Icon(Icons.location_on),
                         ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'يرجى إدخال العنوان';
-                          }
-                          return null;
-                        },
+                        validator: (value) =>
+                            Validators.validateRequired(value, 'العنوان'),
                       ),
                       const SizedBox(height: 16),
 
@@ -143,11 +180,7 @@ class _CreateVolunteerScreenState extends State<CreateVolunteerScreen> {
                         children: [
                           Expanded(
                             child: ElevatedButton(
-                              onPressed: () {
-                                if (_formKey.currentState!.validate()) {
-                                  _createVolunteer();
-                                }
-                              },
+                              onPressed: _isLoading ? null : _createVolunteer,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppTheme.primary,
                                 foregroundColor: Colors.white,
@@ -155,15 +188,22 @@ class _CreateVolunteerScreenState extends State<CreateVolunteerScreen> {
                                   vertical: 15,
                                 ),
                               ),
-                              child: const Text('حفظ المتطوع'),
+                              child: _isLoading
+                                  ? const SizedBox(
+                                      height: 20,
+                                      width: 20,
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Text('حفظ المتطوع'),
                             ),
                           ),
                           const SizedBox(width: 16),
                           Expanded(
                             child: OutlinedButton(
-                              onPressed: () {
-                                Navigator.pop(context);
-                              },
+                              onPressed: () => Navigator.pop(context),
                               style: OutlinedButton.styleFrom(
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 15,
@@ -183,29 +223,6 @@ class _CreateVolunteerScreenState extends State<CreateVolunteerScreen> {
         ),
       ),
     );
-  }
-
-  void _createVolunteer() {
-    final newVolunteer = {
-      'id': 'v${DateTime.now().millisecondsSinceEpoch}',
-      'name': _nameController.text,
-      'phone': _phoneController.text,
-      'email': _emailController.text,
-      'address': _addressController.text,
-      'nationalId': _nationalIdController.text,
-      'createdAt': DateTime.now().toIso8601String(),
-    };
-
-    // TODO: Save to Firebase
-    // await FirebaseFirestore.instance
-    //     .collection('volunteers')
-    //     .add(newVolunteer);
-
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('تم إضافة المتطوع بنجاح')));
-
-    Navigator.pop(context, newVolunteer);
   }
 
   @override

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:resala/screens/themes/app_theme.dart';
+import 'package:resala/presentation/themes/app_theme.dart';
 
 class CommunicationsScreen extends StatelessWidget {
   const CommunicationsScreen({super.key});

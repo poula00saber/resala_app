@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:resala/screens/home/volunteer_management_screen.dart';
-import 'package:resala/screens/themes/app_theme.dart';
+import 'package:resala/presentation/screens/home/volunteer_management_screen.dart';
+import 'package:resala/presentation/themes/app_theme.dart';
 
 class EventDetailsScreen extends StatefulWidget {
   final Map<String, dynamic> event;

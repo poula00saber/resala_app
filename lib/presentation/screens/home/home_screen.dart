@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:resala/screens/themes/app_theme.dart';
+import 'package:resala/presentation/themes/app_theme.dart';
 import 'profiles_screen.dart';
-import 'events_screen.dart';
+import '../events/events_screen.dart';
 import 'evaluations_screen.dart';
 import 'communications_screen.dart';
 import 'reports_screen.dart';
