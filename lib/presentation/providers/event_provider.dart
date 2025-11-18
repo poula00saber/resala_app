@@ -45,14 +45,15 @@ class EventProvider with ChangeNotifier {
       case EventFilter.last7Days:
         return _events.where((event) {
           final eventDate = DateTime.parse(event.date);
-          final difference = now.difference(eventDate).inDays;
+          final difference = eventDate.difference(now).inDays;
           return difference <= 7 && difference >= 0;
         }).toList();
 
       case EventFilter.lastMonth:
         return _events.where((event) {
           final eventDate = DateTime.parse(event.date);
-          final difference = now.difference(eventDate).inDays;
+          //make it for the next 30 days
+          final difference = eventDate.difference(now).inDays;
           return difference <= 30 && difference >= 0;
         }).toList();
 

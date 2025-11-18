@@ -1,5 +1,6 @@
 // ============================================
 // FILE: lib/domain/entities/volunteer.dart
+// UPDATED: Added hasTshirt field
 // ============================================
 
 class Volunteer {
@@ -23,4 +24,3 @@ class Volunteer {
     required this.createdAt,
   });
 }
-

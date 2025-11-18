@@ -1,6 +1,6 @@
 // ============================================
 // FILE: lib/presentation/screens/events/edit_event_screen.dart
-// REDESIGNED to match your UI (Image 2)
+// FIXED: Added t-shirt checkbox + enabled volunteers for اداريات
 // ============================================
 
 import 'package:flutter/material.dart';
@@ -9,6 +9,7 @@ import '../../providers/event_provider.dart';
 import '../../providers/volunteer_provider.dart';
 import '../../themes/app_theme.dart';
 import '../../../data/models/event_model.dart';
+import '../../../data/models/volunteer_model.dart';
 import '../../../core/constants/firebase_constants.dart';
 import '../volunteers/select_volunteer_screen.dart';
 import '../volunteers/create_volunteer_screen.dart';
@@ -28,6 +29,7 @@ class _EditEventScreenState extends State<EditEventScreen> {
   late TextEditingController _dateController;
   late TextEditingController _locationController;
   late List<String> _volunteerIds;
+  late Map<String, bool> _volunteerTshirtStatus; // Track t-shirt status
   bool _isLoading = false;
 
   @override
@@ -39,13 +41,16 @@ class _EditEventScreenState extends State<EditEventScreen> {
       text: widget.event.location ?? '',
     );
     _volunteerIds = List<String>.from(widget.event.volunteerIds);
+    _volunteerTshirtStatus = {};
   }
 
+  // Allow volunteer management for all except meetings (اجتماع still can select from DB)
   bool _allowVolunteerManagement() {
-    return widget.event.type != FirebaseConstants.typeAdministrative;
+    return true; // Changed: Now all types can have volunteers
   }
 
   bool _canCreateNewVolunteer() {
+    // Only meetings and admin cannot create NEW volunteers
     return widget.event.type != FirebaseConstants.typeMeeting &&
         widget.event.type != FirebaseConstants.typeAdministrative;
   }
@@ -74,13 +79,6 @@ class _EditEventScreenState extends State<EditEventScreen> {
   }
 
   void _addVolunteer() {
-    if (!_allowVolunteerManagement()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('لا يمكن إضافة متطوعين لهذا النوع')),
-      );
-      return;
-    }
-
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -93,17 +91,17 @@ class _EditEventScreenState extends State<EditEventScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (_canCreateNewVolunteer()) ...[
-              _buildAddButton('متطوع جديد', Icons.add, () {
-                Navigator.pop(context);
-                _createNewVolunteer();
-              }),
-              const SizedBox(height: 12),
-            ],
             _buildAddButton('إضافة متطوع', Icons.add_circle_outline, () {
               Navigator.pop(context);
               _selectExistingVolunteer();
             }),
+            if (_canCreateNewVolunteer()) ...[
+              const SizedBox(height: 12),
+              _buildAddButton('متطوع جديد', Icons.add, () {
+                Navigator.pop(context);
+                _createNewVolunteer();
+              }),
+            ],
             const SizedBox(height: 24),
           ],
         ),
@@ -128,7 +126,11 @@ class _EditEventScreenState extends State<EditEventScreen> {
           const SizedBox(width: 8),
           Text(
             text,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+            style: const TextStyle(
+              fontFamily: 'Cairo',
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ],
       ),
@@ -158,6 +160,7 @@ class _EditEventScreenState extends State<EditEventScreen> {
       setState(() {
         if (!_volunteerIds.contains(result)) {
           _volunteerIds.add(result);
+          _volunteerTshirtStatus[result] = false; // Default: no t-shirt
         }
       });
     }
@@ -167,6 +170,24 @@ class _EditEventScreenState extends State<EditEventScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
+
+    // Update t-shirt status for all volunteers
+    final volunteerProvider = Provider.of<VolunteerProvider>(
+      context,
+      listen: false,
+    );
+    for (var entry in _volunteerTshirtStatus.entries) {
+      final volunteerId = entry.key;
+      final hasTshirt = entry.value;
+
+      final volunteer = await volunteerProvider.getVolunteerById(volunteerId);
+      if (volunteer != null) {
+        final updatedVolunteer = (volunteer as VolunteerModel).copyWith(
+          hasTshirt: hasTshirt,
+        );
+        await volunteerProvider.updateVolunteer(volunteerId, updatedVolunteer);
+      }
+    }
 
     final eventProvider = Provider.of<EventProvider>(context, listen: false);
 
@@ -196,13 +217,23 @@ class _EditEventScreenState extends State<EditEventScreen> {
     if (mounted) {
       if (success) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('تم تحديث الحدث بنجاح')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'تم تحديث الحدث بنجاح',
+              style: TextStyle(fontFamily: 'Cairo'),
+            ),
+          ),
+        );
       } else {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('فشل تحديث الحدث')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'فشل تحديث الحدث',
+              style: TextStyle(fontFamily: 'Cairo'),
+            ),
+          ),
+        );
       }
     }
   }
@@ -210,20 +241,21 @@ class _EditEventScreenState extends State<EditEventScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFE8DDD3),
+      backgroundColor: AppTheme.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFE8DDD3),
+        backgroundColor: AppTheme.background,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.arrow_forward, color: Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
-          'قافلة',
+          'تفاصيل الحدث',
           style: TextStyle(
+            fontFamily: 'Cairo',
             color: Colors.black,
             fontSize: 20,
-            fontWeight: FontWeight.w500,
+            fontWeight: FontWeight.w600,
           ),
         ),
         centerTitle: true,
@@ -239,19 +271,19 @@ class _EditEventScreenState extends State<EditEventScreen> {
                 children: [
                   Expanded(
                     child: _buildTextField(
-                      controller: _locationController,
-                      label: 'المكان',
-                      readOnly: false,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: _buildTextField(
                       controller: _dateController,
                       label: 'التاريخ',
                       readOnly: true,
                       onTap: _selectDate,
                       suffixIcon: Icons.calendar_today,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _buildTextField(
+                      controller: _locationController,
+                      label: 'المكان',
+                      readOnly: false,
                     ),
                   ),
                 ],
@@ -263,21 +295,19 @@ class _EditEventScreenState extends State<EditEventScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 40),
               child: Column(
                 children: [
-                  if (_allowVolunteerManagement() &&
-                      _canCreateNewVolunteer()) ...[
+                  _buildAddButton(
+                    'إضافة متطوع',
+                    Icons.add_circle_outline,
+                    _selectExistingVolunteer,
+                  ),
+                  if (_canCreateNewVolunteer()) ...[
+                    const SizedBox(height: 12),
                     _buildAddButton(
                       'متطوع جديد',
                       Icons.add,
                       _createNewVolunteer,
                     ),
-                    const SizedBox(height: 12),
                   ],
-                  if (_allowVolunteerManagement())
-                    _buildAddButton(
-                      'إضافة متطوع',
-                      Icons.add_circle_outline,
-                      _selectExistingVolunteer,
-                    ),
                 ],
               ),
             ),
@@ -311,13 +341,13 @@ class _EditEventScreenState extends State<EditEventScreen> {
                       ),
                       child: Row(
                         children: [
-                          Expanded(flex: 1, child: _buildTableHeader('#')),
-                          Expanded(flex: 3, child: _buildTableHeader('الاسم')),
+                          Expanded(flex: 2, child: _buildTableHeader('تيشيرت')),
                           Expanded(
                             flex: 3,
                             child: _buildTableHeader('رقم التليفون'),
                           ),
-                          Expanded(flex: 2, child: _buildTableHeader('تيشيرت')),
+                          Expanded(flex: 3, child: _buildTableHeader('الاسم')),
+                          Expanded(flex: 1, child: _buildTableHeader('#')),
                         ],
                       ),
                     ),
@@ -341,11 +371,24 @@ class _EditEventScreenState extends State<EditEventScreen> {
 
                           final volunteers = snapshot.data ?? [];
 
+                          // Initialize t-shirt status from database
+                          for (var volunteer in volunteers) {
+                            if (!_volunteerTshirtStatus.containsKey(
+                              volunteer.id,
+                            )) {
+                              _volunteerTshirtStatus[volunteer.id] =
+                                  (volunteer as VolunteerModel).hasTshirt;
+                            }
+                          }
+
                           if (volunteers.isEmpty) {
                             return const Center(
                               child: Text(
                                 'لا يوجد متطوعون',
-                                style: TextStyle(color: Colors.grey),
+                                style: TextStyle(
+                                  fontFamily: 'Cairo',
+                                  color: Colors.grey,
+                                ),
                               ),
                             );
                           }
@@ -365,37 +408,38 @@ class _EditEventScreenState extends State<EditEventScreen> {
                                 ),
                                 child: Row(
                                   children: [
+                                    // T-shirt Checkbox
                                     Expanded(
-                                      flex: 1,
-                                      child: _buildTableCell(
-                                        (index + 1).toString(),
+                                      flex: 2,
+                                      child: Center(
+                                        child: Checkbox(
+                                          value:
+                                              _volunteerTshirtStatus[volunteer
+                                                  .id] ??
+                                              false,
+                                          onChanged: (value) {
+                                            setState(() {
+                                              _volunteerTshirtStatus[volunteer
+                                                      .id] =
+                                                  value ?? false;
+                                            });
+                                          },
+                                          activeColor: AppTheme.primary,
+                                        ),
                                       ),
-                                    ),
-                                    Expanded(
-                                      flex: 3,
-                                      child: _buildTableCell(volunteer.name),
                                     ),
                                     Expanded(
                                       flex: 3,
                                       child: _buildTableCell(volunteer.phone),
                                     ),
                                     Expanded(
-                                      flex: 2,
-                                      child: Center(
-                                        child: IconButton(
-                                          icon: const Icon(
-                                            Icons.delete_outline,
-                                            color: Colors.red,
-                                            size: 20,
-                                          ),
-                                          onPressed: () {
-                                            setState(() {
-                                              _volunteerIds.remove(
-                                                volunteer.id,
-                                              );
-                                            });
-                                          },
-                                        ),
+                                      flex: 3,
+                                      child: _buildTableCell(volunteer.name),
+                                    ),
+                                    Expanded(
+                                      flex: 1,
+                                      child: _buildTableCell(
+                                        (index + 1).toString(),
                                       ),
                                     ),
                                   ],
@@ -438,6 +482,7 @@ class _EditEventScreenState extends State<EditEventScreen> {
                     : const Text(
                         'حفظ',
                         style: TextStyle(
+                          fontFamily: 'Cairo',
                           fontSize: 16,
                           fontWeight: FontWeight.w500,
                         ),
@@ -462,10 +507,14 @@ class _EditEventScreenState extends State<EditEventScreen> {
       readOnly: readOnly,
       onTap: onTap,
       textAlign: TextAlign.center,
-      style: const TextStyle(fontSize: 14),
+      style: const TextStyle(fontFamily: 'Cairo', fontSize: 14),
       decoration: InputDecoration(
         hintText: label,
-        hintStyle: TextStyle(color: Colors.grey[400], fontSize: 12),
+        hintStyle: TextStyle(
+          fontFamily: 'Cairo',
+          color: Colors.grey[400],
+          fontSize: 12,
+        ),
         suffixIcon: suffixIcon != null
             ? Icon(suffixIcon, size: 18, color: AppTheme.primary)
             : null,
@@ -496,7 +545,8 @@ class _EditEventScreenState extends State<EditEventScreen> {
       child: Text(
         text,
         style: const TextStyle(
-          fontSize: 14,
+          fontFamily: 'Cairo',
+          fontSize: 13,
           fontWeight: FontWeight.bold,
           color: Colors.black87,
         ),
@@ -510,8 +560,14 @@ class _EditEventScreenState extends State<EditEventScreen> {
         padding: const EdgeInsets.symmetric(vertical: 12),
         child: Text(
           text,
-          style: const TextStyle(fontSize: 13, color: Colors.black87),
+          style: const TextStyle(
+            fontFamily: 'Cairo',
+            fontSize: 12,
+            color: Colors.black87,
+          ),
           textAlign: TextAlign.center,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
       ),
     );

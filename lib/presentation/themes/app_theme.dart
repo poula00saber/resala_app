@@ -1,12 +1,12 @@
 // ============================================
 // FILE: lib/presentation/themes/app_theme.dart
-// Updated with your design colors
+// Updated with Cairo font
 // ============================================
 
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  // Primary Colors matching your design
+  // Primary Colors
   static const Color primary = Color(0xFF8A3A4A); // Burgundy/Mauve color
   static const Color background = Color(0xFFD8CCB2); // Beige background
   static const Color cardBackground = Colors.white;
@@ -26,11 +26,20 @@ class AppTheme {
       background: background,
     ),
 
+    // ✅ Cairo Font Family
+    fontFamily: 'Cairo',
+
     appBarTheme: const AppBarTheme(
       backgroundColor: background,
       foregroundColor: textDark,
       elevation: 0,
       centerTitle: true,
+      titleTextStyle: TextStyle(
+        fontFamily: 'Cairo',
+        fontSize: 20,
+        fontWeight: FontWeight.w600,
+        color: textDark,
+      ),
     ),
 
     cardTheme: CardThemeData(
@@ -59,6 +68,8 @@ class AppTheme {
         borderSide: const BorderSide(color: Colors.red),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      hintStyle: TextStyle(fontFamily: 'Cairo', color: Colors.grey[400]),
+      labelStyle: const TextStyle(fontFamily: 'Cairo'),
     ),
 
     elevatedButtonTheme: ElevatedButtonThemeData(
@@ -68,6 +79,11 @@ class AppTheme {
         minimumSize: const Size(double.infinity, 50),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
         elevation: 2,
+        textStyle: const TextStyle(
+          fontFamily: 'Cairo',
+          fontSize: 16,
+          fontWeight: FontWeight.w500,
+        ),
       ),
     ),
 
@@ -76,22 +92,30 @@ class AppTheme {
         foregroundColor: primary,
         side: const BorderSide(color: primary),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+        textStyle: const TextStyle(
+          fontFamily: 'Cairo',
+          fontSize: 16,
+          fontWeight: FontWeight.w500,
+        ),
       ),
     ),
 
     textTheme: const TextTheme(
       displayLarge: TextStyle(
+        fontFamily: 'Cairo',
         fontSize: 24,
         fontWeight: FontWeight.bold,
         color: textDark,
       ),
       displayMedium: TextStyle(
+        fontFamily: 'Cairo',
         fontSize: 20,
         fontWeight: FontWeight.w600,
         color: textDark,
       ),
-      bodyLarge: TextStyle(fontSize: 16, color: textDark),
-      bodyMedium: TextStyle(fontSize: 14, color: textDark),
+      bodyLarge: TextStyle(fontFamily: 'Cairo', fontSize: 16, color: textDark),
+      bodyMedium: TextStyle(fontFamily: 'Cairo', fontSize: 14, color: textDark),
+      bodySmall: TextStyle(fontFamily: 'Cairo', fontSize: 12, color: textDark),
     ),
   );
 }
