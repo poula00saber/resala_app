@@ -1,5 +1,6 @@
 // ============================================
 // FILE: lib/presentation/screens/volunteers/select_volunteer_screen.dart
+// REDESIGNED to match your UI (Image 3)
 // ============================================
 
 import 'package:flutter/material.dart';
@@ -21,176 +22,226 @@ class _SelectVolunteerScreenState extends State<SelectVolunteerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFE8DDD3),
       appBar: AppBar(
-        title: const Text("اختيار متطوع"),
-        backgroundColor: AppTheme.primary,
-        foregroundColor: Colors.white,
+        backgroundColor: const Color(0xFFE8DDD3),
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text(
+          'قافلة',
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: 20,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        centerTitle: true,
       ),
-      body: Container(
-        color: AppTheme.primary,
-        child: Column(
-          children: [
-            // Search Bar
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Card(
-                child: TextField(
-                  controller: _searchController,
-                  decoration: InputDecoration(
-                    hintText: 'البحث بالاسم أو رقم الهاتف',
-                    prefixIcon: const Icon(Icons.search),
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.all(16),
-                    suffixIcon: _searchController.text.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.clear),
-                            onPressed: () {
-                              setState(() {
-                                _searchController.clear();
-                                _searchQuery = '';
-                              });
-                            },
-                          )
-                        : null,
-                  ),
-                  onChanged: (value) {
-                    setState(() {
-                      _searchQuery = value;
-                    });
-                  },
+      body: Column(
+        children: [
+          // Date and Location Fields (Empty for selection screen)
+          const SizedBox(height: 8),
+
+          // Main Content Card
+          Expanded(
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 30),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(30),
+                  topRight: Radius.circular(30),
                 ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, -2),
+                  ),
+                ],
               ),
-            ),
+              child: Column(
+                children: [
+                  const SizedBox(height: 24),
 
-            // Volunteers List
-            Expanded(
-              child: StreamBuilder(
-                stream: Provider.of<VolunteerProvider>(context, listen: false)
-                    .searchVolunteers(_searchQuery),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(
-                      child: CircularProgressIndicator(color: Colors.white),
-                    );
-                  }
-
-                  if (snapshot.hasError) {
-                    return Center(
-                      child: Text(
-                        'حدث خطأ: ${snapshot.error}',
-                        style: const TextStyle(color: Colors.white),
-                      ),
-                    );
-                  }
-
-                  final volunteers = snapshot.data ?? [];
-
-                  if (volunteers.isEmpty) {
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.search_off,
-                            size: 64,
-                            color: Colors.white.withOpacity(0.5),
-                          ),
-                          const SizedBox(height: 16),
-                          const Text(
-                            'لا توجد نتائج',
-                            style: TextStyle(color: Colors.white, fontSize: 18),
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-
-                  return ListView.builder(
-                    padding: const EdgeInsets.all(16.0),
-                    itemCount: volunteers.length,
-                    itemBuilder: (context, index) {
-                      final volunteer = volunteers[index];
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        child: ListTile(
-                          leading: CircleAvatar(
-                            backgroundColor: AppTheme.primary,
-                            radius: 28,
-                            child: Text(
-                              volunteer.name[0],
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          title: Row(
-                            children: [
-                              Text(
-                                volunteer.name,
-                                style: const TextStyle(fontWeight: FontWeight.bold),
-                              ),
-                              if (!volunteer.hasInterview) ...[
-                                const SizedBox(width: 8),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 2,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.orange[100],
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Text(
-                                    'لم يتم عمل مقابلة',
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      color: Colors.orange[900],
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ],
-                          ),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const SizedBox(height: 4),
-                              Row(
-                                children: [
-                                  const Icon(Icons.phone, size: 14),
-                                  const SizedBox(width: 4),
-                                  Text(volunteer.phone),
-                                ],
-                              ),
-                              Row(
-                                children: [
-                                  const Icon(Icons.location_on, size: 14),
-                                  const SizedBox(width: 4),
-                                  Expanded(child: Text(volunteer.address)),
-                                ],
-                              ),
-                            ],
-                          ),
-                          trailing: ElevatedButton(
-                            onPressed: () {
-                              Navigator.pop(context, volunteer.id);
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppTheme.primary,
-                              foregroundColor: Colors.white,
-                            ),
-                            child: const Text('اختيار'),
+                  // Search Bar
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: TextField(
+                      controller: _searchController,
+                      textAlign: TextAlign.right,
+                      decoration: InputDecoration(
+                        hintText: 'بحث',
+                        hintStyle: TextStyle(color: Colors.grey[400]),
+                        prefixIcon: Icon(Icons.search, color: Colors.grey[600]),
+                        filled: true,
+                        fillColor: Colors.white,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 12,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(25),
+                          borderSide: BorderSide(color: Colors.grey[300]!),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(25),
+                          borderSide: BorderSide(color: Colors.grey[300]!),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(25),
+                          borderSide: const BorderSide(
+                            color: AppTheme.primary,
+                            width: 2,
                           ),
                         ),
-                      );
-                    },
-                  );
-                },
+                      ),
+                      onChanged: (value) {
+                        setState(() {
+                          _searchQuery = value;
+                        });
+                      },
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Volunteers List
+                  Expanded(
+                    child: StreamBuilder(
+                      stream: Provider.of<VolunteerProvider>(
+                        context,
+                        listen: false,
+                      ).searchVolunteers(_searchQuery),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const Center(
+                            child: CircularProgressIndicator(
+                              color: AppTheme.primary,
+                            ),
+                          );
+                        }
+
+                        if (snapshot.hasError) {
+                          return Center(
+                            child: Text(
+                              'حدث خطأ: ${snapshot.error}',
+                              style: const TextStyle(color: Colors.red),
+                            ),
+                          );
+                        }
+
+                        final volunteers = snapshot.data ?? [];
+
+                        if (volunteers.isEmpty) {
+                          return const Center(
+                            child: Text(
+                              'لا توجد نتائج',
+                              style: TextStyle(
+                                color: Colors.grey,
+                                fontSize: 16,
+                              ),
+                            ),
+                          );
+                        }
+
+                        return ListView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          itemCount: volunteers.length,
+                          itemBuilder: (context, index) {
+                            final volunteer = volunteers[index];
+                            return Container(
+                              margin: const EdgeInsets.only(bottom: 12),
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  Navigator.pop(context, volunteer.id);
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppTheme.primary,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 20,
+                                    vertical: 16,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(25),
+                                  ),
+                                  elevation: 2,
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        volunteer.name,
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                        textAlign: TextAlign.right,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Container(
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withOpacity(0.2),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(
+                                        Icons.person,
+                                        size: 24,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+                ],
               ),
             ),
-          ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTextField(String label) {
+    return TextField(
+      enabled: false,
+      textAlign: TextAlign.center,
+      decoration: InputDecoration(
+        hintText: label,
+        hintStyle: TextStyle(color: Colors.grey[400], fontSize: 12),
+        filled: true,
+        fillColor: Colors.white,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 12,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(20),
+          borderSide: const BorderSide(color: AppTheme.primary),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(20),
+          borderSide: const BorderSide(color: AppTheme.primary),
+        ),
+        disabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(20),
+          borderSide: BorderSide(color: Colors.grey[300]!),
         ),
       ),
     );
@@ -202,114 +253,3 @@ class _SelectVolunteerScreenState extends State<SelectVolunteerScreen> {
     super.dispose();
   }
 }
-
-// ============================================
-// 🔥 FIREBASE CONNECTIVITY TEST
-// Add this to main.dart temporarily to test
-// ============================================
-
-/*
-import 'package:cloud_firestore/cloud_firestore.dart';
-
-Future<void> testFirebaseConnection() async {
-  try {
-    print('🔄 Testing Firebase connection...');
-    
-    // Test Write
-    await FirebaseFirestore.instance
-        .collection('test')
-        .add({
-      'timestamp': FieldValue.serverTimestamp(),
-      'message': 'Test from app',
-    });
-    
-    print('✅ Firebase WRITE successful!');
-    
-    // Test Read
-    final snapshot = await FirebaseFirestore.instance
-        .collection('test')
-        .limit(1)
-        .get();
-    
-    print('✅ Firebase READ successful! Found ${snapshot.docs.length} documents');
-    print('✅ Firebase is working perfectly!');
-    
-  } catch (e) {
-    print('❌ Firebase Error: $e');
-  }
-}
-
-// In main() function:
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  
-  // Test Firebase
-  await testFirebaseConnection();
-  
-  runApp(const MyApp());
-}
-*/
-
-// ============================================
-// 📋 COMPLETE TESTING CHECKLIST
-// ============================================
-
-/*
-
-✅ STEP 1: Run the app
-   flutter run
-
-✅ STEP 2: Check logs for Firebase connection
-   Look for: "✅ Firebase is working perfectly!"
-
-✅ STEP 3: Create a volunteer
-   - Tap "إضافة حدث جديد"
-   - Create any event
-   - Check Firestore Console → events collection
-
-✅ STEP 4: Create a volunteer
-   - Inside event, tap "إضافة متطوع"
-   - Tap "إضافة متطوع جديد"
-   - Fill form and save
-   - Check Firestore Console → volunteers collection
-   - Verify hasInterview = false
-
-✅ STEP 5: Check اجتماع restrictions
-   - Create event with type "اجتماع"
-   - Edit event
-   - Try to add volunteer
-   - Should show "اختيار من القائمة" only (no create new)
-
-✅ STEP 6: Check اداريات restrictions
-   - Create event with type "اداريات"
-   - Edit event
-   - Should show: "لا يمكن إضافة متطوعين للإداريات"
-
-✅ STEP 7: Verify real-time updates
-   - Open app
-   - Go to Firebase Console
-   - Manually add/edit event
-   - App should update automatically
-
-✅ STEP 8: Check volunteer interview status
-   - Create new volunteer from app
-   - Go to Select Volunteer screen
-   - Should see "لم يتم عمل مقابلة" badge
-
-// ============================================
-// 🎯 FIREBASE CONSOLE URLs
-// ============================================
-
-Firebase Console: https://console.firebase.google.com
-Your Project → Firestore Database
-
-You should see 2 collections:
-1. events
-2. volunteers
-
-Click on any document to see its data!
-
-*/

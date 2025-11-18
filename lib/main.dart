@@ -39,7 +39,7 @@ class MyApp extends StatelessWidget {
       ],
       child: MaterialApp(
         title: 'Resala Events',
-        theme: AppTheme.theme,// erroooooooooooooooooooooooooooooooooooooooooooooooor
+        theme: AppTheme.lightTheme, // erroooooooooooooooooooooooooooooooooooooooooooooooor
         debugShowCheckedModeBanner: false,
         home: const LoginScreen(),
       ),

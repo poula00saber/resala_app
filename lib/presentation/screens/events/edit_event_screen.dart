@@ -1,3 +1,8 @@
+// ============================================
+// FILE: lib/presentation/screens/events/edit_event_screen.dart
+// REDESIGNED to match your UI (Image 2)
+// ============================================
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/event_provider.dart';
@@ -21,6 +26,7 @@ class _EditEventScreenState extends State<EditEventScreen> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _titleController;
   late TextEditingController _dateController;
+  late TextEditingController _locationController;
   late List<String> _volunteerIds;
   bool _isLoading = false;
 
@@ -29,12 +35,13 @@ class _EditEventScreenState extends State<EditEventScreen> {
     super.initState();
     _titleController = TextEditingController(text: widget.event.title);
     _dateController = TextEditingController(text: widget.event.date);
+    _locationController = TextEditingController(
+      text: widget.event.location ?? '',
+    );
     _volunteerIds = List<String>.from(widget.event.volunteerIds);
   }
 
   bool _allowVolunteerManagement() {
-    // اجتماع can select from database only
-    // اداريات has no volunteer management
     return widget.event.type != FirebaseConstants.typeAdministrative;
   }
 
@@ -49,6 +56,14 @@ class _EditEventScreenState extends State<EditEventScreen> {
       initialDate: DateTime.parse(widget.event.date),
       firstDate: DateTime(2020),
       lastDate: DateTime(2030),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(primary: AppTheme.primary),
+          ),
+          child: child!,
+        );
+      },
     );
     if (picked != null) {
       setState(() {
@@ -68,38 +83,54 @@ class _EditEventScreenState extends State<EditEventScreen> {
 
     showModalBottomSheet(
       context: context,
+      backgroundColor: Colors.transparent,
       builder: (context) => Container(
-        padding: const EdgeInsets.all(16),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+        ),
+        padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
-              'إضافة متطوع',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 20),
-            ListTile(
-              leading: const Icon(Icons.person_search, color: Colors.blue),
-              title: const Text('اختيار متطوع من القائمة'),
-              onTap: () {
-                Navigator.pop(context);
-                _selectExistingVolunteer();
-              },
-            ),
             if (_canCreateNewVolunteer()) ...[
-              const Divider(),
-              ListTile(
-                leading: const Icon(Icons.person_add, color: Colors.green),
-                title: const Text('إضافة متطوع جديد'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _createNewVolunteer();
-                },
-              ),
+              _buildAddButton('متطوع جديد', Icons.add, () {
+                Navigator.pop(context);
+                _createNewVolunteer();
+              }),
+              const SizedBox(height: 12),
             ],
-            const SizedBox(height: 20),
+            _buildAddButton('إضافة متطوع', Icons.add_circle_outline, () {
+              Navigator.pop(context);
+              _selectExistingVolunteer();
+            }),
+            const SizedBox(height: 24),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildAddButton(String text, IconData icon, VoidCallback onPressed) {
+    return ElevatedButton(
+      onPressed: onPressed,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: AppTheme.primary,
+        foregroundColor: Colors.white,
+        minimumSize: const Size(double.infinity, 50),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+        elevation: 2,
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 24),
+          const SizedBox(width: 8),
+          Text(
+            text,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+          ),
+        ],
       ),
     );
   }
@@ -145,7 +176,9 @@ class _EditEventScreenState extends State<EditEventScreen> {
       type: widget.event.type,
       date: _dateController.text,
       description: widget.event.description,
-      location: widget.event.location,
+      location: _locationController.text.isEmpty
+          ? null
+          : _locationController.text,
       meetingPlace: widget.event.meetingPlace,
       administrativeType: widget.event.administrativeType,
       volunteerIds: _volunteerIds,
@@ -177,212 +210,308 @@ class _EditEventScreenState extends State<EditEventScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFE8DDD3),
       appBar: AppBar(
-        title: const Text("تعديل الحدث"),
-        backgroundColor: AppTheme.primary,
-        foregroundColor: Colors.white,
+        backgroundColor: const Color(0xFFE8DDD3),
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text(
+          'قافلة',
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: 20,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        centerTitle: true,
       ),
-      body: Container(
-        color: AppTheme.primary,
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Form(
-                key: _formKey,
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'تعديل تفاصيل الحدث',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
+      body: Form(
+        key: _formKey,
+        child: Column(
+          children: [
+            // Date and Location Fields
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _buildTextField(
+                      controller: _locationController,
+                      label: 'المكان',
+                      readOnly: false,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _buildTextField(
+                      controller: _dateController,
+                      label: 'التاريخ',
+                      readOnly: true,
+                      onTap: _selectDate,
+                      suffixIcon: Icons.calendar_today,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Add Volunteer Buttons
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 40),
+              child: Column(
+                children: [
+                  if (_allowVolunteerManagement() &&
+                      _canCreateNewVolunteer()) ...[
+                    _buildAddButton(
+                      'متطوع جديد',
+                      Icons.add,
+                      _createNewVolunteer,
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                  if (_allowVolunteerManagement())
+                    _buildAddButton(
+                      'إضافة متطوع',
+                      Icons.add_circle_outline,
+                      _selectExistingVolunteer,
+                    ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            // Volunteers Table
+            Expanded(
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 40),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    // Table Header
+                    Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(color: Colors.grey[300]!),
                         ),
                       ),
-                      const SizedBox(height: 20),
-
-                      TextFormField(
-                        controller: _titleController,
-                        decoration: const InputDecoration(
-                          labelText: 'عنوان الحدث',
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.event),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'يرجى إدخال عنوان الحدث';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-
-                      TextFormField(
-                        controller: _dateController,
-                        readOnly: true,
-                        decoration: const InputDecoration(
-                          labelText: 'تاريخ الحدث',
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.calendar_today),
-                        ),
-                        onTap: _selectDate,
-                      ),
-                      const SizedBox(height: 24),
-
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      child: Row(
                         children: [
-                          const Text(
-                            'المتطوعون',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
+                          Expanded(flex: 1, child: _buildTableHeader('#')),
+                          Expanded(flex: 3, child: _buildTableHeader('الاسم')),
+                          Expanded(
+                            flex: 3,
+                            child: _buildTableHeader('رقم التليفون'),
                           ),
-                          if (_allowVolunteerManagement())
-                            ElevatedButton.icon(
-                              onPressed: _addVolunteer,
-                              icon: const Icon(Icons.add, size: 18),
-                              label: const Text('إضافة متطوع'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppTheme.primary,
-                                foregroundColor: Colors.white,
-                              ),
-                            ),
+                          Expanded(flex: 2, child: _buildTableHeader('تيشيرت')),
                         ],
                       ),
-                      const SizedBox(height: 12),
+                    ),
 
-                      if (!_allowVolunteerManagement())
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.orange[50],
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.orange),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.info_outline,
-                                color: Colors.orange[700],
+                    // Table Rows
+                    Expanded(
+                      child: FutureBuilder(
+                        future: Provider.of<VolunteerProvider>(
+                          context,
+                          listen: false,
+                        ).getVolunteersByIds(_volunteerIds),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return const Center(
+                              child: CircularProgressIndicator(
+                                color: AppTheme.primary,
                               ),
-                              const SizedBox(width: 12),
-                              const Expanded(
-                                child: Text('لا يمكن إضافة متطوعين للإداريات'),
+                            );
+                          }
+
+                          final volunteers = snapshot.data ?? [];
+
+                          if (volunteers.isEmpty) {
+                            return const Center(
+                              child: Text(
+                                'لا يوجد متطوعون',
+                                style: TextStyle(color: Colors.grey),
                               ),
-                            ],
-                          ),
-                        ),
+                            );
+                          }
 
-                      if (_allowVolunteerManagement())
-                        FutureBuilder(
-                          future: Provider.of<VolunteerProvider>(
-                            context,
-                            listen: false,
-                          ).getVolunteersByIds(_volunteerIds),
-                          builder: (context, snapshot) {
-                            if (snapshot.connectionState ==
-                                ConnectionState.waiting) {
-                              return const CircularProgressIndicator();
-                            }
-
-                            final volunteers = snapshot.data ?? [];
-
-                            if (volunteers.isEmpty) {
+                          return ListView.builder(
+                            padding: EdgeInsets.zero,
+                            itemCount: volunteers.length,
+                            itemBuilder: (context, index) {
+                              final volunteer = volunteers[index];
                               return Container(
-                                padding: const EdgeInsets.all(24),
                                 decoration: BoxDecoration(
-                                  color: Colors.grey[100],
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: const Center(
-                                  child: Text('لا يوجد متطوعون'),
-                                ),
-                              );
-                            }
-
-                            return ListView.builder(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              itemCount: volunteers.length,
-                              itemBuilder: (context, index) {
-                                final volunteer = volunteers[index];
-                                return Card(
-                                  child: ListTile(
-                                    leading: CircleAvatar(
-                                      backgroundColor: AppTheme.primary,
-                                      child: Text(volunteer.name[0]),
-                                    ),
-                                    title: Text(volunteer.name),
-                                    subtitle: Text(volunteer.phone),
-                                    trailing: IconButton(
-                                      icon: const Icon(
-                                        Icons.delete,
-                                        color: Colors.red,
-                                      ),
-                                      onPressed: () {
-                                        setState(() {
-                                          _volunteerIds.remove(volunteer.id);
-                                        });
-                                      },
+                                  border: Border(
+                                    bottom: BorderSide(
+                                      color: Colors.grey[200]!,
                                     ),
                                   ),
-                                );
-                              },
-                            );
-                          },
-                        ),
-
-                      const SizedBox(height: 30),
-
-                      Row(
-                        children: [
-                          Expanded(
-                            child: ElevatedButton(
-                              onPressed: _isLoading ? null : _saveEvent,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppTheme.primary,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 15,
                                 ),
-                              ),
-                              child: _isLoading
-                                  ? const SizedBox(
-                                      height: 20,
-                                      width: 20,
-                                      child: CircularProgressIndicator(
-                                        color: Colors.white,
-                                        strokeWidth: 2,
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      flex: 1,
+                                      child: _buildTableCell(
+                                        (index + 1).toString(),
                                       ),
-                                    )
-                                  : const Text('حفظ التعديلات'),
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: OutlinedButton(
-                              onPressed: () => Navigator.pop(context),
-                              style: OutlinedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 15,
+                                    ),
+                                    Expanded(
+                                      flex: 3,
+                                      child: _buildTableCell(volunteer.name),
+                                    ),
+                                    Expanded(
+                                      flex: 3,
+                                      child: _buildTableCell(volunteer.phone),
+                                    ),
+                                    Expanded(
+                                      flex: 2,
+                                      child: Center(
+                                        child: IconButton(
+                                          icon: const Icon(
+                                            Icons.delete_outline,
+                                            color: Colors.red,
+                                            size: 20,
+                                          ),
+                                          onPressed: () {
+                                            setState(() {
+                                              _volunteerIds.remove(
+                                                volunteer.id,
+                                              );
+                                            });
+                                          },
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ),
-                              child: const Text('إلغاء'),
-                            ),
-                          ),
-                        ],
+                              );
+                            },
+                          );
+                        },
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ),
-          ),
+
+            const SizedBox(height: 16),
+
+            // Save Button
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+              child: ElevatedButton(
+                onPressed: _isLoading ? null : _saveEvent,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primary,
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size(double.infinity, 50),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(25),
+                  ),
+                ),
+                child: _isLoading
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Text(
+                        'حفظ',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    bool readOnly = false,
+    VoidCallback? onTap,
+    IconData? suffixIcon,
+  }) {
+    return TextFormField(
+      controller: controller,
+      readOnly: readOnly,
+      onTap: onTap,
+      textAlign: TextAlign.center,
+      style: const TextStyle(fontSize: 14),
+      decoration: InputDecoration(
+        hintText: label,
+        hintStyle: TextStyle(color: Colors.grey[400], fontSize: 12),
+        suffixIcon: suffixIcon != null
+            ? Icon(suffixIcon, size: 18, color: AppTheme.primary)
+            : null,
+        filled: true,
+        fillColor: Colors.white,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 12,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(20),
+          borderSide: const BorderSide(color: AppTheme.primary),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(20),
+          borderSide: const BorderSide(color: AppTheme.primary),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(20),
+          borderSide: const BorderSide(color: AppTheme.primary, width: 2),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTableHeader(String text) {
+    return Center(
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.bold,
+          color: Colors.black87,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTableCell(String text) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Text(
+          text,
+          style: const TextStyle(fontSize: 13, color: Colors.black87),
+          textAlign: TextAlign.center,
         ),
       ),
     );
@@ -392,6 +521,7 @@ class _EditEventScreenState extends State<EditEventScreen> {
   void dispose() {
     _titleController.dispose();
     _dateController.dispose();
+    _locationController.dispose();
     super.dispose();
   }
 }
