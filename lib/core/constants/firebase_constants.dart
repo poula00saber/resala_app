@@ -1,10 +1,13 @@
 // ============================================
-// FILE: lib/core/constants/firebase_constants.dart
+// FILE: lib/core/constants/firebase_constants.dart (UPDATE)
 // ============================================
 
 class FirebaseConstants {
+  // Collections
   static const String eventsCollection = 'events';
   static const String volunteersCollection = 'volunteers';
+  static const String committeesCollection = 'committees';
+  static const String evaluationsCollection = 'evaluations';
 
   // Event Types
   static const String typeQafela = 'قافلة';
@@ -31,4 +34,16 @@ class FirebaseConstants {
     'اجتماع مجلس إدارة',
     'اجتماع لجنة',
   ];
+
+  // Volunteer Status
+  static const String statusActive = 'active';
+  static const String statusInactive = 'inactive';
+
+  // Evaluation Criteria
+  static const Map<String, String> evaluationCriteria = {
+    'commitment': 'الالتزام',
+    'performance': 'الأداء',
+    'teamwork': 'العمل الجماعي',
+    'initiative': 'المبادرة',
+  };
 }

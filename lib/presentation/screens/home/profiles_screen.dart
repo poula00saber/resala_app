@@ -1,158 +1,236 @@
-// import 'package:flutter/material.dart';
-// import 'package:provider/provider.dart';
-// import 'package:resala/screens/themes/app_theme.dart';
-// import 'package:resala/services/database_service.dart';
+// ============================================
+// FILE: lib/presentation/screens/home/profiles_screen.dart
+// Matching your design from Image 2
+// ============================================
 
-// class ProfilesScreen extends StatefulWidget {
-//   const ProfilesScreen({super.key});
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../providers/volunteer_provider.dart';
+import '../../themes/app_theme.dart';
+import 'profile_details_screen.dart';
 
-//   @override
-//   State<ProfilesScreen> createState() => _ProfilesScreenState();
-// }
+class ProfilesScreen extends StatefulWidget {
+  const ProfilesScreen({super.key});
 
-// class _ProfilesScreenState extends State<ProfilesScreen> {
-//   final TextEditingController _nameController = TextEditingController();
-//   final TextEditingController _emailController = TextEditingController();
-//   final TextEditingController _phoneController = TextEditingController();
+  @override
+  State<ProfilesScreen> createState() => _ProfilesScreenState();
+}
 
-//   Future<void> _addProfile() async {
-//     if (_nameController.text.isEmpty) return;
+class _ProfilesScreenState extends State<ProfilesScreen> {
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
 
-//     final database = Provider.of<DatabaseService>(context, listen: false);
-//     try {
-//       await database.addProfile({
-//         'name': _nameController.text,
-//         'email': _emailController.text,
-//         'phone': _phoneController.text,
-//         'createdAt': FieldValue.serverTimestamp(),
-//       });
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppTheme.background,
+      appBar: AppBar(
+        backgroundColor: AppTheme.background,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_forward, color: Colors.black),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text(
+          'البروفايلات',
+          style: TextStyle(
+            fontFamily: 'Cairo',
+            color: Colors.black,
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        centerTitle: true,
+      ),
+      body: Column(
+        children: [
+          // Search Bar
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: TextField(
+              controller: _searchController,
+              textAlign: TextAlign.right,
+              style: const TextStyle(fontFamily: 'Cairo'),
+              decoration: InputDecoration(
+                hintText: 'بحث',
+                hintStyle: const TextStyle(
+                  fontFamily: 'Cairo',
+                  color: Colors.grey,
+                ),
+                prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                filled: true,
+                fillColor: Colors.white,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 16,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(30),
+                  borderSide: BorderSide(color: AppTheme.primary),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(30),
+                  borderSide: BorderSide(color: AppTheme.primary),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(30),
+                  borderSide: BorderSide(color: AppTheme.primary, width: 2),
+                ),
+              ),
+              onChanged: (value) {
+                setState(() {
+                  _searchQuery = value;
+                });
+              },
+            ),
+          ),
 
-//       _nameController.clear();
-//       _emailController.clear();
-//       _phoneController.clear();
+          // Volunteers List
+          Expanded(
+            child: StreamBuilder(
+              stream: Provider.of<VolunteerProvider>(
+                context,
+                listen: false,
+              ).searchVolunteers(_searchQuery),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(
+                    child: CircularProgressIndicator(color: AppTheme.primary),
+                  );
+                }
 
-//       ScaffoldMessenger.of(context).showSnackBar(
-//         const SnackBar(content: Text('تم إضافة البروفايل بنجاح!')),
-//       );
-//     } catch (e) {
-//       ScaffoldMessenger.of(
-//         context,
-//       ).showSnackBar(SnackBar(content: Text('خطأ: $e')));
-//     }
-//   }
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Text(
+                      'حدث خطأ: ${snapshot.error}',
+                      style: const TextStyle(
+                        fontFamily: 'Cairo',
+                        color: Colors.red,
+                      ),
+                    ),
+                  );
+                }
 
-//   Future<void> _deleteProfile(String profileId) async {
-//     final database = Provider.of<DatabaseService>(context, listen: false);
-//     try {
-//       await database.deleteDocument('profiles', profileId);
-//     } catch (e) {
-//       ScaffoldMessenger.of(
-//         context,
-//       ).showSnackBar(SnackBar(content: Text('خطأ: $e')));
-//     }
-//   }
+                final volunteers = snapshot.data ?? [];
 
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(
-//         title: const Text("بروفايلات"),
-//         backgroundColor: AppTheme.primary,
-//         foregroundColor: Colors.white,
-//       ),
-//       body: Container(
-//         color: AppTheme.primary,
-//         child: Padding(
-//           padding: const EdgeInsets.all(16.0),
-//           child: Column(
-//             children: [
-//               // Add Profile Form
-//               Card(
-//                 child: Padding(
-//                   padding: const EdgeInsets.all(16.0),
-//                   child: Column(
-//                     children: [
-//                       TextField(
-//                         controller: _nameController,
-//                         decoration: const InputDecoration(labelText: 'الاسم'),
-//                       ),
-//                       TextField(
-//                         controller: _emailController,
-//                         decoration: const InputDecoration(
-//                           labelText: 'البريد الإلكتروني',
-//                         ),
-//                       ),
-//                       TextField(
-//                         controller: _phoneController,
-//                         decoration: const InputDecoration(labelText: 'الهاتف'),
-//                       ),
-//                       const SizedBox(height: 16),
-//                       ElevatedButton(
-//                         onPressed: _addProfile,
-//                         style: ElevatedButton.styleFrom(
-//                           backgroundColor: AppTheme.primary,
-//                           foregroundColor: Colors.white,
-//                           minimumSize: const Size(double.infinity, 50),
-//                         ),
-//                         child: const Text('إضافة بروفايل'),
-//                       ),
-//                     ],
-//                   ),
-//                 ),
-//               ),
-//               const SizedBox(height: 20),
-//               // Profiles List
-//               Expanded(
-//                 child: StreamBuilder(
-//                   stream: Provider.of<DatabaseService>(context).getProfiles(),
-//                   builder: (context, snapshot) {
-//                     if (snapshot.hasError) {
-//                       return Center(child: Text('خطأ: ${snapshot.error}'));
-//                     }
-//                     if (snapshot.connectionState == ConnectionState.waiting) {
-//                       return const Center(child: CircularProgressIndicator());
-//                     }
+                if (volunteers.isEmpty) {
+                  return const Center(
+                    child: Text(
+                      'لا توجد بروفايلات',
+                      style: TextStyle(
+                        fontFamily: 'Cairo',
+                        color: Colors.grey,
+                        fontSize: 16,
+                      ),
+                    ),
+                  );
+                }
 
-//                     final profiles = snapshot.data!.docs;
+                return ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: volunteers.length,
+                  itemBuilder: (context, index) {
+                    final volunteer = volunteers[index];
+                    return _buildProfileCard(volunteer);
+                  },
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-//                     if (profiles.isEmpty) {
-//                       return const Center(
-//                         child: Text(
-//                           'لا توجد بروفايلات',
-//                           style: TextStyle(color: Colors.white, fontSize: 18),
-//                         ),
-//                       );
-//                     }
+  Widget _buildProfileCard(dynamic volunteer) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: AppTheme.primary,
+        borderRadius: BorderRadius.circular(30),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) =>
+                  ProfileDetailsScreen(
+                volunteer: volunteer,
+              ), // inside constructor:
+            ),
+          );
+        },
+        borderRadius: BorderRadius.circular(30),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          child: Row(
+            children: [
+              // Left - Edit Icon
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.edit,
+                  color: AppTheme.primary,
+                  size: 20,
+                ),
+              ),
 
-//                     return ListView.builder(
-//                       itemCount: profiles.length,
-//                       itemBuilder: (context, index) {
-//                         final profile = profiles[index];
-//                         final data = profile.data() as Map<String, dynamic>;
+              const Spacer(),
 
-//                         return Card(
-//                           margin: const EdgeInsets.only(bottom: 8),
-//                           child: ListTile(
-//                             leading: const Icon(Icons.person),
-//                             title: Text(data['name'] ?? ''),
-//                             subtitle: Text(
-//                               '${data['email'] ?? ''} - ${data['phone'] ?? ''}',
-//                             ),
-//                             trailing: IconButton(
-//                               icon: const Icon(Icons.delete, color: Colors.red),
-//                               onPressed: () => _deleteProfile(profile.id),
-//                             ),
-//                           ),
-//                         );
-//                       },
-//                     );
-//                   },
-//                 ),
-//               ),
-//             ],
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-// }
+              // Right - Name
+              Expanded(
+                flex: 3,
+                child: Text(
+                  volunteer.name,
+                  style: const TextStyle(
+                    fontFamily: 'Cairo',
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  textAlign: TextAlign.right,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+
+              const SizedBox(width: 12),
+
+              // Profile Circle
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.person,
+                  color: AppTheme.primary,
+                  size: 20,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+}

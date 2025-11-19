@@ -7,6 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:resala/presentation/providers/committee_provider.dart';
+import 'package:resala/presentation/providers/evaluation_provider.dart';
 import 'package:resala/presentation/screens/lgoin/login_screen.dart';
 import 'firebase_options.dart';
 import 'presentation/providers/event_provider.dart';
@@ -33,7 +35,13 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(
           create: (_) => VolunteerProvider()..initVolunteers(),
         ),
+        ChangeNotifierProvider(create: (_) => EvaluationProvider()),
+        // ADD THIS:
+        ChangeNotifierProvider(
+          create: (_) => CommitteeProvider()..initCommittees(),
+        ),
       ],
+      // ... rest of your app
       child: MaterialApp(
         title: 'Resala Events',
         theme: AppTheme.lightTheme,

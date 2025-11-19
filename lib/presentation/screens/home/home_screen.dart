@@ -31,12 +31,12 @@ class HomeScreen extends StatelessWidget {
             mainAxisSpacing: 15,
             children: [
               _menuButton("بروفايلات", Icons.person, () {
-                // Navigator.push(
-                //   context,
-                //   MaterialPageRoute(
-                //     builder: (context) => const ProfilesScreen(),
-                //   ),
-                // );
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ProfilesScreen(),
+                  ),
+                );
               }),
               _menuButton("اثرثيوهات", Icons.lightbulb, () {
                 Navigator.push(
