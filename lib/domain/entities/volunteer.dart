@@ -1,6 +1,6 @@
 // ============================================
 // FILE: lib/domain/entities/volunteer.dart
-// UPDATED: Added hasTshirt field
+// UPDATED: Fixed constructor parameter order
 // ============================================
 
 class Volunteer {
@@ -12,6 +12,15 @@ class Volunteer {
   final String? nationalId;
   final bool hasInterview;
   final DateTime createdAt;
+  final int? age;
+  final String? committeeId;
+  final String? committeeName;
+  final String? birthDate;
+  final String? gender;
+  final String? educationalLevel;
+  final String? university;
+  final String? profileImage;
+  final bool hasTshirt; // ADD THIS - IMPORTANT!
 
   Volunteer({
     required this.id,
@@ -22,5 +31,14 @@ class Volunteer {
     this.nationalId,
     required this.hasInterview,
     required this.createdAt,
+    this.age,
+    this.committeeId,
+    this.committeeName,
+    this.birthDate,
+    this.gender,
+    this.educationalLevel,
+    this.university,
+    this.profileImage,
+    this.hasTshirt = false, // ADD THIS
   });
 }

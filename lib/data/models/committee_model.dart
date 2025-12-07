@@ -1,5 +1,6 @@
 // ============================================
 // FILE: lib/data/models/committee_model.dart
+// UPDATED: Added copyWith method
 // ============================================
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -33,5 +34,22 @@ class CommitteeModel extends Committee {
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.now(),
     };
+  }
+
+  // ADD THIS COPYWITH METHOD
+  CommitteeModel copyWith({
+    String? id,
+    String? name,
+    String? description,
+    bool? isActive,
+    DateTime? createdAt,
+  }) {
+    return CommitteeModel(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      description: description ?? this.description,
+      isActive: isActive ?? this.isActive,
+      createdAt: createdAt ?? this.createdAt,
+    );
   }
 }

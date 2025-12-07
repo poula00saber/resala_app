@@ -28,7 +28,7 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
         backgroundColor: AppTheme.background,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_forward, color: Colors.black),
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
@@ -161,8 +161,7 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) =>
-                  ProfileDetailsScreen(
+              builder: (context) => ProfileDetailsScreen(
                 volunteer: volunteer,
               ), // inside constructor:
             ),
@@ -181,12 +180,11 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
-                  Icons.edit,
+                  Icons.person,
                   color: AppTheme.primary,
                   size: 20,
                 ),
               ),
-
               const Spacer(),
 
               // Right - Name
@@ -216,7 +214,7 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
-                  Icons.person,
+                  Icons.edit,
                   color: AppTheme.primary,
                   size: 20,
                 ),

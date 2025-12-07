@@ -1,5 +1,6 @@
 // ============================================
-// FILE: lib/core/constants/firebase_constants.dart (UPDATE)
+// FILE: lib/core/constants/firebase_constants.dart
+// MERGED - All constants in one place
 // ============================================
 
 class FirebaseConstants {
@@ -46,4 +47,24 @@ class FirebaseConstants {
     'teamwork': 'العمل الجماعي',
     'initiative': 'المبادرة',
   };
+
+  // Field names for Volunteers (NEW)
+  static const String nameField = 'name';
+  static const String phoneField = 'phone';
+  static const String emailField = 'email';
+  static const String addressField = 'address';
+  static const String nationalIdField = 'nationalId';
+  static const String ageField = 'age';
+  static const String committeeIdField = 'committeeId';
+  static const String committeeNameField = 'committeeName';
+  static const String hasInterviewField = 'hasInterview';
+  static const String hasTshirtField = 'hasTshirt';
+  static const String isActiveField = 'isActive';
+  static const String createdAtField = 'createdAt';
+  static const String updatedAtField = 'updatedAt';
+  static const String birthDateField = 'birthDate';
+  static const String genderField = 'gender';
+  static const String educationalLevelField = 'educationalLevel';
+  static const String universityField = 'university';
+  static const String profileImageField = 'profileImage';
 }

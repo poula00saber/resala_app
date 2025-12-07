@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:resala/presentation/screens/settings/committees_management_screen.dart';
 import 'package:resala/presentation/themes/app_theme.dart';
 import 'profiles_screen.dart';
 import '../events/events_screen.dart';
@@ -38,7 +39,7 @@ class HomeScreen extends StatelessWidget {
                   ),
                 );
               }),
-              _menuButton("اثرثيوهات", Icons.lightbulb, () {
+              _menuButton("تقارير", Icons.lightbulb, () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -81,6 +82,14 @@ class HomeScreen extends StatelessWidget {
                   context,
                   MaterialPageRoute(
                     builder: (context) => const PromotionsScreen(),
+                  ),
+                );
+              }),
+              _menuButton("اللجان", Icons.groups_2_outlined, () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const CommitteesManagementScreen(),
                   ),
                 );
               }),
