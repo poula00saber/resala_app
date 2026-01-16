@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:resala/presentation/screens/contacts/contacts_screen.dart';
 import 'package:resala/presentation/screens/promotions/promotions_screen.dart';
 import 'package:resala/presentation/screens/settings/committees_management_screen.dart';
 import 'package:resala/presentation/themes/app_theme.dart';
 import 'profiles_screen.dart';
 import '../events/events_screen.dart';
 import 'evaluations_screen.dart';
-import 'communications_screen.dart';
 import 'reports_screen.dart';
 import 'interviews_screen.dart';
 
@@ -65,7 +65,7 @@ class HomeScreen extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const CommunicationsScreen(),
+                    builder: (context) => const ContactsScreen(),
                   ),
                 );
               }),
