@@ -48,6 +48,19 @@ class FirebaseConstants {
     'initiative': 'المبادرة',
   };
 
+
+  // Genders (NEW)
+  static const List<String> genders = ['ذكر', 'أنثى'];
+
+  // Educational Levels (NEW)
+  static const List<String> educationalLevels = [
+    'جدد',
+    'داخل متابعة',
+    'تدريب',
+    'مشروع مسئول',
+    'مسئول',
+  ];
+
   // Field names for Volunteers (NEW)
   static const String nameField = 'name';
   static const String phoneField = 'phone';

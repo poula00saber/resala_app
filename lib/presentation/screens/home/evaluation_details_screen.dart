@@ -277,10 +277,10 @@ class _VolunteerEvaluationDetailsScreenState
           ),
           child: Row(
             children: [
-              _buildTableHeader('ملاحظات', flex: 2),
-              _buildTableHeader('التقييم', flex: 2),
               _buildTableHeader('الاسم', flex: 2),
-              _buildTableHeader('التاريخ', flex: 2),
+              _buildTableHeader('التقييم', flex: 2),
+              _buildTableHeader('الشهر', flex: 2),
+              _buildTableHeader('ملاحظات', flex: 2),
             ],
           ),
         ),
@@ -314,10 +314,10 @@ class _VolunteerEvaluationDetailsScreenState
                 ),
                 child: Row(
                   children: [
-                    _buildTableCell(notes, flex: 2),
-                    _buildTableCell('$rating/10', flex: 2),
                     _buildTableCell(evaluatorName, flex: 2),
+                    _buildTableCell('$rating/10', flex: 2),
                     _buildTableCell(month, flex: 2),
+                    _buildTableCell(notes, flex: 2),
                   ],
                 ),
               );

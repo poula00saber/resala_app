@@ -7,6 +7,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:resala/core/constants/firebase_constants.dart';
 import 'package:resala/services/image_upload_service.dart';
 import '../../providers/volunteer_provider.dart';
 import '../../providers/committee_provider.dart';
@@ -43,15 +44,8 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
   String? _selectedCommitteeName;
   String? _selectedGender;
   bool _committeesLoaded = false;
-
-  final List<String> _genders = ['ذكر', 'أنثى'];
-  final List<String> _educationalLevels = [
-    'جدد',
-    'داخل متابعة',
-    'تدريب',
-    'مشروع مسئول',
-    'مسئول',
-  ];
+  final List<String> _genders = FirebaseConstants.genders;
+  final List<String> _educationalLevels = FirebaseConstants.educationalLevels;
 
   @override
   void initState() {
