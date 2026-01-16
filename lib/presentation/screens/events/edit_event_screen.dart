@@ -341,13 +341,13 @@ class _EditEventScreenState extends State<EditEventScreen> {
                       ),
                       child: Row(
                         children: [
-                          Expanded(flex: 2, child: _buildTableHeader('تيشيرت')),
+                          Expanded(flex: 1, child: _buildTableHeader('#')),
+                          Expanded(flex: 3, child: _buildTableHeader('الاسم')),
                           Expanded(
                             flex: 3,
                             child: _buildTableHeader('رقم التليفون'),
                           ),
-                          Expanded(flex: 3, child: _buildTableHeader('الاسم')),
-                          Expanded(flex: 1, child: _buildTableHeader('#')),
+                          Expanded(flex: 2, child: _buildTableHeader('تيشيرت')),
                         ],
                       ),
                     ),
@@ -408,6 +408,21 @@ class _EditEventScreenState extends State<EditEventScreen> {
                                 ),
                                 child: Row(
                                   children: [
+                                    Expanded(
+                                      flex: 1,
+                                      child: _buildTableCell(
+                                        (index + 1).toString(),
+                                      ),
+                                    ),
+
+                                    Expanded(
+                                      flex: 3,
+                                      child: _buildTableCell(volunteer.name),
+                                    ),
+                                    Expanded(
+                                      flex: 3,
+                                      child: _buildTableCell(volunteer.phone),
+                                    ),
                                     // T-shirt Checkbox
                                     Expanded(
                                       flex: 2,
@@ -426,20 +441,6 @@ class _EditEventScreenState extends State<EditEventScreen> {
                                           },
                                           activeColor: AppTheme.primary,
                                         ),
-                                      ),
-                                    ),
-                                    Expanded(
-                                      flex: 3,
-                                      child: _buildTableCell(volunteer.phone),
-                                    ),
-                                    Expanded(
-                                      flex: 3,
-                                      child: _buildTableCell(volunteer.name),
-                                    ),
-                                    Expanded(
-                                      flex: 1,
-                                      child: _buildTableCell(
-                                        (index + 1).toString(),
                                       ),
                                     ),
                                   ],

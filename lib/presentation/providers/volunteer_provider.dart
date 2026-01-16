@@ -4,6 +4,7 @@
 // ============================================
 
 import 'package:flutter/foundation.dart';
+import 'package:resala/core/constants/firebase_constants.dart';
 import '../../data/models/volunteer_model.dart';
 import '../../data/repositories/volunteer_repository.dart';
 
@@ -49,6 +50,7 @@ class VolunteerProvider with ChangeNotifier {
     String? committeeId, // NEW
     String? committeeName, // NEW
     bool hasInterview = false,
+    String? educationalLevel, // NEW: Optional parameter
   }) async {
     _isLoading = true;
     _error = null;
@@ -66,6 +68,8 @@ class VolunteerProvider with ChangeNotifier {
         committeeId: committeeId, // NEW
         committeeName: committeeName, // NEW
         hasInterview: hasInterview,
+        educationalLevel:
+            educationalLevel ?? FirebaseConstants.educationalLevels.first,
         createdAt: DateTime.now(),
       );
 
@@ -100,8 +104,31 @@ class VolunteerProvider with ChangeNotifier {
     }
   }
 
+  // Add this method to your VolunteerProvider class
+  Future<bool> updateVolunteerLevel(String volunteerId, String newLevel) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      // Use your existing updateVolunteerData method with just the level
+      final success = await updateVolunteerData(volunteerId, {
+        'educationalLevel': newLevel,
+      });
+
+      _isLoading = false;
+      notifyListeners();
+      return success;
+    } catch (e) {
+      _error = e.toString();
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
   // Update volunteer with map (easier for partial updates)
-Future<bool> updateVolunteerData(
+  Future<bool> updateVolunteerData(
     String id,
     Map<String, dynamic> updates,
   ) async {
@@ -147,6 +174,7 @@ Future<bool> updateVolunteerData(
       return false;
     }
   }
+
   // Delete volunteer
   Future<bool> deleteVolunteer(String id) async {
     _isLoading = true;

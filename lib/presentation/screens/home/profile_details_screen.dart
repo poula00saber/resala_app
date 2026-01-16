@@ -208,7 +208,7 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
         'committeeName': _selectedCommitteeName,
         'gender': _selectedGender,
         'hasTshirt': _hasTshirt,
-        'educationalLevel': _educationalLevelController.text.trim(),
+        // Educational level is managed from promotions screen - not included here
         'university': _universityController.text.trim(),
       };
 
@@ -700,7 +700,7 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
                       ),
                     ),
                     const SizedBox(width: 12),
-                    // Educational Level - الدرجة التعليمية
+                    // Educational Level - الدرجة التعليمية (READ ONLY)
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -716,62 +716,61 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
                               ),
                             ),
                           ),
+                          // Changed from DropdownButton to a read-only display
                           Container(
+                            height: 56, // Match the dropdown height
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 14,
+                            ),
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color:
+                                  Colors.grey[100], // Light grey for read-only
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
-                                color: AppTheme.primary,
+                                color: Colors
+                                    .grey[400]!, // Grey border for read-only
                                 width: 1.5,
                               ),
                             ),
-                            child: DropdownButtonHideUnderline(
-                              child: DropdownButton<String>(
-                                value:
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Icon(
+                                  Icons.school,
+                                  size: 20,
+                                  color: Colors.grey,
+                                ),
+                                Expanded(
+                                  child: Text(
                                     _educationalLevelController.text.isNotEmpty
-                                    ? _educationalLevelController.text
-                                    : null,
-                                isExpanded: true,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                ),
-                                style: const TextStyle(
-                                  fontFamily: 'Cairo',
-                                  fontSize: 14,
-                                  color: Colors.black,
-                                ),
-                                items: [
-                                  const DropdownMenuItem(
-                                    value: null,
-                                    child: Text(
-                                      'اختر الدرجة',
-                                      style: TextStyle(
-                                        fontFamily: 'Cairo',
-                                        color: Colors.grey,
-                                      ),
+                                        ? _educationalLevelController.text
+                                        : 'لا توجد درجة',
+                                    style: TextStyle(
+                                      fontFamily: 'Cairo',
+                                      fontSize: 14,
+                                      color:
+                                          _educationalLevelController
+                                              .text
+                                              .isNotEmpty
+                                          ? Colors.black
+                                          : Colors.grey,
+                                      fontWeight:
+                                          _educationalLevelController
+                                              .text
+                                              .isNotEmpty
+                                          ? FontWeight.w500
+                                          : FontWeight.normal,
                                     ),
+                                    textAlign: TextAlign.right,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                  ..._educationalLevels.map(
-                                    (level) => DropdownMenuItem(
-                                      value: level,
-                                      child: Text(
-                                        level,
-                                        style: const TextStyle(
-                                          fontFamily: 'Cairo',
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                                onChanged: (value) {
-                                  setState(() {
-                                    _educationalLevelController.text =
-                                        value ?? '';
-                                  });
-                                },
-                              ),
+                                ),
+                              ],
                             ),
                           ),
+                          // Help text
                         ],
                       ),
                     ),

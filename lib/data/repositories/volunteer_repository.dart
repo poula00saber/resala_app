@@ -3,6 +3,7 @@
 // ============================================
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 import '../models/volunteer_model.dart';
 import '../../core/constants/firebase_constants.dart';
 
@@ -94,6 +95,23 @@ class VolunteerRepository {
       return true;
     } catch (e) {
       print('Error deleting volunteer: $e');
+      return false;
+    }
+  }
+
+// Add this method to your VolunteerRepository class
+  Future<bool> updateVolunteerLevel(String volunteerId, String newLevel) async {
+    try {
+      await _firestore
+          .collection(FirebaseConstants.volunteersCollection)
+          .doc(volunteerId)
+          .update({
+            'educationalLevel': newLevel,
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+      return true;
+    } catch (e) {
+      debugPrint('Error updating volunteer level: $e');
       return false;
     }
   }
