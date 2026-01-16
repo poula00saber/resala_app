@@ -1,6 +1,5 @@
 // ============================================
 // FILE 2: lib/presentation/screens/home/volunteer_evaluation_details_screen.dart
-// Image 2 & 4 - View volunteer info and evaluations table
 // ============================================
 
 import 'package:flutter/material.dart';
@@ -30,14 +29,13 @@ class _VolunteerEvaluationDetailsScreenState
     super.initState();
     _nameController.text = widget.volunteer.name;
     _phoneController.text = widget.volunteer.phone;
-    // here to add age using widget.volunteer.age if exists
+    _ageController.text = widget.volunteer.age?.toString() ?? '';
   }
 
-  // ADD THIS METHOD FOR OPENING DIALOG
   void _openAddEvaluationDialog() {
     showDialog(
       context: context,
-      barrierColor: Colors.black54, // Semi-transparent background
+      barrierColor: Colors.black54,
       builder: (context) => AddEvaluationScreen(volunteer: widget.volunteer),
     );
   }
@@ -126,100 +124,7 @@ class _VolunteerEvaluationDetailsScreenState
                         ),
                       ],
                     ),
-                    child: StreamBuilder(
-                      stream: Provider.of<EvaluationProvider>(
-                        context,
-                      ).getEvaluationsForVolunteer(widget.volunteer.id),
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return const Padding(
-                            padding: EdgeInsets.all(40),
-                            child: Center(
-                              child: CircularProgressIndicator(
-                                color: AppTheme.primary,
-                              ),
-                            ),
-                          );
-                        }
-
-                        final evaluations = snapshot.data ?? [];
-
-                        return Column(
-                          children: [
-                            // Table Header
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 12,
-                                horizontal: 16,
-                              ),
-                              decoration: BoxDecoration(
-                                border: Border(
-                                  bottom: BorderSide(color: Colors.grey[300]!),
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-                                  _buildTableHeader('ملاحظات', flex: 2),
-                                  _buildTableHeader('التقييم', flex: 2),
-                                  _buildTableHeader('الاسم', flex: 2),
-                                  _buildTableHeader('التاريخ', flex: 2),
-                                ],
-                              ),
-                            ),
-
-                            // Table Rows
-                            if (evaluations.isEmpty)
-                              const Padding(
-                                padding: EdgeInsets.all(40),
-                                child: Text(
-                                  'لا توجد تقييمات',
-                                  style: TextStyle(
-                                    fontFamily: 'Cairo',
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                              )
-                            else
-                              ...evaluations.map(
-                                (evaluation) => Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 12,
-                                    horizontal: 16,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    border: Border(
-                                      bottom: BorderSide(
-                                        color: Colors.grey[200]!,
-                                      ),
-                                    ),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      _buildTableCell(
-                                        evaluation.notes ?? '-',
-                                        flex: 2,
-                                      ),
-                                      _buildTableCell(
-                                        '${evaluation.rating}/10',
-                                        flex: 2,
-                                      ),
-                                      _buildTableCell(
-                                        evaluation.evaluatorName,
-                                        flex: 2,
-                                      ),
-                                      _buildTableCell(
-                                        evaluation.month,
-                                        flex: 2,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                          ],
-                        );
-                      },
-                    ),
+                    child: _buildEvaluationsContent(),
                   ),
 
                   const SizedBox(height: 24),
@@ -229,7 +134,7 @@ class _VolunteerEvaluationDetailsScreenState
                     children: [
                       Expanded(
                         child: ElevatedButton(
-                          onPressed: _openAddEvaluationDialog, // CHANGED HERE
+                          onPressed: _openAddEvaluationDialog,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppTheme.primary,
                             foregroundColor: Colors.white,
@@ -252,7 +157,6 @@ class _VolunteerEvaluationDetailsScreenState
                       Expanded(
                         child: ElevatedButton(
                           onPressed: () {
-                            // Save volunteer info
                             Navigator.pop(context);
                           },
                           style: ElevatedButton.styleFrom(
@@ -264,7 +168,7 @@ class _VolunteerEvaluationDetailsScreenState
                             ),
                           ),
                           child: const Text(
-                            'حفظ', // Fixed typo: حفط -> حفظ
+                            'حفظ',
                             style: TextStyle(
                               fontFamily: 'Cairo',
                               fontSize: 16,
@@ -283,6 +187,155 @@ class _VolunteerEvaluationDetailsScreenState
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildEvaluationsContent() {
+    return StreamBuilder<List<dynamic>>(
+      stream: Provider.of<EvaluationProvider>(
+        context,
+      ).getEvaluationsForVolunteer(widget.volunteer.id),
+      builder: (context, snapshot) {
+        // Handle loading state
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Padding(
+            padding: EdgeInsets.all(40),
+            child: Center(
+              child: CircularProgressIndicator(color: AppTheme.primary),
+            ),
+          );
+        }
+
+        // Handle error state - FIXED HERE
+        if (snapshot.hasError) {
+          print('❌ Stream error: ${snapshot.error}');
+          print('📋 Stack trace: ${snapshot.stackTrace}');
+
+          // Check if the error is a Firebase permission error
+          String errorMessage = 'حدث خطأ في تحميل التقييمات';
+          if (snapshot.error.toString().contains('PERMISSION_DENIED') ||
+              snapshot.error.toString().contains(
+                'Missing or insufficient permissions',
+              )) {
+            errorMessage = 'ليس لديك صلاحية لعرض التقييمات';
+          }
+
+          return Padding(
+            padding: const EdgeInsets.all(40),
+            child: Center(
+              child: Text(
+                errorMessage,
+                style: const TextStyle(fontFamily: 'Cairo', color: Colors.grey),
+              ),
+            ),
+          );
+        }
+
+        // Check if data exists
+        if (!snapshot.hasData) {
+          return const Padding(
+            padding: EdgeInsets.all(40),
+            child: Center(
+              child: Text(
+                'لا توجد تقييمات',
+                style: TextStyle(fontFamily: 'Cairo', color: Colors.grey),
+              ),
+            ),
+          );
+        }
+
+        // Safely cast the data
+        try {
+          final evaluations = snapshot.data as List<dynamic>;
+          print('✅ Loaded ${evaluations.length} evaluations');
+
+          return _buildEvaluationsTable(evaluations);
+        } catch (e) {
+          print('❌ Error casting evaluations: $e');
+          return Padding(
+            padding: const EdgeInsets.all(40),
+            child: Center(
+              child: Text(
+                'خطأ في تحميل البيانات',
+                style: const TextStyle(fontFamily: 'Cairo', color: Colors.grey),
+              ),
+            ),
+          );
+        }
+      },
+    );
+  }
+
+  Widget _buildEvaluationsTable(List<dynamic> evaluations) {
+    return Column(
+      children: [
+        // Table Header
+        Container(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+          decoration: BoxDecoration(
+            border: Border(bottom: BorderSide(color: Colors.grey[300]!)),
+          ),
+          child: Row(
+            children: [
+              _buildTableHeader('ملاحظات', flex: 2),
+              _buildTableHeader('التقييم', flex: 2),
+              _buildTableHeader('الاسم', flex: 2),
+              _buildTableHeader('التاريخ', flex: 2),
+            ],
+          ),
+        ),
+
+        // Table Rows
+        if (evaluations.isEmpty)
+          const Padding(
+            padding: EdgeInsets.all(40),
+            child: Text(
+              'لا توجد تقييمات',
+              style: TextStyle(fontFamily: 'Cairo', color: Colors.grey),
+            ),
+          )
+        else
+          ...evaluations.map((evaluation) {
+            try {
+              // Try to access properties safely
+              final notes = evaluation.notes?.toString() ?? '-';
+              final rating = evaluation.rating?.toString() ?? '0';
+              final evaluatorName =
+                  evaluation.evaluatorName?.toString() ?? 'غير معروف';
+              final month = evaluation.month?.toString() ?? '-';
+
+              return Container(
+                padding: const EdgeInsets.symmetric(
+                  vertical: 12,
+                  horizontal: 16,
+                ),
+                decoration: BoxDecoration(
+                  border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
+                ),
+                child: Row(
+                  children: [
+                    _buildTableCell(notes, flex: 2),
+                    _buildTableCell('$rating/10', flex: 2),
+                    _buildTableCell(evaluatorName, flex: 2),
+                    _buildTableCell(month, flex: 2),
+                  ],
+                ),
+              );
+            } catch (e) {
+              print('❌ Error rendering evaluation: $e');
+              return Container(
+                padding: const EdgeInsets.symmetric(
+                  vertical: 12,
+                  horizontal: 16,
+                ),
+                child: const Text(
+                  'خطأ في عرض البيانات',
+                  style: TextStyle(fontFamily: 'Cairo', color: Colors.red),
+                ),
+              );
+            }
+          }),
+      ],
     );
   }
 
