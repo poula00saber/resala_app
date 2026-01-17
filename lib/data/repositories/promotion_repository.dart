@@ -1,5 +1,6 @@
 // ============================================
 // FILE: lib/data/repositories/promotion_repository.dart
+// FIXED VERSION
 // ============================================
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -34,7 +35,11 @@ class PromotionRepository {
         );
       } else {
         // Create new requirements with default questions
-        return _createDefaultRequirements(volunteerId, currentLevel, nextLevel);
+        return await _createDefaultRequirements(
+          volunteerId,
+          currentLevel,
+          nextLevel,
+        );
       }
     } catch (e) {
       debugPrint('Error getting promotion requirements: $e');
@@ -75,7 +80,7 @@ class PromotionRepository {
     }
   }
 
-  // Get default requirements based on current level// In _getDefaultRequirementsForLevel method, you can simplify it:
+  // Get default requirements based on current level
   List<Requirement> _getDefaultRequirementsForLevel(String level) {
     final requirements =
         FirebaseConstants.promotionRequirements[level] ??
@@ -108,19 +113,19 @@ class PromotionRepository {
       if (!doc.exists) return false;
 
       final data = doc.data()!;
-      final requirements = (data['requirements'] as List<dynamic>)
-          .map((item) => Requirement.fromMap(item as Map<String, dynamic>))
-          .toList();
+      final requirementsData = data['requirements'] as List<dynamic>;
 
       // Update specific requirement
-      final updatedRequirements = requirements.map((req) {
-        if (req.id == requirementId) {
-          return req.copyWith(
-            isCompleted: isCompleted,
-            completedAt: isCompleted ? DateTime.now() : null,
-          );
+      final updatedRequirements = requirementsData.map((item) {
+        final reqData = item as Map<String, dynamic>;
+        if (reqData['id'] == requirementId) {
+          return {
+            ...reqData,
+            'isCompleted': isCompleted,
+            'completedAt': isCompleted ? Timestamp.now() : null,
+          };
         }
-        return req;
+        return item;
       }).toList();
 
       // Update in Firestore
@@ -128,9 +133,8 @@ class PromotionRepository {
           .collection(FirebaseConstants.promotionRequirementsCollection)
           .doc(promotionId)
           .update({
-            'requirements': updatedRequirements
-                .map((req) => req.toMap())
-                .toList(),
+            'requirements': updatedRequirements,
+            'updatedAt': Timestamp.now(),
           });
 
       return true;

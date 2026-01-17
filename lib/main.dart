@@ -10,7 +10,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:resala/presentation/providers/committee_provider.dart';
 import 'package:resala/presentation/providers/evaluation_provider.dart';
 import 'package:resala/presentation/providers/interview_provider.dart';
-// import 'package:resala/presentation/providers/promotion_provider.dart'; // ADD THIS
+import 'package:resala/presentation/providers/promotion_provider.dart'; // ADD THIS
 import 'package:resala/presentation/screens/lgoin/login_screen.dart';
 import 'firebase_options.dart';
 import 'presentation/providers/event_provider.dart';
@@ -44,7 +44,7 @@ class MyApp extends StatelessWidget {
           create: (_) => InterviewProvider()..initInterviews(),
         ),
         // ADD THIS:
-        // ChangeNotifierProvider(create: (_) => PromotionProvider()),
+        ChangeNotifierProvider(create: (_) => PromotionProvider()),
       ],
       child: MaterialApp(
         title: 'Resala Events',
