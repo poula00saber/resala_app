@@ -1,5 +1,6 @@
 // ============================================
 // FILE: lib/presentation/screens/interviews/interviews_screen.dart
+// FIXED: Prevents duplicate interviews - always checks existing first
 // ============================================
 
 import 'package:flutter/material.dart';
@@ -21,7 +22,14 @@ class InterviewsScreen extends StatefulWidget {
 class _InterviewsScreenState extends State<InterviewsScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
-  bool _showOnlyWithoutInterviews = true;
+  String _selectedFilter = 'لم تتم مقابلتهم';
+
+  final List<String> _filterOptions = [
+    'كل',
+    'مقبولين',
+    'مرفوضين',
+    'لم تتم مقابلتهم',
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -47,7 +55,6 @@ class _InterviewsScreenState extends State<InterviewsScreen> {
       ),
       body: Column(
         children: [
-          // Search Bar
           Padding(
             padding: const EdgeInsets.all(16),
             child: TextField(
@@ -71,14 +78,6 @@ class _InterviewsScreenState extends State<InterviewsScreen> {
                   borderRadius: BorderRadius.circular(30),
                   borderSide: BorderSide(color: AppTheme.primary),
                 ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(30),
-                  borderSide: BorderSide(color: AppTheme.primary),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(30),
-                  borderSide: BorderSide(color: AppTheme.primary, width: 2),
-                ),
               ),
               onChanged: (value) {
                 setState(() {
@@ -87,161 +86,179 @@ class _InterviewsScreenState extends State<InterviewsScreen> {
               },
             ),
           ),
-
-          // Filter Section
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                // Toggle for showing volunteers without interviews
-                Expanded(
-                  child: InkWell(
-                    onTap: () {
-                      setState(() {
-                        _showOnlyWithoutInterviews =
-                            !_showOnlyWithoutInterviews;
-                      });
-                    },
-                    borderRadius: BorderRadius.circular(20),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                      decoration: BoxDecoration(
-                        color: _showOnlyWithoutInterviews
-                            ? AppTheme.primary.withOpacity(0.1)
-                            : Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: _showOnlyWithoutInterviews
-                              ? AppTheme.primary
-                              : Colors.grey[300]!,
-                          width: 1.5,
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            _showOnlyWithoutInterviews
-                                ? Icons.filter_alt
-                                : Icons.filter_alt_outlined,
-                            color: _showOnlyWithoutInterviews
-                                ? AppTheme.primary
-                                : Colors.grey,
-                            size: 18,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            _showOnlyWithoutInterviews
-                                ? 'من لم يتم مقابلتهم'
-                                : 'عرض الكل',
-                            style: TextStyle(
-                              fontFamily: 'Cairo',
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: _showOnlyWithoutInterviews
-                                  ? AppTheme.primary
-                                  : Colors.grey,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: AppTheme.primary, width: 1.5),
+              ),
+              child: DropdownButton<String>(
+                value: _selectedFilter,
+                isExpanded: true,
+                underline: const SizedBox(),
+                icon: const Icon(
+                  Icons.arrow_drop_down,
+                  color: AppTheme.primary,
+                  size: 24,
                 ),
-                const SizedBox(width: 12),
-                // Interview Status Filter
-                // In InterviewsScreen, update the filter section:
-                // Interview Status Filter
-                Expanded(
-                  child: Consumer<InterviewProvider>(
-                    builder: (context, interviewProvider, child) {
-                      return PopupMenuButton<String>(
-                        onSelected: (value) {
-                          interviewProvider.setFilterStatus(value);
-                        },
-                        itemBuilder: (context) => [
-                          const PopupMenuItem(
-                            value: 'all',
-                            child: Text('الكل'),
-                          ),
-                          const PopupMenuItem(
-                            value: 'pending',
-                            child: Text('قيد الانتظار'),
-                          ),
-                          const PopupMenuItem(
-                            value: 'passed',
-                            child: Text('ناجح'),
-                          ),
-                          const PopupMenuItem(
-                            value: 'failed',
-                            child: Text('راسب'),
-                          ),
-                        ],
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: AppTheme.primary,
-                              width: 1.5,
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                _getFilterText(interviewProvider.filterStatus),
-                                style: const TextStyle(
-                                  fontFamily: 'Cairo',
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppTheme.primary,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              const Icon(
-                                Icons.arrow_drop_down,
-                                color: AppTheme.primary,
-                                size: 20,
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
+                style: const TextStyle(
+                  fontFamily: 'Cairo',
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.primary,
                 ),
-              ],
+                items: _filterOptions.map((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  );
+                }).toList(),
+                onChanged: (String? newValue) {
+                  setState(() {
+                    _selectedFilter = newValue!;
+                  });
+                },
+              ),
             ),
           ),
-
           const SizedBox(height: 16),
-
-          // Volunteers/Interviews List
-          Expanded(
-            child: _showOnlyWithoutInterviews
-                ? _buildVolunteersWithoutInterviews()
-                : _buildInterviewsList(),
-          ),
+          Expanded(child: _buildListByFilter()),
         ],
       ),
-      floatingActionButton: _showOnlyWithoutInterviews
-          ? FloatingActionButton(
-              onPressed: () {
-                // Add logic to schedule new interview
-                _showScheduleInterviewDialog(context);
-              },
-              backgroundColor: AppTheme.primary,
-              child: const Icon(Icons.calendar_today, color: Colors.white),
-            )
-          : null,
+    );
+  }
+
+  Widget _buildListByFilter() {
+    switch (_selectedFilter) {
+      case 'كل':
+        return _buildAllVolunteers();
+      case 'مقبولين':
+        return _buildPassedInterviews();
+      case 'مرفوضين':
+        return _buildFailedInterviews();
+      case 'لم تتم مقابلتهم':
+        return _buildVolunteersWithoutInterviews();
+      default:
+        return _buildVolunteersWithoutInterviews();
+    }
+  }
+
+  Widget _buildAllVolunteers() {
+    return StreamBuilder(
+      stream: Provider.of<VolunteerProvider>(
+        context,
+        listen: false,
+      ).searchVolunteers(_searchQuery),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: CircularProgressIndicator(color: AppTheme.primary),
+          );
+        }
+
+        final volunteers = snapshot.data ?? [];
+
+        if (volunteers.isEmpty) {
+          return const Center(
+            child: Text(
+              'لا يوجد متطوعين',
+              style: TextStyle(
+                fontFamily: 'Cairo',
+                color: Colors.grey,
+                fontSize: 16,
+              ),
+            ),
+          );
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          itemCount: volunteers.length,
+          itemBuilder: (context, index) {
+            final volunteer = volunteers[index];
+            return _buildVolunteerCard(volunteer);
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildPassedInterviews() {
+    return Consumer<InterviewProvider>(
+      builder: (context, interviewProvider, child) {
+        final passedInterviews = interviewProvider.interviews
+            .where((interview) => interview.passed == true)
+            .where((interview) {
+              if (_searchQuery.isEmpty) return true;
+              return interview.volunteerName.toLowerCase().contains(
+                _searchQuery.toLowerCase(),
+              );
+            })
+            .toList();
+
+        if (passedInterviews.isEmpty) {
+          return const Center(
+            child: Text(
+              'لا يوجد متطوعين مقبولين',
+              style: TextStyle(
+                fontFamily: 'Cairo',
+                color: Colors.grey,
+                fontSize: 16,
+              ),
+            ),
+          );
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          itemCount: passedInterviews.length,
+          itemBuilder: (context, index) {
+            final interview = passedInterviews[index];
+            return _buildInterviewCard(interview);
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildFailedInterviews() {
+    return Consumer<InterviewProvider>(
+      builder: (context, interviewProvider, child) {
+        final failedInterviews = interviewProvider.interviews
+            .where((interview) => interview.passed == false)
+            .where((interview) {
+              if (_searchQuery.isEmpty) return true;
+              return interview.volunteerName.toLowerCase().contains(
+                _searchQuery.toLowerCase(),
+              );
+            })
+            .toList();
+
+        if (failedInterviews.isEmpty) {
+          return const Center(
+            child: Text(
+              'لا يوجد متطوعين مرفوضين',
+              style: TextStyle(
+                fontFamily: 'Cairo',
+                color: Colors.grey,
+                fontSize: 16,
+              ),
+            ),
+          );
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          itemCount: failedInterviews.length,
+          itemBuilder: (context, index) {
+            final interview = failedInterviews[index];
+            return _buildInterviewCard(interview);
+          },
+        );
+      },
     );
   }
 
@@ -255,15 +272,6 @@ class _InterviewsScreenState extends State<InterviewsScreen> {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(
             child: CircularProgressIndicator(color: AppTheme.primary),
-          );
-        }
-
-        if (snapshot.hasError) {
-          return Center(
-            child: Text(
-              'حدث خطأ: ${snapshot.error}',
-              style: const TextStyle(fontFamily: 'Cairo', color: Colors.red),
-            ),
           );
         }
 
@@ -330,43 +338,6 @@ class _InterviewsScreenState extends State<InterviewsScreen> {
     );
   }
 
-  Widget _buildInterviewsList() {
-    return Consumer<InterviewProvider>(
-      builder: (context, interviewProvider, child) {
-        final filteredInterviews = interviewProvider.filteredInterviews.where((
-          interview,
-        ) {
-          if (_searchQuery.isEmpty) return true;
-          return interview.volunteerName.toLowerCase().contains(
-            _searchQuery.toLowerCase(),
-          );
-        }).toList();
-
-        if (filteredInterviews.isEmpty) {
-          return const Center(
-            child: Text(
-              'لا يوجد مقابلات',
-              style: TextStyle(
-                fontFamily: 'Cairo',
-                color: Colors.grey,
-                fontSize: 16,
-              ),
-            ),
-          );
-        }
-
-        return ListView.builder(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          itemCount: filteredInterviews.length,
-          itemBuilder: (context, index) {
-            final interview = filteredInterviews[index];
-            return _buildInterviewCard(interview);
-          },
-        );
-      },
-    );
-  }
-
   Widget _buildVolunteerCard(dynamic volunteer) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -382,8 +353,9 @@ class _InterviewsScreenState extends State<InterviewsScreen> {
         ],
       ),
       child: InkWell(
-        onTap: () {
-          _showScheduleInterviewDialog(context, volunteer);
+        onTap: () async {
+          // FIXED: Always check for existing interview first
+          await _openInterviewForVolunteer(context, volunteer);
         },
         borderRadius: BorderRadius.circular(20),
         child: Padding(
@@ -391,17 +363,30 @@ class _InterviewsScreenState extends State<InterviewsScreen> {
           child: Row(
             children: [
               // Interview Icon
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: AppTheme.primary.withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.person_add,
-                  color: AppTheme.primary,
-                  size: 20,
-                ),
+              FutureBuilder<List<InterviewModel>>(
+                future: Provider.of<InterviewProvider>(
+                  context,
+                  listen: false,
+                ).getInterviewsByVolunteerId(volunteer.id),
+                builder: (context, snapshot) {
+                  final hasInterview =
+                      snapshot.hasData && snapshot.data!.isNotEmpty;
+
+                  return Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: hasInterview
+                          ? Colors.green.withOpacity(0.1)
+                          : AppTheme.primary.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      hasInterview ? Icons.edit : Icons.person_add,
+                      color: hasInterview ? Colors.green : AppTheme.primary,
+                      size: 20,
+                    ),
+                  );
+                },
               ),
               const SizedBox(width: 16),
 
@@ -410,17 +395,79 @@ class _InterviewsScreenState extends State<InterviewsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Text(
-                      volunteer.name,
-                      style: const TextStyle(
-                        fontFamily: 'Cairo',
-                        color: Colors.black,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      textAlign: TextAlign.right,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            volunteer.name,
+                            style: const TextStyle(
+                              fontFamily: 'Cairo',
+                              color: Colors.black,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            textAlign: TextAlign.right,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        // Interview status badge
+                        FutureBuilder<List<InterviewModel>>(
+                          future: Provider.of<InterviewProvider>(
+                            context,
+                            listen: false,
+                          ).getInterviewsByVolunteerId(volunteer.id),
+                          builder: (context, snapshot) {
+                            if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                              return const SizedBox();
+                            }
+
+                            final interview = snapshot.data!.first;
+
+                            return Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: interview.passed == true
+                                    ? Colors.green.withOpacity(0.1)
+                                    : interview.passed == false
+                                    ? Colors.red.withOpacity(0.1)
+                                    : Colors.orange.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: interview.passed == true
+                                      ? Colors.green
+                                      : interview.passed == false
+                                      ? Colors.red
+                                      : Colors.orange,
+                                  width: 1,
+                                ),
+                              ),
+                              child: Text(
+                                interview.passed == true
+                                    ? 'مقبول'
+                                    : interview.passed == false
+                                    ? 'مرفوض'
+                                    : 'قيد المراجعة',
+                                style: TextStyle(
+                                  fontFamily: 'Cairo',
+                                  fontSize: 8,
+                                  color: interview.passed == true
+                                      ? Colors.green
+                                      : interview.passed == false
+                                      ? Colors.red
+                                      : Colors.orange,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
                     ),
                     if (volunteer.committeeName != null &&
                         volunteer.committeeName!.isNotEmpty)
@@ -432,8 +479,6 @@ class _InterviewsScreenState extends State<InterviewsScreen> {
                           fontSize: 12,
                         ),
                         textAlign: TextAlign.right,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
                     if (volunteer.age != null)
                       Text(
@@ -451,24 +496,17 @@ class _InterviewsScreenState extends State<InterviewsScreen> {
 
               const SizedBox(width: 16),
 
-              // Schedule Button
+              // Action Icon
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color: AppTheme.primary,
-                  borderRadius: BorderRadius.circular(15),
+                  shape: BoxShape.circle,
                 ),
-                child: const Text(
-                  'جدولة',
-                  style: TextStyle(
-                    fontFamily: 'Cairo',
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
+                child: const Icon(
+                  Icons.arrow_forward_ios,
+                  color: Colors.white,
+                  size: 16,
                 ),
               ),
             ],
@@ -483,31 +521,18 @@ class _InterviewsScreenState extends State<InterviewsScreen> {
     IconData statusIcon;
     String statusText;
 
-    switch (interview.status) {
-      case 'pending':
-        statusColor = Colors.orange;
-        statusIcon = Icons.schedule;
-        statusText = 'قيد الانتظار';
-        break;
-      case 'completed':
-        statusColor = Colors.blue;
-        statusIcon = Icons.check_circle_outline;
-        statusText = 'مكتمل';
-        break;
-      case 'passed':
-        statusColor = Colors.green;
-        statusIcon = Icons.check_circle;
-        statusText = 'ناجح';
-        break;
-      case 'failed':
-        statusColor = Colors.red;
-        statusIcon = Icons.cancel;
-        statusText = 'راسب';
-        break;
-      default:
-        statusColor = Colors.grey;
-        statusIcon = Icons.help;
-        statusText = 'غير معروف';
+    if (interview.passed == true) {
+      statusColor = Colors.green;
+      statusIcon = Icons.check_circle;
+      statusText = 'ناجح';
+    } else if (interview.passed == false) {
+      statusColor = Colors.red;
+      statusIcon = Icons.cancel;
+      statusText = 'راسب';
+    } else {
+      statusColor = Colors.orange;
+      statusIcon = Icons.schedule;
+      statusText = 'قيد الانتظار';
     }
 
     return Container(
@@ -538,7 +563,6 @@ class _InterviewsScreenState extends State<InterviewsScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           child: Row(
             children: [
-              // Status Indicator
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
@@ -548,8 +572,6 @@ class _InterviewsScreenState extends State<InterviewsScreen> {
                 child: Icon(statusIcon, color: statusColor, size: 20),
               ),
               const SizedBox(width: 16),
-
-              // Interview Info
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
@@ -563,8 +585,6 @@ class _InterviewsScreenState extends State<InterviewsScreen> {
                         fontWeight: FontWeight.w600,
                       ),
                       textAlign: TextAlign.right,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
                     Text(
                       'تاريخ المقابلة: ${_formatDate(interview.interviewDate)}',
@@ -580,9 +600,7 @@ class _InterviewsScreenState extends State<InterviewsScreen> {
                         'الدرجة: ${interview.totalGrade}',
                         style: TextStyle(
                           fontFamily: 'Cairo',
-                          color: interview.passed == true
-                              ? Colors.green
-                              : Colors.red,
+                          color: statusColor,
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                         ),
@@ -591,10 +609,7 @@ class _InterviewsScreenState extends State<InterviewsScreen> {
                   ],
                 ),
               ),
-
               const SizedBox(width: 16),
-
-              // Status Badge
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12,
@@ -622,151 +637,124 @@ class _InterviewsScreenState extends State<InterviewsScreen> {
     );
   }
 
-  String _getFilterText(String status) {
-    switch (status) {
-      case 'all':
-        return 'الكل';
-      case 'pending':
-        return 'قيد الانتظار';
-      case 'completed':
-        return 'مكتمل';
-      case 'passed':
-        return 'ناجح';
-      case 'failed':
-        return 'راسب';
-      default:
-        return 'الكل';
+  // FIXED: This method now ALWAYS checks for existing interview first
+  // and NEVER creates duplicates
+  Future<void> _openInterviewForVolunteer(
+    BuildContext context,
+    dynamic volunteer,
+  ) async {
+    print('\n==========================================');
+    print('🔍 Opening interview for: ${volunteer.name}');
+    print('   Volunteer ID: ${volunteer.id}');
+    print('==========================================');
+
+    // Show loading
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(color: AppTheme.primary),
+      ),
+    );
+
+    final interviewProvider = Provider.of<InterviewProvider>(
+      context,
+      listen: false,
+    );
+
+    try {
+      // STEP 1: Check if volunteer already has an interview
+      print('📋 Step 1: Checking for existing interviews...');
+      final existingInterviews = await interviewProvider
+          .getInterviewsByVolunteerId(volunteer.id);
+
+      print('   Found ${existingInterviews.length} existing interview(s)');
+
+      InterviewModel? interview;
+
+      if (existingInterviews.isNotEmpty) {
+        // ✅ Volunteer HAS interview - use existing one
+        interview = existingInterviews.first;
+        print('✅ USING EXISTING INTERVIEW');
+        print('   Interview ID: ${interview.id}');
+        print('   Status: ${interview.status}');
+        print('   Passed: ${interview.passed}');
+        print('   Answers count: ${interview.answers.length}');
+      } else {
+        // ✅ Volunteer DOESN'T have interview - create new one
+        print('📝 NO EXISTING INTERVIEW - Creating new one...');
+
+        final interviewId = await interviewProvider.createInterview(
+          volunteerId: volunteer.id,
+          volunteerName: volunteer.name,
+          interviewDate: DateTime.now(),
+        );
+
+        print('   Created interview ID: $interviewId');
+
+        if (interviewId != null) {
+          // Fetch the newly created interview
+          interview = await interviewProvider.getInterviewById(interviewId);
+          print('   Fetched new interview successfully');
+        } else {
+          print('❌ Failed to create interview');
+        }
+      }
+
+      // Close loading dialog
+      Navigator.pop(context);
+
+      if (interview != null) {
+        print('✅ Navigating to interview details screen');
+        print('==========================================\n');
+
+        // Navigate to interview details
+        final result = await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => InterviewDetailsScreen(interview: interview!),
+          ),
+        );
+
+        // Refresh the screen when coming back
+        if (result == true || result == null) {
+          setState(() {});
+        }
+      } else {
+        print('❌ Interview is null - cannot navigate');
+        print('==========================================\n');
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'حدث خطأ أثناء فتح المقابلة',
+              style: TextStyle(fontFamily: 'Cairo'),
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      print('❌ EXCEPTION in _openInterviewForVolunteer: $e');
+      print('==========================================\n');
+
+      // Close loading dialog
+      Navigator.pop(context);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'حدث خطأ: ${e.toString()}',
+            style: const TextStyle(fontFamily: 'Cairo'),
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
   String _formatDate(DateTime date) {
     return '${date.day}/${date.month}/${date.year}';
-  }
-
-  void _showScheduleInterviewDialog(BuildContext context, [dynamic volunteer]) {
-    final nameController = TextEditingController();
-    final dateController = TextEditingController();
-    DateTime? selectedDate;
-
-    if (volunteer != null) {
-      nameController.text = volunteer.name;
-    }
-
-    showDialog(
-      context: context,
-      builder: (context) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: AlertDialog(
-          title: const Text(
-            'جدولة مقابلة جديدة',
-            style: TextStyle(fontFamily: 'Cairo'),
-          ),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (volunteer == null)
-                  TextField(
-                    controller: nameController,
-                    decoration: const InputDecoration(
-                      labelText: 'اسم المتطوع',
-                      hintText: 'أدخل اسم المتطوع',
-                    ),
-                  ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: dateController,
-                  readOnly: true,
-                  decoration: InputDecoration(
-                    labelText: 'تاريخ المقابلة',
-                    hintText: 'اختر التاريخ',
-                    suffixIcon: IconButton(
-                      icon: const Icon(Icons.calendar_today),
-                      onPressed: () async {
-                        final DateTime? picked = await showDatePicker(
-                          context: context,
-                          initialDate: DateTime.now(),
-                          firstDate: DateTime.now(),
-                          lastDate: DateTime.now().add(
-                            const Duration(days: 365),
-                          ),
-                        );
-                        if (picked != null) {
-                          selectedDate = picked;
-                          dateController.text =
-                              '${picked.day}/${picked.month}/${picked.year}';
-                        }
-                      },
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('إلغاء'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                if (nameController.text.isEmpty || selectedDate == null) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('يرجى ملء جميع الحقول'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                  return;
-                }
-
-                final interviewProvider = Provider.of<InterviewProvider>(
-                  context,
-                  listen: false,
-                );
-
-                final volunteerProvider = Provider.of<VolunteerProvider>(
-                  context,
-                  listen: false,
-                );
-
-                String volunteerId;
-                if (volunteer != null) {
-                  volunteerId = volunteer.id;
-                } else {
-                  // Find volunteer by name
-                  final allVolunteers = await volunteerProvider
-                      .getVolunteers()
-                      .first;
-                  final foundVolunteer = allVolunteers.firstWhere(
-                    (v) => v.name == nameController.text,
-                  );
-
-                  volunteerId = foundVolunteer.id;
-                }
-
-                final interviewId = await interviewProvider.createInterview(
-                  volunteerId: volunteerId,
-                  volunteerName: nameController.text,
-                  interviewDate: selectedDate!,
-                );
-
-                if (interviewId != null) {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('تم جدولة المقابلة بنجاح'),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
-                }
-              },
-              child: const Text('حفظ'),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   @override

@@ -11,7 +11,7 @@ import 'package:resala/presentation/providers/committee_provider.dart';
 import 'package:resala/presentation/providers/evaluation_provider.dart';
 import 'package:resala/presentation/providers/interview_provider.dart';
 import 'package:resala/presentation/providers/promotion_provider.dart'; // ADD THIS
-import 'package:resala/presentation/screens/lgoin/login_screen.dart';
+import 'package:resala/presentation/screens/login/login_screen.dart';
 import 'firebase_options.dart';
 import 'presentation/providers/event_provider.dart';
 import 'presentation/providers/volunteer_provider.dart';

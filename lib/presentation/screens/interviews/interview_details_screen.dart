@@ -1,5 +1,6 @@
 // ============================================
 // FILE: lib/presentation/screens/interviews/interview_details_screen.dart
+// FIXED: Ensures we're updating the SAME interview, not creating duplicates
 // ============================================
 
 import 'package:flutter/material.dart';
@@ -30,6 +31,12 @@ class _InterviewDetailsScreenState extends State<InterviewDetailsScreen> {
   void initState() {
     super.initState();
 
+    print('\n📱 InterviewDetailsScreen opened');
+    print('   Interview ID: ${widget.interview.id}');
+    print('   Volunteer: ${widget.interview.volunteerName}');
+    print('   Volunteer ID: ${widget.interview.volunteerId}');
+    print('   Existing answers: ${widget.interview.answers.length}');
+
     // Initialize controllers with existing answers
     for (int i = 0; i < FirebaseConstants.interviewQuestions.length; i++) {
       final question = FirebaseConstants.interviewQuestions[i];
@@ -41,6 +48,8 @@ class _InterviewDetailsScreenState extends State<InterviewDetailsScreen> {
     _notesController.text = widget.interview.notes ?? '';
     _gradeController.text = widget.interview.totalGrade?.toString() ?? '';
     _passed = widget.interview.passed;
+
+    print('   Initialized with passed status: $_passed');
   }
 
   @override
@@ -53,8 +62,11 @@ class _InterviewDetailsScreenState extends State<InterviewDetailsScreen> {
     super.dispose();
   }
 
-  // In InterviewDetailsScreen _saveInterview method:
   Future<void> _saveInterview() async {
+    print('\n💾 SAVING INTERVIEW');
+    print('   Interview ID: ${widget.interview.id}');
+    print('   Volunteer ID: ${widget.interview.volunteerId}');
+
     if (_passed == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -74,16 +86,25 @@ class _InterviewDetailsScreenState extends State<InterviewDetailsScreen> {
       answers[question] = _answerControllers[i].text.trim();
     }
 
+    print('   Collected ${answers.length} answers');
+
     // Parse grade
     final totalGrade = int.tryParse(_gradeController.text.trim()) ?? 0;
+    print('   Total grade: $totalGrade');
+    print('   Passed: $_passed');
 
     final interviewProvider = Provider.of<InterviewProvider>(
       context,
       listen: false,
     );
 
+    // CRITICAL: We're UPDATING the existing interview, not creating a new one
+    print(
+      '   Calling updateInterviewAnswers for interview ID: ${widget.interview.id}',
+    );
+
     final success = await interviewProvider.updateInterviewAnswers(
-      interviewId: widget.interview.id,
+      interviewId: widget.interview.id, // THIS IS THE KEY - using existing ID
       answers: answers,
       passed: _passed,
       totalGrade: totalGrade,
@@ -93,8 +114,11 @@ class _InterviewDetailsScreenState extends State<InterviewDetailsScreen> {
     setState(() => _isSaving = false);
 
     if (success) {
+      print('✅ Interview saved successfully');
+
       // Update volunteer's hasInterview status if passed
       if (_passed == true) {
+        print('   Updating volunteer hasInterview status...');
         final volunteerProvider = Provider.of<VolunteerProvider>(
           context,
           listen: false,
@@ -103,6 +127,7 @@ class _InterviewDetailsScreenState extends State<InterviewDetailsScreen> {
           widget.interview.volunteerId,
           {'hasInterview': true},
         );
+        print('   ✅ Volunteer updated');
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -113,8 +138,11 @@ class _InterviewDetailsScreenState extends State<InterviewDetailsScreen> {
           backgroundColor: _passed! ? Colors.green : Colors.orange,
         ),
       );
-      Navigator.pop(context);
+
+      // Return true to indicate success
+      Navigator.pop(context, true);
     } else {
+      print('❌ Failed to save interview');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('حدث خطأ أثناء حفظ المقابلة'),
@@ -135,14 +163,26 @@ class _InterviewDetailsScreenState extends State<InterviewDetailsScreen> {
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text(
-          widget.interview.volunteerName,
-          style: const TextStyle(
-            fontFamily: 'Cairo',
-            color: Colors.black,
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-          ),
+        title: Column(
+          children: [
+            Text(
+              widget.interview.volunteerName,
+              style: const TextStyle(
+                fontFamily: 'Cairo',
+                color: Colors.black,
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            Text(
+              'ID: ${widget.interview.id}',
+              style: const TextStyle(
+                fontFamily: 'Cairo',
+                color: Colors.grey,
+                fontSize: 10,
+              ),
+            ),
+          ],
         ),
         centerTitle: true,
         actions: [
@@ -197,7 +237,26 @@ class _InterviewDetailsScreenState extends State<InterviewDetailsScreen> {
                       ],
                     ),
                     const SizedBox(height: 8),
-                    if (widget.interview.totalGrade != null)
+                    Row(
+                      children: [
+                        const Icon(Icons.badge, size: 18, color: Colors.grey),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'معرف المقابلة: ${widget.interview.id}',
+                            style: const TextStyle(
+                              fontFamily: 'Cairo',
+                              fontSize: 12,
+                              color: Colors.grey,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (widget.interview.totalGrade != null) ...[
+                      const SizedBox(height: 8),
                       Row(
                         children: [
                           Icon(
@@ -234,6 +293,7 @@ class _InterviewDetailsScreenState extends State<InterviewDetailsScreen> {
                           ),
                         ],
                       ),
+                    ],
                   ],
                 ),
               ),
@@ -320,15 +380,6 @@ class _InterviewDetailsScreenState extends State<InterviewDetailsScreen> {
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
                 color: Colors.black87,
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'أجب على جميع الأسئلة بالتفصيل',
-              style: TextStyle(
-                fontFamily: 'Cairo',
-                fontSize: 12,
-                color: Colors.grey,
               ),
             ),
             const SizedBox(height: 16),

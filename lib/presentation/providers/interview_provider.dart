@@ -1,5 +1,6 @@
 // ============================================
 // FILE: lib/presentation/providers/interview_provider.dart
+// FIXED: Completely prevents duplicate interviews
 // ============================================
 
 import 'package:flutter/foundation.dart';
@@ -19,7 +20,7 @@ class InterviewProvider with ChangeNotifier {
   String? _error;
   String? get error => _error;
 
-  String _filterStatus = 'pending'; // pending, completed, passed, failed, all
+  String _filterStatus = 'all';
   String get filterStatus => _filterStatus;
 
   // Initialize interviews stream
@@ -55,12 +56,14 @@ class InterviewProvider with ChangeNotifier {
         .toList();
   }
 
-  // Get interviews by status
-  Stream<List<InterviewModel>> getInterviewsByStatus(String status) {
-    return _repository.getInterviewsByStatus(status);
+  // Get interviews by volunteer ID
+  Future<List<InterviewModel>> getInterviewsByVolunteerId(
+    String volunteerId,
+  ) async {
+    return await _repository.getInterviewsByVolunteerId(volunteerId);
   }
 
-  // Create interview
+  // FIXED: Create interview - PREVENTS duplicates completely
   Future<String?> createInterview({
     required String volunteerId,
     required String volunteerName,
@@ -71,6 +74,28 @@ class InterviewProvider with ChangeNotifier {
     notifyListeners();
 
     try {
+      // CRITICAL CHECK: Always verify if interview already exists
+      print('🔍 Checking for existing interviews for volunteer: $volunteerId');
+      final existingInterviews = await getInterviewsByVolunteerId(volunteerId);
+
+      if (existingInterviews.isNotEmpty) {
+        print(
+          '⚠️ DUPLICATE PREVENTED: Interview already exists for $volunteerName',
+        );
+        print('   Existing interview ID: ${existingInterviews.first.id}');
+
+        _isLoading = false;
+        notifyListeners();
+
+        // Return existing interview ID instead of creating new one
+        return existingInterviews.first.id;
+      }
+
+      // Safe to create new interview
+      print(
+        '✅ No existing interview found. Creating new one for $volunteerName',
+      );
+
       final interview = InterviewModel(
         id: '',
         volunteerId: volunteerId,
@@ -83,10 +108,18 @@ class InterviewProvider with ChangeNotifier {
       );
 
       final id = await _repository.createInterview(interview);
+
+      if (id != null) {
+        print('✅ Successfully created interview with ID: $id');
+      } else {
+        print('❌ Failed to create interview');
+      }
+
       _isLoading = false;
       notifyListeners();
       return id;
     } catch (e) {
+      print('❌ Error in createInterview: $e');
       _error = e.toString();
       _isLoading = false;
       notifyListeners();
@@ -107,6 +140,8 @@ class InterviewProvider with ChangeNotifier {
     notifyListeners();
 
     try {
+      print('💾 Updating interview $interviewId');
+
       final success = await _repository.updateInterviewAnswers(
         interviewId: interviewId,
         answers: answers,
@@ -115,10 +150,17 @@ class InterviewProvider with ChangeNotifier {
         notes: notes,
       );
 
+      if (success) {
+        print('✅ Interview updated successfully');
+      } else {
+        print('❌ Failed to update interview');
+      }
+
       _isLoading = false;
       notifyListeners();
       return success;
     } catch (e) {
+      print('❌ Error updating interview: $e');
       _error = e.toString();
       _isLoading = false;
       notifyListeners();
@@ -129,13 +171,6 @@ class InterviewProvider with ChangeNotifier {
   // Get interview by ID
   Future<InterviewModel?> getInterviewById(String id) async {
     return await _repository.getInterviewById(id);
-  }
-
-  // Get interviews by volunteer ID
-  Future<List<InterviewModel>> getInterviewsByVolunteerId(
-    String volunteerId,
-  ) async {
-    return await _repository.getInterviewsByVolunteerId(volunteerId);
   }
 
   // Delete interview

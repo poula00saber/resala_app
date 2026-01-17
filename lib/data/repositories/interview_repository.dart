@@ -1,5 +1,6 @@
 // ============================================
 // FILE: lib/data/repositories/interview_repository.dart
+// FIXED: Added duplicate check in createInterview
 // ============================================
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -60,12 +61,28 @@ class InterviewRepository {
     }
   }
 
-  // Create new interview
+  // Create new interview - FIXED: Now checks for duplicates
   Future<String?> createInterview(InterviewModel interview) async {
     try {
+      // SAFETY CHECK: Verify no existing interview for this volunteer
+      final existingInterviews = await getInterviewsByVolunteerId(
+        interview.volunteerId,
+      );
+
+      if (existingInterviews.isNotEmpty) {
+        print(
+          '⚠️ Interview already exists for volunteer ${interview.volunteerId}',
+        );
+        // Return existing interview ID instead of creating duplicate
+        return existingInterviews.first.id;
+      }
+
+      // No existing interview, safe to create new one
       final docRef = await _firestore
           .collection(FirebaseConstants.interviewsCollection)
           .add(interview.toFirestore());
+
+      print('✅ Created new interview for volunteer ${interview.volunteerId}');
       return docRef.id;
     } catch (e) {
       print('Error creating interview: $e');
@@ -87,6 +104,7 @@ class InterviewRepository {
     }
   }
 
+  // Update interview answers
   Future<bool> updateInterviewAnswers({
     required String interviewId,
     required Map<String, String> answers,
@@ -95,7 +113,6 @@ class InterviewRepository {
     String? notes,
   }) async {
     try {
-      // Determine status based on passed value
       String status;
       if (passed == true) {
         status = FirebaseConstants.interviewStatusPassed;
@@ -113,7 +130,7 @@ class InterviewRepository {
             if (passed != null) 'passed': passed,
             if (totalGrade != null) 'totalGrade': totalGrade,
             if (notes != null) 'notes': notes,
-            'status': status, // Use the determined status
+            'status': status,
             'updatedAt': FieldValue.serverTimestamp(),
           });
       return true;
@@ -177,11 +194,11 @@ class InterviewRepository {
     List<dynamic> allVolunteers,
   ) async {
     try {
-      final interviews = await _firestore
+      final interviewsSnapshot = await _firestore
           .collection(FirebaseConstants.interviewsCollection)
           .get();
 
-      final interviewedVolunteerIds = interviews.docs
+      final interviewedVolunteerIds = interviewsSnapshot.docs
           .map((doc) => (doc.data() as Map<String, dynamic>)['volunteerId'])
           .toSet();
 
