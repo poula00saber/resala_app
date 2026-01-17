@@ -22,9 +22,8 @@ class _PromotionsScreenState extends State<PromotionsScreen> {
   String _searchQuery = '';
 
   // Define educational levels hierarchy (highest to lowest)
- final Map<String, int> _educationalLevelsOrder =
+  final Map<String, int> _educationalLevelsOrder =
       FirebaseConstants.educationalLevelsOrder;
-
 
   // Sort volunteers by educational level (higher first)
   List<dynamic> _sortVolunteersByLevel(List<dynamic> volunteers) {
@@ -181,6 +180,7 @@ class _PromotionsScreenState extends State<PromotionsScreen> {
     final bool canBePromoted = currentLevel != 'مسئول';
 
     // Determine color based on level
+    // In _buildVolunteerCard method
     Color levelColor;
     switch (currentLevel) {
       case 'مسئول':
@@ -197,6 +197,9 @@ class _PromotionsScreenState extends State<PromotionsScreen> {
         break;
       case 'جدد':
         levelColor = const Color(0xFFF44336); // Red
+        break;
+      case 'شبل':
+        levelColor = const Color(0xFFFFC107); // Amber
         break;
       default:
         levelColor = AppTheme.primary;
@@ -337,18 +340,20 @@ class _PromotionsScreenState extends State<PromotionsScreen> {
   }
 
   // Helper method to get level number (for visual indicator)
+  // Update the helper method in PromotionsScreen
   int _getLevelNumber(String level) {
     switch (level) {
       case 'مسئول':
-        return 5;
+        return 6;
       case 'مشروع مسئول':
-        return 4;
+        return 5;
       case 'تدريب':
-        return 3;
+        return 4;
       case 'داخل متابعة':
-        return 2;
+        return 3;
       case 'جدد':
-        return 1;
+      case 'شبل': // BOTH SAME LEVEL
+        return 2;
       default:
         return 0;
     }

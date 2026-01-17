@@ -1,6 +1,6 @@
 // ============================================
 // FILE: lib/core/constants/firebase_constants.dart
-// MERGED - All constants in one place
+// UPDATED: Added 'شبل' level
 // ============================================
 
 class FirebaseConstants {
@@ -21,9 +21,8 @@ class FirebaseConstants {
   static const String meetingOnline = 'أونلاين';
   static const String meetingOfflineBranch = 'أوفلاين بالفرع';
   static const String meetingOfflineExternal = 'أوفلاين بالخارج';
-    static const String promotionRequirementsCollection =
+  static const String promotionRequirementsCollection =
       'promotion_requirements';
-
 
   // Administrative Types
   static const List<String> administrativeTypes = [
@@ -51,40 +50,44 @@ class FirebaseConstants {
     'initiative': 'المبادرة',
   };
 
-
   // Genders (NEW)
   static const List<String> genders = ['ذكر', 'أنثى'];
-// Educational/Promotion Levels
+// Educational/Promotion Levels - UPDATED
   static const List<String> educationalLevels = [
-    'جدد',
+    'شبل', // Under 17 years old
+    'جدد', // 17 or older
     'داخل متابعة',
     'تدريب',
     'مشروع مسئول',
     'مسئول',
   ];
 
-
-
-
-
-  // Educational Levels with Order (for sorting)
+  // Educational Levels with Order (for sorting) - UPDATED
   static const Map<String, int> educationalLevelsOrder = {
-    'مسئول': 5,
-    'مشروع مسئول': 4,
-    'تدريب': 3,
-    'داخل متابعة': 2,
-    'جدد': 1,
+    'مسئول': 6,
+    'مشروع مسئول': 5,
+    'تدريب': 4,
+    'داخل متابعة': 3,
+    'جدد': 2,
+    'شبل': 2, // SAME LEVEL as جدد
     '': 0,
   };
 
-// Promotion Requirements for each level
+  // Promotion Requirements for each level - UPDATED
   static const Map<String, List<String>> promotionRequirements = {
+    'شبل': [
+      'حضر 2 اجتماعات على الأقل',
+      'شارك في نشاط تطوعي واحد',
+      'أكمل ملف التعريف الشخصي',
+      'حضر جلسة تعريفية',
+    ],
     'جدد': [
       'حضر 4 اجتماعات على الأقل',
       'شارك في نشاط تطوعي واحد',
       'أكمل ملف التعريف الشخصي',
       'حضر جلسة تعريفية',
     ],
+    // Both شبل and جدد promote to داخل متابعة
     'داخل متابعة': [
       'حضر 8 اجتماعات على الأقل',
       'قاد نشاط تطوعي صغير',
@@ -105,10 +108,35 @@ class FirebaseConstants {
     ],
   };
 
+  // Helper method to determine initial educational level based on age
+  static String getInitialEducationalLevel(int age) {
+    if (age < 17) {
+      return 'شبل';
+    } else {
+      return 'جدد';
+    }
+  }
 
+  // Helper method to get next level
+  static String? getNextLevel(String currentLevel) {
+    switch (currentLevel) {
+      case 'شبل':
+      case 'جدد':
+        return 'داخل متابعة';
+      case 'داخل متابعة':
+        return 'تدريب';
+      case 'تدريب':
+        return 'مشروع مسئول';
+      case 'مشروع مسئول':
+        return 'مسئول';
+      case 'مسئول':
+        return null;
+      default:
+        return 'داخل متابعة';
+    }
+  }
 
-
-  // Field names for Volunteers (NEW)
+  // Field names for Volunteers
   static const String nameField = 'name';
   static const String phoneField = 'phone';
   static const String emailField = 'email';
@@ -127,4 +155,6 @@ class FirebaseConstants {
   static const String educationalLevelField = 'educationalLevel';
   static const String universityField = 'university';
   static const String profileImageField = 'profileImage';
+
+  
 }

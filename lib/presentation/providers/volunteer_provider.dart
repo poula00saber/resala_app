@@ -1,6 +1,6 @@
 // ============================================
 // FILE: lib/presentation/providers/volunteer_provider.dart
-// UPDATED: Added age and committee parameters
+// UPDATED: Age is required in createVolunteer method
 // ============================================
 
 import 'package:flutter/foundation.dart';
@@ -39,24 +39,28 @@ class VolunteerProvider with ChangeNotifier {
     return _repository.getAllVolunteers();
   }
 
-  // Create volunteer
+  // Create volunteer - UPDATED: age is now required
   Future<String?> createVolunteer({
     required String name,
     required String phone,
     required String email,
     required String address,
     String? nationalId,
-    int? age, // NEW
-    String? committeeId, // NEW
-    String? committeeName, // NEW
+    required int age, // CHANGED: Now required
+    String? committeeId,
+    String? committeeName,
     bool hasInterview = false,
-    String? educationalLevel, // NEW: Optional parameter
   }) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
+      // Validate age
+      if (age < 1 || age > 100) {
+        throw Exception('العمر يجب أن يكون بين 1 و 100 سنة');
+      }
+
       final volunteer = VolunteerModel(
         id: '',
         name: name,
@@ -64,12 +68,12 @@ class VolunteerProvider with ChangeNotifier {
         email: email,
         address: address,
         nationalId: nationalId,
-        age: age, // NEW
-        committeeId: committeeId, // NEW
-        committeeName: committeeName, // NEW
+        age: age,
+        committeeId: committeeId,
+        committeeName: committeeName,
         hasInterview: hasInterview,
-        educationalLevel:
-            educationalLevel ?? FirebaseConstants.educationalLevels.first,
+        // Automatically determine educational level based on age
+        educationalLevel: FirebaseConstants.getInitialEducationalLevel(age),
         createdAt: DateTime.now(),
       );
 
@@ -104,14 +108,13 @@ class VolunteerProvider with ChangeNotifier {
     }
   }
 
-  // Add this method to your VolunteerProvider class
+  // Update volunteer level
   Future<bool> updateVolunteerLevel(String volunteerId, String newLevel) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      // Use your existing updateVolunteerData method with just the level
       final success = await updateVolunteerData(volunteerId, {
         'educationalLevel': newLevel,
       });
@@ -145,6 +148,17 @@ class VolunteerProvider with ChangeNotifier {
         return false;
       }
 
+      // Validate age if being updated
+      if (updates['age'] != null) {
+        final newAge = updates['age'];
+        if (newAge is int && (newAge < 1 || newAge > 100)) {
+          _error = 'العمر يجب أن يكون بين 1 و 100 سنة';
+          _isLoading = false;
+          notifyListeners();
+          return false;
+        }
+      }
+
       final updatedVolunteer = volunteer.copyWith(
         name: updates['name'],
         phone: updates['phone'],
@@ -155,12 +169,16 @@ class VolunteerProvider with ChangeNotifier {
         committeeId: updates['committeeId'],
         committeeName: updates['committeeName'],
         hasInterview: updates['hasInterview'],
-        hasTshirt: updates['hasTshirt'], // ADD THIS
-        birthDate: updates['birthDate'], // ADD THIS
-        gender: updates['gender'], // ADD THIS
-        educationalLevel: updates['educationalLevel'], // ADD THIS
-        university: updates['university'], // ADD THIS
-        profileImage: updates['profileImage'], // ADD THIS
+        hasTshirt: updates['hasTshirt'],
+        birthDate: updates['birthDate'],
+        gender: updates['gender'],
+        educationalLevel:
+            updates['educationalLevel'] ??
+            (updates['age'] != null
+                ? FirebaseConstants.getInitialEducationalLevel(updates['age'])
+                : volunteer.educationalLevel),
+        university: updates['university'],
+        profileImage: updates['profileImage'],
       );
 
       final success = await _repository.updateVolunteer(id, updatedVolunteer);
@@ -215,5 +233,23 @@ class VolunteerProvider with ChangeNotifier {
   ) async {
     final allVolunteers = await _repository.getAllVolunteers().first;
     return allVolunteers.where((v) => v.committeeId == committeeId).toList();
+  }
+
+  // Get volunteers by educational level
+  Future<List<VolunteerModel>> getVolunteersByLevel(String level) async {
+    final allVolunteers = await _repository.getAllVolunteers().first;
+    return allVolunteers.where((v) => v.educationalLevel == level).toList();
+  }
+
+  // Get volunteers under 17 years old (شبل)
+  Future<List<VolunteerModel>> getScoutVolunteers() async {
+    final allVolunteers = await _repository.getAllVolunteers().first;
+    return allVolunteers.where((v) => v.age != null && v.age! < 17).toList();
+  }
+
+  // Get volunteers 17 or older (جدد)
+  Future<List<VolunteerModel>> getNewVolunteers() async {
+    final allVolunteers = await _repository.getAllVolunteers().first;
+    return allVolunteers.where((v) => v.age != null && v.age! >= 17).toList();
   }
 }

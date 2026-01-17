@@ -1,6 +1,6 @@
 // ============================================
 // FILE: lib/presentation/screens/promotions/volunteer_promotion_screen.dart
-// UPDATED VERSION
+// UPDATED: شبل and جدد both promote to داخل متابعة
 // ============================================
 
 import 'package:flutter/material.dart';
@@ -23,11 +23,8 @@ class VolunteerPromotionScreen extends StatefulWidget {
 
 class _VolunteerPromotionScreenState extends State<VolunteerPromotionScreen> {
   final List<String> _educationalLevels = FirebaseConstants.educationalLevels;
-
-
   late String _currentLevel;
-  late int _currentLevelIndex;
-  late PromotionRepository _promotionRepository;
+  PromotionRepository _promotionRepository = PromotionRepository();
   PromotionRequirement? _promotionRequirement;
   bool _isLoading = true;
 
@@ -36,13 +33,13 @@ class _VolunteerPromotionScreenState extends State<VolunteerPromotionScreen> {
     super.initState();
     _promotionRepository = PromotionRepository();
     _currentLevel = widget.volunteer.educationalLevel ?? 'جدد';
-    _currentLevelIndex = _educationalLevels.indexOf(_currentLevel);
     _loadPromotionRequirements();
   }
 
   Future<void> _loadPromotionRequirements() async {
-    if (_currentLevelIndex < _educationalLevels.length - 1) {
-      final nextLevel = _educationalLevels[_currentLevelIndex + 1];
+    final nextLevel = FirebaseConstants.getNextLevel(_currentLevel);
+
+    if (nextLevel != null) {
       _promotionRequirement = await _promotionRepository
           .getPromotionRequirements(
             widget.volunteer.id,
@@ -74,9 +71,9 @@ class _VolunteerPromotionScreenState extends State<VolunteerPromotionScreen> {
   }
 
   Future<void> _promoteVolunteer() async {
-    if (_currentLevelIndex < _educationalLevels.length - 1) {
-      final nextLevel = _educationalLevels[_currentLevelIndex + 1];
+    final nextLevel = FirebaseConstants.getNextLevel(_currentLevel);
 
+    if (nextLevel != null) {
       // Update volunteer level
       await Provider.of<VolunteerProvider>(
         context,
@@ -92,15 +89,12 @@ class _VolunteerPromotionScreenState extends State<VolunteerPromotionScreen> {
 
       // Update UI
       setState(() {
-        _currentLevelIndex++;
         _currentLevel = nextLevel;
         _promotionRequirement = null;
       });
 
       // Load new requirements for next level (if any)
-      if (_currentLevelIndex < _educationalLevels.length - 1) {
-        await _loadPromotionRequirements();
-      }
+      await _loadPromotionRequirements();
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -117,10 +111,8 @@ class _VolunteerPromotionScreenState extends State<VolunteerPromotionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final bool isMaxLevel = _currentLevelIndex == _educationalLevels.length - 1;
-    final String nextLevel = isMaxLevel
-        ? 'أعلى مستوى'
-        : _educationalLevels[_currentLevelIndex + 1];
+    final nextLevel = FirebaseConstants.getNextLevel(_currentLevel);
+    final bool isMaxLevel = nextLevel == null;
 
     return Scaffold(
       backgroundColor: AppTheme.background,
@@ -238,9 +230,9 @@ class _VolunteerPromotionScreenState extends State<VolunteerPromotionScreen> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    const Text(
-                      'يجب إكمال جميع المتطلبات لتفعيل زر الترقية',
-                      style: TextStyle(
+                    Text(
+                      'يجب إكمال جميع المتطلبات لترقية ${widget.volunteer.name} من $_currentLevel إلى $nextLevel',
+                      style: const TextStyle(
                         fontFamily: 'Cairo',
                         fontSize: 12,
                         color: Colors.grey,
@@ -287,7 +279,9 @@ class _VolunteerPromotionScreenState extends State<VolunteerPromotionScreen> {
                         elevation: 0,
                       ),
                       child: Text(
-                        isMaxLevel ? 'أعلى مستوى' : 'ترقية إلى $nextLevel',
+                        isMaxLevel
+                            ? 'أعلى مستوى'
+                            : 'ترقية من $_currentLevel إلى $nextLevel',
                         style: const TextStyle(
                           fontFamily: 'Cairo',
                           fontSize: 16,
@@ -307,6 +301,56 @@ class _VolunteerPromotionScreenState extends State<VolunteerPromotionScreen> {
                           fontSize: 14,
                           color: Colors.grey,
                         ),
+                      ),
+                    ),
+                  ],
+
+                  // Show special info for شبل and جدد
+                  if (_currentLevel == 'شبل' || _currentLevel == 'جدد') ...[
+                    const SizedBox(height: 20),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primary.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: AppTheme.primary.withOpacity(0.3),
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.info,
+                                color: AppTheme.primary,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 8),
+                              const Text(
+                                'معلومة',
+                                style: TextStyle(
+                                  fontFamily: 'Cairo',
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppTheme.primary,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            _currentLevel == 'شبل'
+                                ? 'أنت في مستوى "شبل" (أقل من 17 سنة). عند الترقية ستصبح "داخل متابعة".'
+                                : 'أنت في مستوى "جدد" (17 سنة أو أكثر). عند الترقية ستصبح "داخل متابعة".',
+                            style: const TextStyle(
+                              fontFamily: 'Cairo',
+                              fontSize: 13,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
