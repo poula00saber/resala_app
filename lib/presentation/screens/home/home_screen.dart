@@ -7,7 +7,7 @@ import 'profiles_screen.dart';
 import '../events/events_screen.dart';
 import 'evaluations_screen.dart';
 import 'reports_screen.dart';
-import 'interviews_screen.dart';
+import '../interviews/interviews_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});

@@ -71,7 +71,7 @@ class VolunteerProvider with ChangeNotifier {
         age: age,
         committeeId: committeeId,
         committeeName: committeeName,
-        hasInterview: hasInterview,
+        hasInterview: false,
         // Automatically determine educational level based on age
         educationalLevel: FirebaseConstants.getInitialEducationalLevel(age),
         createdAt: DateTime.now(),
@@ -97,6 +97,31 @@ class VolunteerProvider with ChangeNotifier {
 
     try {
       final success = await _repository.updateVolunteer(id, volunteer);
+      _isLoading = false;
+      notifyListeners();
+      return success;
+    } catch (e) {
+      _error = e.toString();
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  // Add this method to VolunteerProvider class:
+  Future<bool> updateVolunteerInterviewStatus(
+    String volunteerId,
+    bool hasInterview,
+  ) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final success = await updateVolunteerData(volunteerId, {
+        'hasInterview': hasInterview,
+      });
+
       _isLoading = false;
       notifyListeners();
       return success;

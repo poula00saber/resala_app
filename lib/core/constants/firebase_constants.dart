@@ -9,6 +9,8 @@ class FirebaseConstants {
   static const String volunteersCollection = 'volunteers';
   static const String committeesCollection = 'committees';
   static const String evaluationsCollection = 'evaluations';
+  static const String interviewsCollection = 'interviews';
+
 
   // Event Types
   static const String typeQafela = 'قافلة';
@@ -41,6 +43,31 @@ class FirebaseConstants {
   // Volunteer Status
   static const String statusActive = 'active';
   static const String statusInactive = 'inactive';
+
+
+
+// Interview Questions
+  static const List<String> interviewQuestions = [
+    'عرفتنا منين',
+    'طريقة التواصل',
+    'الهوايات والمهارات',
+    'لو اختلفنا في النقاش هندير الحوار ازاي خصوصا لو قدام متطوعين',
+    'هتعمل ايه لو اخدت تاسك مش عايز تعمله',
+    'لو احنا عندنا ايفينت وحصل تهدير في الوجبات والعدد نقص هتتصرف ازاي',
+    'تحب الليدر يتعامل معاك ازاي',
+    'هتتعامل مع الناس ازاي او تحفزهم ازاي',
+    'تحب تشتغل لوحدك ولا في تيم',
+    'ايه الايام المتاحة وكام يوم تقدر تجيهم',
+    'ممكن تشتغل حاجة من البيت',
+    'هل شاركت في اي عمل تطوعي',
+  ];
+
+  // Interview Status
+  static const String interviewStatusPending = 'pending';
+  static const String interviewStatusPassed = 'passed';
+  static const String interviewStatusFailed = 'failed';
+
+
 
   // Evaluation Criteria
   static const Map<String, String> evaluationCriteria = {

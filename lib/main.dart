@@ -1,6 +1,6 @@
 // ============================================
 // FILE: lib/main.dart
-// Updated with RTL support and Cairo font
+// UPDATED: Added missing providers
 // ============================================
 
 import 'package:flutter/material.dart';
@@ -9,6 +9,8 @@ import 'package:provider/provider.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:resala/presentation/providers/committee_provider.dart';
 import 'package:resala/presentation/providers/evaluation_provider.dart';
+import 'package:resala/presentation/providers/interview_provider.dart';
+// import 'package:resala/presentation/providers/promotion_provider.dart'; // ADD THIS
 import 'package:resala/presentation/screens/lgoin/login_screen.dart';
 import 'firebase_options.dart';
 import 'presentation/providers/event_provider.dart';
@@ -35,12 +37,15 @@ class MyApp extends StatelessWidget {
           create: (_) => VolunteerProvider()..initVolunteers(),
         ),
         ChangeNotifierProvider(create: (_) => EvaluationProvider()),
-        // ADD THIS:
         ChangeNotifierProvider(
           create: (_) => CommitteeProvider()..initCommittees(),
         ),
+        ChangeNotifierProvider(
+          create: (_) => InterviewProvider()..initInterviews(),
+        ),
+        // ADD THIS:
+        // ChangeNotifierProvider(create: (_) => PromotionProvider()),
       ],
-      // ... rest of your app
       child: MaterialApp(
         title: 'Resala Events',
         theme: AppTheme.lightTheme,
