@@ -13,7 +13,6 @@ import 'package:resala/presentation/screens/lgoin/login_screen.dart';
 import 'firebase_options.dart';
 import 'presentation/providers/event_provider.dart';
 import 'presentation/providers/volunteer_provider.dart';
-import 'presentation/screens/events/events_screen.dart';
 import 'presentation/themes/app_theme.dart';
 
 void main() async {
