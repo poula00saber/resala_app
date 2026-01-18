@@ -3,10 +3,10 @@ import 'package:resala/presentation/screens/contacts/contacts_screen.dart';
 import 'package:resala/presentation/screens/promotions/promotions_screen.dart';
 import 'package:resala/presentation/screens/settings/committees_management_screen.dart';
 import 'package:resala/presentation/themes/app_theme.dart';
-import 'profiles_screen.dart';
+import '../profiles/profiles_screen.dart';
 import '../events/events_screen.dart';
-import 'evaluations_screen.dart';
-import 'reports_screen.dart';
+import '../evaluations/evaluations_screen.dart';
+import '../reports/reports_screen.dart';
 import '../interviews/interviews_screen.dart';
 
 class HomeScreen extends StatelessWidget {

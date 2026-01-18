@@ -5,7 +5,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:resala/presentation/screens/home/evaluation_details_screen.dart';
+import 'package:resala/presentation/screens/evaluations/evaluation_details_screen.dart';
 import '../../providers/volunteer_provider.dart';
 import '../../themes/app_theme.dart';
 
