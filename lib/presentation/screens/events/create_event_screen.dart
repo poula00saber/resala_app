@@ -1,10 +1,12 @@
 // ============================================
 // FILE: lib/presentation/screens/events/create_event_screen.dart
+// UPDATED: Always show location, add "أخرى" option, committee selection
 // ============================================
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/event_provider.dart';
+import '../../providers/committee_provider.dart'; // ADD THIS IMPORT
 import '../../themes/app_theme.dart';
 import '../../../core/constants/firebase_constants.dart';
 import '../../../core/utils/validators.dart';
@@ -22,17 +24,23 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _locationController = TextEditingController();
   final TextEditingController _dateController = TextEditingController();
+  final TextEditingController _customEventTypeController =
+      TextEditingController(); // NEW
 
   String _selectedType = FirebaseConstants.typeQafela;
   String? _selectedMeetingPlace;
   String? _selectedAdministrativeType;
+  String? _selectedCommitteeId; // NEW
+  List<dynamic> _committees = []; // NEW
 
+  // UPDATED: Added "أخرى" (Other) option
   final List<String> _eventTypes = [
     FirebaseConstants.typeQafela,
     FirebaseConstants.typeKarnafal,
     FirebaseConstants.typeFamilyDay,
     FirebaseConstants.typeMeeting,
     FirebaseConstants.typeAdministrative,
+    'أخرى', // NEW: Other option
   ];
 
   final List<String> _meetingPlaces = [
@@ -42,11 +50,27 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
   ];
 
   bool _isLoading = false;
+  bool _showCustomEventTypeField = false; // NEW
+  bool _showCommitteeSelection = false; // NEW
 
+  @override
+  void initState() {
+    super.initState();
+    _loadCommittees(); // NEW: Load committees
+  }
+
+  // NEW: Load committees
+  Future<void> _loadCommittees() async {
+    final committeeProvider = Provider.of<CommitteeProvider>(
+      context,
+      listen: false,
+    );
+    _committees = committeeProvider.committees;
+  }
+
+  // UPDATED: Location is always required
   bool _needsLocation() {
-    return _selectedType == FirebaseConstants.typeQafela ||
-        _selectedType == FirebaseConstants.typeKarnafal ||
-        _selectedType == FirebaseConstants.typeFamilyDay;
+    return true; // Always show location
   }
 
   bool _needsMeetingPlace() {
@@ -55,6 +79,17 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
 
   bool _needsAdministrativeType() {
     return _selectedType == FirebaseConstants.typeAdministrative;
+  }
+
+  // NEW: Check if custom event type field should be shown
+  bool _isCustomEventType() {
+    return _selectedType == 'أخرى';
+  }
+
+  // NEW: Check if committee selection should be shown
+  bool _isCommitteeMeeting() {
+    return _selectedType == FirebaseConstants.typeAdministrative &&
+        _selectedAdministrativeType == 'اجتماع لجنة';
   }
 
   Future<void> _selectDate() async {
@@ -75,20 +110,68 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
   Future<void> _createEvent() async {
     if (!_formKey.currentState!.validate()) return;
 
+    // Validate location for all event types
+    if (_locationController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('يرجى إدخال المكان'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     setState(() => _isLoading = true);
 
     final eventProvider = Provider.of<EventProvider>(context, listen: false);
 
+    // Determine final event type
+    final String finalEventType;
+    if (_isCustomEventType()) {
+      finalEventType = _customEventTypeController.text.trim();
+      if (finalEventType.isEmpty) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('يرجى إدخال نوع الحدث'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+    } else {
+      finalEventType = _selectedType;
+    }
+
+    // Prepare committee data if selected
+    final Map<String, dynamic>? committeeData;
+    if (_isCommitteeMeeting() && _selectedCommitteeId != null) {
+      final selectedCommittee = _committees.firstWhere(
+        (committee) => committee.id == _selectedCommitteeId,
+        orElse: () => null,
+      );
+      committeeData = selectedCommittee != null
+          ? {
+              'committeeId': selectedCommittee.id,
+              'committeeName': selectedCommittee.name,
+            }
+          : null;
+    } else {
+      committeeData = null;
+    }
+
     final eventId = await eventProvider.createEvent(
       title: _titleController.text,
-      type: _selectedType,
+      type: finalEventType,
       date: _dateController.text,
       description: _descriptionController.text,
-      location: _needsLocation() ? _locationController.text : null,
+      location: _locationController.text, // Always required
       meetingPlace: _needsMeetingPlace() ? _selectedMeetingPlace : null,
       administrativeType: _needsAdministrativeType()
           ? _selectedAdministrativeType
           : null,
+      committeeId: committeeData?['committeeId'], // NEW
+      committeeName: committeeData?['committeeName'], // NEW
     );
 
     setState(() => _isLoading = false);
@@ -96,13 +179,19 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
     if (mounted) {
       if (eventId != null) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('تم إضافة الحدث بنجاح')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('تم إضافة الحدث بنجاح'),
+            backgroundColor: Colors.green,
+          ),
+        );
       } else {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('فشل إضافة الحدث')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('فشل إضافة الحدث'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     }
   }
@@ -167,28 +256,47 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                         onChanged: (String? newValue) {
                           setState(() {
                             _selectedType = newValue!;
-                            _locationController.clear();
                             _selectedMeetingPlace = null;
                             _selectedAdministrativeType = null;
+                            _selectedCommitteeId = null;
+                            _customEventTypeController.clear();
+                            _showCustomEventTypeField = _isCustomEventType();
+                            _showCommitteeSelection = _isCommitteeMeeting();
                           });
                         },
                       ),
                       const SizedBox(height: 16),
 
-                      // Conditional: Location
-                      if (_needsLocation()) ...[
+                      // Custom Event Type Field (when "أخرى" is selected)
+                      if (_showCustomEventTypeField) ...[
                         TextFormField(
-                          controller: _locationController,
+                          controller: _customEventTypeController,
                           decoration: const InputDecoration(
-                            labelText: 'المكان',
+                            labelText: 'اكتب نوع الحدث',
+                            hintText: 'مثال: ندوة، معسكر، ...',
                             border: OutlineInputBorder(),
-                            prefixIcon: Icon(Icons.location_on),
+                            prefixIcon: Icon(Icons.edit),
                           ),
-                          validator: (value) =>
-                              Validators.validateRequired(value, 'المكان'),
+                          validator: (value) => _isCustomEventType()
+                              ? Validators.validateRequired(value, 'نوع الحدث')
+                              : null,
                         ),
                         const SizedBox(height: 16),
                       ],
+
+                      // Location Field (ALWAYS VISIBLE)
+                      TextFormField(
+                        controller: _locationController,
+                        decoration: const InputDecoration(
+                          labelText: 'المكان',
+                          hintText: 'أدخل مكان الحدث',
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.location_on),
+                        ),
+                        validator: (value) =>
+                            Validators.validateRequired(value, 'المكان'),
+                      ),
+                      const SizedBox(height: 16),
 
                       // Conditional: Meeting Place
                       if (_needsMeetingPlace()) ...[
@@ -238,6 +346,8 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                           onChanged: (String? newValue) {
                             setState(() {
                               _selectedAdministrativeType = newValue;
+                              _selectedCommitteeId = null;
+                              _showCommitteeSelection = _isCommitteeMeeting();
                             });
                           },
                           validator: (value) => Validators.validateRequired(
@@ -246,6 +356,33 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                           ),
                         ),
                         const SizedBox(height: 16),
+
+                        // Committee Selection (when "اجتماع لجنة" is selected)
+                        if (_showCommitteeSelection) ...[
+                          DropdownButtonFormField<String>(
+                            value: _selectedCommitteeId,
+                            decoration: const InputDecoration(
+                              labelText: 'اختر اللجنة',
+                              border: OutlineInputBorder(),
+                              prefixIcon: Icon(Icons.groups),
+                            ),
+                            items: _committees.map((committee) {
+                              return DropdownMenuItem<String>(
+                                value: committee.id,
+                                child: Text(committee.name ?? 'بدون اسم'),
+                              );
+                            }).toList(),
+                            onChanged: (String? newValue) {
+                              setState(() {
+                                _selectedCommitteeId = newValue;
+                              });
+                            },
+                            validator: (value) => _isCommitteeMeeting()
+                                ? Validators.validateRequired(value, 'اللجنة')
+                                : null,
+                          ),
+                          const SizedBox(height: 16),
+                        ],
                       ],
 
                       // Description
@@ -335,6 +472,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
     _descriptionController.dispose();
     _locationController.dispose();
     _dateController.dispose();
+    _customEventTypeController.dispose();
     super.dispose();
   }
 }

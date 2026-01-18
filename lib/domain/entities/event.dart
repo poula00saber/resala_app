@@ -11,6 +11,8 @@ class Event {
   final String? location;
   final String? meetingPlace;
   final String? administrativeType;
+    final String? committeeId; // NEW
+  final String? committeeName; // NEW
   final List<String> volunteerIds;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -24,6 +26,8 @@ class Event {
     this.location,
     this.meetingPlace,
     this.administrativeType,
+    this.committeeId, // NEW
+    this.committeeName, // NEW
     required this.volunteerIds,
     required this.createdAt,
     required this.updatedAt,

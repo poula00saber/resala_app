@@ -92,6 +92,8 @@ class EventProvider with ChangeNotifier {
     String? location,
     String? meetingPlace,
     String? administrativeType,
+    String? committeeId, // ADD THIS
+    String? committeeName, // ADD THIS
   }) async {
     _isLoading = true;
     _error = null;
@@ -107,6 +109,8 @@ class EventProvider with ChangeNotifier {
         location: location,
         meetingPlace: meetingPlace,
         administrativeType: administrativeType,
+        committeeId: committeeId, // ADD THIS
+        committeeName: committeeName, // ADD THIS
         volunteerIds: [],
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),

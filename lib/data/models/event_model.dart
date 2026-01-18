@@ -1,5 +1,6 @@
 // ============================================
 // FILE: lib/data/models/event_model.dart
+// UPDATED: Added committeeId and committeeName fields
 // ============================================
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -15,6 +16,8 @@ class EventModel extends Event {
     super.location,
     super.meetingPlace,
     super.administrativeType,
+    super.committeeId, // NEW
+    super.committeeName, // NEW
     required super.volunteerIds,
     required super.createdAt,
     required super.updatedAt,
@@ -32,6 +35,8 @@ class EventModel extends Event {
       location: data['location'],
       meetingPlace: data['meetingPlace'],
       administrativeType: data['administrativeType'],
+      committeeId: data['committeeId'], // NEW
+      committeeName: data['committeeName'], // NEW
       volunteerIds: List<String>.from(data['volunteerIds'] ?? []),
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       updatedAt: (data['updatedAt'] as Timestamp).toDate(),
@@ -48,6 +53,8 @@ class EventModel extends Event {
       'location': location,
       'meetingPlace': meetingPlace,
       'administrativeType': administrativeType,
+      'committeeId': committeeId, // NEW
+      'committeeName': committeeName, // NEW
       'volunteerIds': volunteerIds,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.now(),
