@@ -1,12 +1,12 @@
 // ============================================
 // FILE: lib/presentation/screens/events/create_event_screen.dart
-// UPDATED: Always show location, add "أخرى" option, committee selection
+// FIXED: Committee selection orElse error
 // ============================================
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/event_provider.dart';
-import '../../providers/committee_provider.dart'; // ADD THIS IMPORT
+import '../../providers/committee_provider.dart';
 import '../../themes/app_theme.dart';
 import '../../../core/constants/firebase_constants.dart';
 import '../../../core/utils/validators.dart';
@@ -25,22 +25,21 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
   final TextEditingController _locationController = TextEditingController();
   final TextEditingController _dateController = TextEditingController();
   final TextEditingController _customEventTypeController =
-      TextEditingController(); // NEW
+      TextEditingController();
 
   String _selectedType = FirebaseConstants.typeQafela;
   String? _selectedMeetingPlace;
   String? _selectedAdministrativeType;
-  String? _selectedCommitteeId; // NEW
-  List<dynamic> _committees = []; // NEW
+  String? _selectedCommitteeId;
+  List<dynamic> _committees = [];
 
-  // UPDATED: Added "أخرى" (Other) option
   final List<String> _eventTypes = [
     FirebaseConstants.typeQafela,
     FirebaseConstants.typeKarnafal,
     FirebaseConstants.typeFamilyDay,
     FirebaseConstants.typeMeeting,
     FirebaseConstants.typeAdministrative,
-    'أخرى', // NEW: Other option
+    'أخرى',
   ];
 
   final List<String> _meetingPlaces = [
@@ -50,27 +49,27 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
   ];
 
   bool _isLoading = false;
-  bool _showCustomEventTypeField = false; // NEW
-  bool _showCommitteeSelection = false; // NEW
+  bool _showCustomEventTypeField = false;
+  bool _showCommitteeSelection = false;
 
   @override
   void initState() {
     super.initState();
-    _loadCommittees(); // NEW: Load committees
+    _loadCommittees();
   }
 
-  // NEW: Load committees
   Future<void> _loadCommittees() async {
     final committeeProvider = Provider.of<CommitteeProvider>(
       context,
       listen: false,
     );
-    _committees = committeeProvider.committees;
+    setState(() {
+      _committees = committeeProvider.committees;
+    });
   }
 
-  // UPDATED: Location is always required
   bool _needsLocation() {
-    return true; // Always show location
+    return true;
   }
 
   bool _needsMeetingPlace() {
@@ -81,12 +80,10 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
     return _selectedType == FirebaseConstants.typeAdministrative;
   }
 
-  // NEW: Check if custom event type field should be shown
   bool _isCustomEventType() {
     return _selectedType == 'أخرى';
   }
 
-  // NEW: Check if committee selection should be shown
   bool _isCommitteeMeeting() {
     return _selectedType == FirebaseConstants.typeAdministrative &&
         _selectedAdministrativeType == 'اجتماع لجنة';
@@ -110,7 +107,6 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
   Future<void> _createEvent() async {
     if (!_formKey.currentState!.validate()) return;
 
-    // Validate location for all event types
     if (_locationController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -143,21 +139,24 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       finalEventType = _selectedType;
     }
 
-    // Prepare committee data if selected
-    final Map<String, dynamic>? committeeData;
+    // FIXED: Prepare committee data properly
+    String? committeeId;
+    String? committeeName;
+
     if (_isCommitteeMeeting() && _selectedCommitteeId != null) {
-      final selectedCommittee = _committees.firstWhere(
-        (committee) => committee.id == _selectedCommitteeId,
-        orElse: () => null,
-      );
-      committeeData = selectedCommittee != null
-          ? {
-              'committeeId': selectedCommittee.id,
-              'committeeName': selectedCommittee.name,
-            }
-          : null;
-    } else {
-      committeeData = null;
+      try {
+        final selectedCommittee = _committees.firstWhere(
+          (committee) => committee.id == _selectedCommitteeId,
+          orElse: () => null, // FIXED: Return null instead of throwing
+        );
+
+        if (selectedCommittee != null) {
+          committeeId = selectedCommittee.id;
+          committeeName = selectedCommittee.name;
+        }
+      } catch (e) {
+        print('Error finding committee: $e');
+      }
     }
 
     final eventId = await eventProvider.createEvent(
@@ -165,13 +164,13 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       type: finalEventType,
       date: _dateController.text,
       description: _descriptionController.text,
-      location: _locationController.text, // Always required
+      location: _locationController.text,
       meetingPlace: _needsMeetingPlace() ? _selectedMeetingPlace : null,
       administrativeType: _needsAdministrativeType()
           ? _selectedAdministrativeType
           : null,
-      committeeId: committeeData?['committeeId'], // NEW
-      committeeName: committeeData?['committeeName'], // NEW
+      committeeId: committeeId,
+      committeeName: committeeName,
     );
 
     setState(() => _isLoading = false);
@@ -267,7 +266,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Custom Event Type Field (when "أخرى" is selected)
+                      // Custom Event Type Field
                       if (_showCustomEventTypeField) ...[
                         TextFormField(
                           controller: _customEventTypeController,
@@ -298,7 +297,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Conditional: Meeting Place
+                      // Meeting Place
                       if (_needsMeetingPlace()) ...[
                         DropdownButtonFormField<String>(
                           value: _selectedMeetingPlace,
@@ -326,7 +325,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                         const SizedBox(height: 16),
                       ],
 
-                      // Conditional: Administrative Type
+                      // Administrative Type
                       if (_needsAdministrativeType()) ...[
                         DropdownButtonFormField<String>(
                           value: _selectedAdministrativeType,
@@ -357,7 +356,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                         ),
                         const SizedBox(height: 16),
 
-                        // Committee Selection (when "اجتماع لجنة" is selected)
+                        // Committee Selection
                         if (_showCommitteeSelection) ...[
                           DropdownButtonFormField<String>(
                             value: _selectedCommitteeId,

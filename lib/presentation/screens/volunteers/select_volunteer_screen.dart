@@ -31,7 +31,7 @@ class _SelectVolunteerScreenState extends State<SelectVolunteerScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
-          'قافلة',
+          'اختيار متطوع حالي',
           style: TextStyle(
             color: Colors.black,
             fontSize: 20,

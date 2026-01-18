@@ -169,7 +169,7 @@ class _CreateVolunteerScreenState extends State<CreateVolunteerScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
-          'قافلة',
+          'اضافة متطوع',
           style: TextStyle(
             color: Colors.black,
             fontSize: 20,
@@ -181,18 +181,7 @@ class _CreateVolunteerScreenState extends State<CreateVolunteerScreen> {
       body: Column(
         children: [
           // Date and Location Fields (Empty for create screen)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
-            child: Row(
-              children: [
-                Expanded(child: _buildDisabledTextField('المكان')),
-                const SizedBox(width: 16),
-                Expanded(child: _buildDisabledTextField('التاريخ')),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 8),
+          const SizedBox(height: 18),
 
           // Main Form Card
           Expanded(
@@ -338,14 +327,6 @@ class _CreateVolunteerScreenState extends State<CreateVolunteerScreen> {
                       // Birth Date Row
                       Row(
                         children: [
-                          Expanded(
-                            child: _buildFormField(
-                              controller: TextEditingController(),
-                              label: 'الخبرة',
-                              enabled: false,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
                           Expanded(
                             child: _buildFormField(
                               controller: _birthDateController,

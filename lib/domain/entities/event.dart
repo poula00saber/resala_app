@@ -1,5 +1,6 @@
 // ============================================
 // FILE: lib/domain/entities/event.dart
+// FIXED: Added committeeId and committeeName fields
 // ============================================
 
 class Event {
@@ -11,7 +12,7 @@ class Event {
   final String? location;
   final String? meetingPlace;
   final String? administrativeType;
-    final String? committeeId; // NEW
+  final String? committeeId; // NEW
   final String? committeeName; // NEW
   final List<String> volunteerIds;
   final DateTime createdAt;
