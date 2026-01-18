@@ -1,6 +1,6 @@
 // ============================================
 // FILE: lib/presentation/screens/interviews/interview_details_screen.dart
-// FIXED: Ensures we're updating the SAME interview, not creating duplicates
+// ENHANCED UI - SAME LOGIC (No changes to functionality)
 // ============================================
 
 import 'package:flutter/material.dart';
@@ -70,7 +70,10 @@ class _InterviewDetailsScreenState extends State<InterviewDetailsScreen> {
     if (_passed == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('يرجى تحديد نتيجة المقابلة'),
+          content: Text(
+            'يرجى تحديد نتيجة المقابلة',
+            style: TextStyle(fontFamily: 'Cairo'),
+          ),
           backgroundColor: Colors.red,
         ),
       );
@@ -132,10 +135,21 @@ class _InterviewDetailsScreenState extends State<InterviewDetailsScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            _passed! ? 'تم حفظ المقابلة بنجاح ✓' : 'تم حفظ المقابلة (راسب)',
+          content: Row(
+            children: [
+              Icon(
+                _passed! ? Icons.check_circle : Icons.info,
+                color: Colors.white,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                _passed! ? 'تم حفظ المقابلة بنجاح ✓' : 'تم حفظ المقابلة (راسب)',
+                style: const TextStyle(fontFamily: 'Cairo'),
+              ),
+            ],
           ),
           backgroundColor: _passed! ? Colors.green : Colors.orange,
+          duration: const Duration(seconds: 2),
         ),
       );
 
@@ -145,7 +159,16 @@ class _InterviewDetailsScreenState extends State<InterviewDetailsScreen> {
       print('❌ Failed to save interview');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('حدث خطأ أثناء حفظ المقابلة'),
+          content: Row(
+            children: [
+              Icon(Icons.error, color: Colors.white),
+              SizedBox(width: 8),
+              Text(
+                'حدث خطأ أثناء حفظ المقابلة',
+                style: TextStyle(fontFamily: 'Cairo'),
+              ),
+            ],
+          ),
           backgroundColor: Colors.red,
         ),
       );
@@ -158,197 +181,97 @@ class _InterviewDetailsScreenState extends State<InterviewDetailsScreen> {
       backgroundColor: AppTheme.background,
       appBar: AppBar(
         backgroundColor: AppTheme.background,
-        elevation: 0,
+        elevation: 1,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.arrow_back, color: AppTheme.primary),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Column(
-          children: [
-            Text(
-              widget.interview.volunteerName,
-              style: const TextStyle(
-                fontFamily: 'Cairo',
-                color: Colors.black,
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            Text(
-              'ID: ${widget.interview.id}',
-              style: const TextStyle(
-                fontFamily: 'Cairo',
-                color: Colors.grey,
-                fontSize: 10,
-              ),
-            ),
-          ],
+        title: Text(
+          widget.interview.volunteerName,
+          style: const TextStyle(
+            fontFamily: 'Cairo',
+            color: AppTheme.primary,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         centerTitle: true,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.save, color: AppTheme.primary),
-            onPressed: _isSaving ? null : _saveInterview,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: IconButton(
+              icon: _isSaving
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppTheme.primary,
+                      ),
+                    )
+                  : const Icon(Icons.save, color: AppTheme.primary, size: 24),
+              onPressed: _isSaving ? null : _saveInterview,
+            ),
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+      body: Column(
+        children: [
+          // Header with interview info
+
+          // Main content
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 20),
+
+                  // Interview Questions
+                  _buildQuestionsSection(),
+
+                  const SizedBox(height: 20),
+
+                  // Notes
+                  _buildNotesSection(),
+
+                  const SizedBox(height: 80),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+      floatingActionButton: _buildSaveFAB(),
+    );
+  }
+
+  Widget _buildResultSection() {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Interview Info Card
-            Card(
-              elevation: 2,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'معلومات المقابلة',
-                      style: TextStyle(
-                        fontFamily: 'Cairo',
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.primary,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.calendar_today,
-                          size: 18,
-                          color: Colors.grey,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'تاريخ المقابلة: ${_formatDate(widget.interview.interviewDate)}',
-                          style: const TextStyle(
-                            fontFamily: 'Cairo',
-                            fontSize: 14,
-                            color: Colors.grey,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        const Icon(Icons.badge, size: 18, color: Colors.grey),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            'معرف المقابلة: ${widget.interview.id}',
-                            style: const TextStyle(
-                              fontFamily: 'Cairo',
-                              fontSize: 12,
-                              color: Colors.grey,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                    if (widget.interview.totalGrade != null) ...[
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Icon(
-                            widget.interview.passed == true
-                                ? Icons.check_circle
-                                : Icons.cancel,
-                            size: 18,
-                            color: widget.interview.passed == true
-                                ? Colors.green
-                                : Colors.red,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'النتيجة: ${widget.interview.passed == true ? 'ناجح' : 'راسب'}',
-                            style: TextStyle(
-                              fontFamily: 'Cairo',
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: widget.interview.passed == true
-                                  ? Colors.green
-                                  : Colors.red,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          const Icon(Icons.score, size: 18, color: Colors.grey),
-                          const SizedBox(width: 8),
-                          Text(
-                            'الدرجة: ${widget.interview.totalGrade}',
-                            style: const TextStyle(
-                              fontFamily: 'Cairo',
-                              fontSize: 14,
-                              color: Colors.grey,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 24),
-
-            // Result Selection
-            const Text(
-              'نتيجة المقابلة',
-              style: TextStyle(
-                fontFamily: 'Cairo',
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
-            ),
-            const SizedBox(height: 12),
+            // Section Title
             Row(
               children: [
-                Expanded(
-                  child: ChoiceChip(
-                    label: const Text(
-                      'ناجح',
-                      style: TextStyle(fontFamily: 'Cairo'),
-                    ),
-                    selected: _passed == true,
-                    onSelected: (selected) {
-                      setState(() {
-                        _passed = selected ? true : null;
-                      });
-                    },
-                    selectedColor: Colors.green,
-                    labelStyle: TextStyle(
-                      color: _passed == true ? Colors.white : Colors.black,
-                    ),
-                  ),
+                const Icon(
+                  Icons.rate_review,
+                  color: AppTheme.primary,
+                  size: 20,
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ChoiceChip(
-                    label: const Text(
-                      'راسب',
-                      style: TextStyle(fontFamily: 'Cairo'),
-                    ),
-                    selected: _passed == false,
-                    onSelected: (selected) {
-                      setState(() {
-                        _passed = selected ? false : null;
-                      });
-                    },
-                    selectedColor: Colors.red,
-                    labelStyle: TextStyle(
-                      color: _passed == false ? Colors.white : Colors.black,
-                    ),
+                const SizedBox(width: 8),
+                const Text(
+                  'تقييم المقابلة',
+                  style: TextStyle(
+                    fontFamily: 'Cairo',
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.primary,
                   ),
                 ),
               ],
@@ -356,102 +279,86 @@ class _InterviewDetailsScreenState extends State<InterviewDetailsScreen> {
 
             const SizedBox(height: 16),
 
-            // Total Grade
-            TextField(
-              controller: _gradeController,
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(
-                labelText: 'الدرجة الكلية',
-                hintText: 'أدخل الدرجة الكلية',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                prefixIcon: const Icon(Icons.score),
-              ),
-            ),
-
-            const SizedBox(height: 24),
-
-            // Interview Questions
-            const Text(
-              'أسئلة المقابلة',
+            // Result Selection
+            Text(
+              'النتيجة النهائية',
               style: TextStyle(
                 fontFamily: 'Cairo',
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Questions List
-            ...List.generate(FirebaseConstants.interviewQuestions.length, (
-              index,
-            ) {
-              final question = FirebaseConstants.interviewQuestions[index];
-              return _buildQuestionCard(
-                index + 1,
-                question,
-                _answerControllers[index],
-              );
-            }).expand((widget) => [widget, const SizedBox(height: 16)]),
-
-            // Notes
-            const Text(
-              'ملاحظات إضافية',
-              style: TextStyle(
-                fontFamily: 'Cairo',
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey[700],
               ),
             ),
             const SizedBox(height: 12),
-            TextField(
-              controller: _notesController,
-              maxLines: 4,
-              decoration: InputDecoration(
-                hintText: 'أدخل أي ملاحظات إضافية عن المقابلة...',
-                hintStyle: const TextStyle(fontFamily: 'Cairo'),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+
+            Row(
+              children: [
+                Expanded(
+                  child: _buildResultChip(
+                    label: 'ناجح',
+                    selected: _passed == true,
+                    color: Colors.green,
+                    icon: Icons.check_circle,
+                    onSelected: (selected) {
+                      setState(() => _passed = selected ? true : null);
+                    },
+                  ),
                 ),
-              ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildResultChip(
+                    label: 'راسب',
+                    selected: _passed == false,
+                    color: Colors.red,
+                    icon: Icons.cancel,
+                    onSelected: (selected) {
+                      setState(() => _passed = selected ? false : null);
+                    },
+                  ),
+                ),
+              ],
             ),
 
-            const SizedBox(height: 32),
+            const SizedBox(height: 20),
 
-            // Save Button
-            SizedBox(
-              width: double.infinity,
-              height: 52,
-              child: ElevatedButton(
-                onPressed: _isSaving ? null : _saveInterview,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primary,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  elevation: 3,
+            // Grade Input
+            Text(
+              'الدرجة الكلية',
+              style: TextStyle(
+                fontFamily: 'Cairo',
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey[700],
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _gradeController,
+              keyboardType: TextInputType.number,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontFamily: 'Cairo',
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+              decoration: InputDecoration(
+                hintText: 'أدخل الدرجة',
+                hintStyle: const TextStyle(color: Colors.grey),
+                filled: true,
+                fillColor: Colors.grey[50],
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
                 ),
-                child: _isSaving
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2.5,
-                        ),
-                      )
-                    : const Text(
-                        'حفظ المقابلة',
-                        style: TextStyle(
-                          fontFamily: 'Cairo',
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
+                prefixIcon: const Icon(Icons.score, color: AppTheme.primary),
+                suffix: const Text(
+                  'من 100',
+                  style: TextStyle(fontFamily: 'Cairo'),
+                ),
               ),
             ),
           ],
@@ -460,40 +367,168 @@ class _InterviewDetailsScreenState extends State<InterviewDetailsScreen> {
     );
   }
 
-  Widget _buildQuestionCard(
+  Widget _buildResultChip({
+    required String label,
+    required bool selected,
+    required Color color,
+    required IconData icon,
+    required Function(bool) onSelected,
+  }) {
+    return InkWell(
+      onTap: () => onSelected(!selected),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+        decoration: BoxDecoration(
+          color: selected ? color : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: selected ? color : Colors.grey[300]!,
+            width: selected ? 2 : 1,
+          ),
+          boxShadow: selected
+              ? [
+                  BoxShadow(
+                    color: color.withOpacity(0.2),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3),
+                  ),
+                ]
+              : null,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 18, color: selected ? Colors.white : color),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontFamily: 'Cairo',
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: selected ? Colors.white : color,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuestionsSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Section Header
+        Row(
+          children: [
+            const Icon(
+              Icons.question_answer,
+              color: AppTheme.primary,
+              size: 20,
+            ),
+            const SizedBox(width: 8),
+            const Text(
+              'أسئلة المقابلة',
+              style: TextStyle(
+                fontFamily: 'Cairo',
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: AppTheme.primary,
+              ),
+            ),
+            const Spacer(),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppTheme.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                '${FirebaseConstants.interviewQuestions.length} سؤال',
+                style: const TextStyle(
+                  fontFamily: 'Cairo',
+                  fontSize: 12,
+                  color: AppTheme.primary,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 16),
+
+        // Questions List
+        ...List.generate(FirebaseConstants.interviewQuestions.length, (index) {
+          final question = FirebaseConstants.interviewQuestions[index];
+          return _buildQuestionItem(
+            index + 1,
+            question,
+            _answerControllers[index],
+          );
+        }).expand((widget) => [widget, const SizedBox(height: 12)]),
+      ],
+    );
+  }
+
+  Widget _buildQuestionItem(
     int number,
     String question,
     TextEditingController controller,
   ) {
-    return Card(
-      elevation: 1,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Question Header
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Question Number
                 Container(
-                  width: 24,
-                  height: 24,
+                  width: 28,
+                  height: 28,
                   decoration: BoxDecoration(
-                    color: AppTheme.primary,
-                    borderRadius: BorderRadius.circular(12),
+                    gradient: LinearGradient(
+                      colors: [
+                        AppTheme.primary,
+                        AppTheme.primary.withOpacity(0.8),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(14),
                   ),
                   child: Center(
                     child: Text(
                       number.toString(),
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 12,
+                        fontSize: 14,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
                 ),
+
                 const SizedBox(width: 12),
+
+                // Question Text
                 Expanded(
                   child: Text(
                     question,
@@ -502,34 +537,165 @@ class _InterviewDetailsScreenState extends State<InterviewDetailsScreen> {
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                       color: Colors.black87,
+                      height: 1.4,
                     ),
                   ),
                 ),
               ],
             ),
+
             const SizedBox(height: 12),
+
+            // Answer Input
             TextField(
               controller: controller,
-              maxLines: 3,
+              maxLines: 4,
+              minLines: 2,
               textAlign: TextAlign.right,
-              style: const TextStyle(fontFamily: 'Cairo'),
+              style: const TextStyle(fontFamily: 'Cairo', fontSize: 14),
               decoration: InputDecoration(
-                hintText: 'اكتب إجابتك هنا...',
+                hintText: 'أدخل إجابتك هنا...',
                 hintStyle: const TextStyle(
                   fontFamily: 'Cairo',
                   color: Colors.grey,
+                  fontSize: 13,
                 ),
+                filled: true,
+                fillColor: Colors.grey[50],
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.grey[300]!),
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: AppTheme.primary),
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(color: AppTheme.primary, width: 1.5),
                 ),
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNotesSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Section Header
+        Row(
+          children: [
+            const Icon(Icons.note, color: AppTheme.primary, size: 20),
+            const SizedBox(width: 8),
+            const Text(
+              'ملاحظات إضافية',
+              style: TextStyle(
+                fontFamily: 'Cairo',
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: AppTheme.primary,
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 12),
+
+        // Notes Input
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'يمكنك إضافة أي ملاحظات إضافية عن المتطوع أو المقابلة',
+                  style: TextStyle(
+                    fontFamily: 'Cairo',
+                    fontSize: 13,
+                    color: Colors.grey[600],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _notesController,
+                  maxLines: 4,
+                  textAlign: TextAlign.right,
+                  style: const TextStyle(fontFamily: 'Cairo', fontSize: 14),
+                  decoration: InputDecoration(
+                    hintText: 'اكتب ملاحظاتك هنا...',
+                    hintStyle: const TextStyle(
+                      fontFamily: 'Cairo',
+                      color: Colors.grey,
+                      fontSize: 13,
+                    ),
+                    filled: true,
+                    fillColor: Colors.grey[50],
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(
+                        color: AppTheme.primary,
+                        width: 1.5,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 20),
+        _buildResultSection(),
+      ],
+    );
+  }
+
+  Widget _buildSaveFAB() {
+    return FloatingActionButton.extended(
+      onPressed: _isSaving ? null : _saveInterview,
+      backgroundColor: AppTheme.primary,
+      foregroundColor: Colors.white,
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      icon: _isSaving
+          ? const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white,
+              ),
+            )
+          : const Icon(Icons.save, size: 20),
+      label: const Text(
+        'حفظ المقابلة',
+        style: TextStyle(
+          fontFamily: 'Cairo',
+          fontSize: 14,
+          fontWeight: FontWeight.bold,
         ),
       ),
     );
