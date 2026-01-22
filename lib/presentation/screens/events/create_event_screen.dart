@@ -1,8 +1,3 @@
-// ============================================
-// FILE: lib/presentation/screens/events/create_event_screen.dart
-// FIXED: Committee selection orElse error
-// ============================================
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/event_provider.dart';
@@ -30,7 +25,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
   String _selectedType = FirebaseConstants.typeQafela;
   String? _selectedMeetingPlace;
   String? _selectedAdministrativeType;
-  String? _selectedCommitteeId;
+  String? _selectedMeetingTarget; // NEW: For meeting target selection
   List<dynamic> _committees = [];
 
   final List<String> _eventTypes = [
@@ -48,9 +43,17 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
     FirebaseConstants.meetingOfflineExternal,
   ];
 
+  // NEW: List of administrative types (without اجتماع لجنة)
+  final List<String> _administrativeTypes = [
+    'اجتماع ليدرات', // Leaders meeting
+    'اجتماع للكل', // Everyone meeting
+    'مهام إدارية أخرى', // Other administrative tasks
+  ];
+
   bool _isLoading = false;
   bool _showCustomEventTypeField = false;
   bool _showCommitteeSelection = false;
+  bool _showMeetingTargetSelection = false; // NEW
 
   @override
   void initState() {
@@ -80,13 +83,20 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
     return _selectedType == FirebaseConstants.typeAdministrative;
   }
 
+  bool _needsMeetingTarget() {
+    // Show meeting target selection only for typeMeeting
+    return _selectedType == FirebaseConstants.typeMeeting;
+  }
+
   bool _isCustomEventType() {
     return _selectedType == 'أخرى';
   }
 
   bool _isCommitteeMeeting() {
-    return _selectedType == FirebaseConstants.typeAdministrative &&
-        _selectedAdministrativeType == 'اجتماع لجنة';
+    return _selectedType == FirebaseConstants.typeMeeting &&
+        _selectedMeetingTarget != null &&
+        _selectedMeetingTarget != 'اجتماع ليدرات' &&
+        _selectedMeetingTarget != 'اجتماع للكل';
   }
 
   Future<void> _selectDate() async {
@@ -139,15 +149,16 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       finalEventType = _selectedType;
     }
 
-    // FIXED: Prepare committee data properly
+    // Prepare committee data
     String? committeeId;
     String? committeeName;
 
-    if (_isCommitteeMeeting() && _selectedCommitteeId != null) {
+    if (_isCommitteeMeeting() && _selectedMeetingTarget != null) {
       try {
+        // Check if selected meeting target is a committee
         final selectedCommittee = _committees.firstWhere(
-          (committee) => committee.id == _selectedCommitteeId,
-          orElse: () => null, // FIXED: Return null instead of throwing
+          (committee) => committee.id == _selectedMeetingTarget,
+          orElse: () => null,
         );
 
         if (selectedCommittee != null) {
@@ -257,10 +268,11 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                             _selectedType = newValue!;
                             _selectedMeetingPlace = null;
                             _selectedAdministrativeType = null;
-                            _selectedCommitteeId = null;
+                            _selectedMeetingTarget = null;
                             _customEventTypeController.clear();
                             _showCustomEventTypeField = _isCustomEventType();
                             _showCommitteeSelection = _isCommitteeMeeting();
+                            _showMeetingTargetSelection = _needsMeetingTarget();
                           });
                         },
                       ),
@@ -297,7 +309,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Meeting Place
+                      // Meeting Place (for نوع الاجتماع)
                       if (_needsMeetingPlace()) ...[
                         DropdownButtonFormField<String>(
                           value: _selectedMeetingPlace,
@@ -323,9 +335,56 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                           ),
                         ),
                         const SizedBox(height: 16),
+
+                        // NEW: Meeting Target Selection (for نوع الاجتماع)
+                        DropdownButtonFormField<String>(
+                          value: _selectedMeetingTarget,
+                          decoration: const InputDecoration(
+                            labelText: 'نوع الاجتماع',
+                            border: OutlineInputBorder(),
+                            prefixIcon: Icon(Icons.group),
+                          ),
+                          items: [
+                            // First two fixed options
+                            const DropdownMenuItem<String>(
+                              value: 'اجتماع ليدرات',
+                              child: Text('اجتماع ليدرات'),
+                            ),
+                            const DropdownMenuItem<String>(
+                              value: 'اجتماع للكل',
+                              child: Text('اجتماع للكل'),
+                            ),
+                            // Divider
+                            const DropdownMenuItem<String>(
+                              value: 'divider',
+                              enabled: false,
+                              child: Divider(),
+                            ),
+                            // Then all committees
+                            ..._committees.map((committee) {
+                              return DropdownMenuItem<String>(
+                                value: committee.id,
+                                child: Text(committee.name ?? 'بدون اسم'),
+                              );
+                            }).toList(),
+                          ],
+                          onChanged: (String? newValue) {
+                            if (newValue != 'divider') {
+                              setState(() {
+                                _selectedMeetingTarget = newValue;
+                                _showCommitteeSelection = _isCommitteeMeeting();
+                              });
+                            }
+                          },
+                          validator: (value) => Validators.validateRequired(
+                            value,
+                            'نوع الاجتماع',
+                          ),
+                        ),
+                        const SizedBox(height: 16),
                       ],
 
-                      // Administrative Type
+                      // Administrative Type (for نوع الإداريات)
                       if (_needsAdministrativeType()) ...[
                         DropdownButtonFormField<String>(
                           value: _selectedAdministrativeType,
@@ -334,9 +393,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                             border: OutlineInputBorder(),
                             prefixIcon: Icon(Icons.admin_panel_settings),
                           ),
-                          items: FirebaseConstants.administrativeTypes.map((
-                            String type,
-                          ) {
+                          items: _administrativeTypes.map((String type) {
                             return DropdownMenuItem<String>(
                               value: type,
                               child: Text(type),
@@ -345,8 +402,6 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                           onChanged: (String? newValue) {
                             setState(() {
                               _selectedAdministrativeType = newValue;
-                              _selectedCommitteeId = null;
-                              _showCommitteeSelection = _isCommitteeMeeting();
                             });
                           },
                           validator: (value) => Validators.validateRequired(
@@ -355,33 +410,6 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                           ),
                         ),
                         const SizedBox(height: 16),
-
-                        // Committee Selection
-                        if (_showCommitteeSelection) ...[
-                          DropdownButtonFormField<String>(
-                            value: _selectedCommitteeId,
-                            decoration: const InputDecoration(
-                              labelText: 'اختر اللجنة',
-                              border: OutlineInputBorder(),
-                              prefixIcon: Icon(Icons.groups),
-                            ),
-                            items: _committees.map((committee) {
-                              return DropdownMenuItem<String>(
-                                value: committee.id,
-                                child: Text(committee.name ?? 'بدون اسم'),
-                              );
-                            }).toList(),
-                            onChanged: (String? newValue) {
-                              setState(() {
-                                _selectedCommitteeId = newValue;
-                              });
-                            },
-                            validator: (value) => _isCommitteeMeeting()
-                                ? Validators.validateRequired(value, 'اللجنة')
-                                : null,
-                          ),
-                          const SizedBox(height: 16),
-                        ],
                       ],
 
                       // Description

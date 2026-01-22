@@ -1,12 +1,13 @@
 // ============================================
 // FILE: lib/presentation/screens/settings/committees_management_screen.dart
-// NEW FILE - Committee management with add/edit/delete
+// UPDATED: Added navigation to committee volunteers screen
 // ============================================
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/committee_provider.dart';
 import '../../themes/app_theme.dart';
+import 'committee_volunteers_screen.dart';
 
 class CommitteesManagementScreen extends StatelessWidget {
   const CommitteesManagementScreen({super.key});
@@ -109,79 +110,94 @@ class CommitteesManagementScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(16),
                 ),
                 elevation: 2,
-                child: ListTile(
-                  contentPadding: const EdgeInsets.all(16),
-                  leading: Container(
-                    width: 50,
-                    height: 50,
-                    decoration: BoxDecoration(
-                      color: committee.isActive
-                          ? AppTheme.primary.withOpacity(0.1)
-                          : Colors.grey[300],
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.groups,
-                      color: committee.isActive
-                          ? AppTheme.primary
-                          : Colors.grey,
-                    ),
-                  ),
-                  title: Text(
-                    committee.name,
-                    style: const TextStyle(
-                      fontFamily: 'Cairo',
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    textAlign: TextAlign.right,
-                  ),
-                  subtitle: committee.description != null
-                      ? Text(
-                          committee.description!,
-                          style: TextStyle(
-                            fontFamily: 'Cairo',
-                            fontSize: 12,
-                            color: Colors.grey[600],
-                          ),
-                          textAlign: TextAlign.right,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        )
-                      : null,
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Toggle Active Status
-                      Switch(
-                        value: committee.isActive,
-                        onChanged: (value) async {
-                          final provider = Provider.of<CommitteeProvider>(
-                            context,
-                            listen: false,
-                          );
-                          await provider.toggleCommitteeStatus(
-                            committee.id,
-                            value,
-                          );
-                        },
-                        activeColor: AppTheme.primary,
+                child: InkWell(
+                  onTap: () {
+                    // Navigate to committee volunteers screen
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => CommitteeVolunteersScreen(
+                          committeeId: committee.id,
+                          committeeName: committee.name,
+                        ),
                       ),
-                      // Edit Button
-                      IconButton(
-                        icon: const Icon(Icons.edit, color: AppTheme.primary),
-                        onPressed: () {
-                          _showEditDialog(context, committee);
-                        },
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(16),
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.all(16),
+                    leading: Container(
+                      width: 50,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        color: committee.isActive
+                            ? AppTheme.primary.withOpacity(0.1)
+                            : Colors.grey[300],
+                        shape: BoxShape.circle,
                       ),
-                      // Delete Button
-                      IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () {
-                          _showDeleteDialog(context, committee.id);
-                        },
+                      child: Icon(
+                        Icons.groups,
+                        color: committee.isActive
+                            ? AppTheme.primary
+                            : Colors.grey,
                       ),
-                    ],
+                    ),
+                    title: Text(
+                      committee.name,
+                      style: const TextStyle(
+                        fontFamily: 'Cairo',
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      textAlign: TextAlign.right,
+                    ),
+                    subtitle: committee.description != null
+                        ? Text(
+                            committee.description!,
+                            style: TextStyle(
+                              fontFamily: 'Cairo',
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                            ),
+                            textAlign: TextAlign.right,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          )
+                        : null,
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Toggle Active Status
+                        Switch(
+                          value: committee.isActive,
+                          onChanged: (value) async {
+                            final provider = Provider.of<CommitteeProvider>(
+                              context,
+                              listen: false,
+                            );
+                            await provider.toggleCommitteeStatus(
+                              committee.id,
+                              value,
+                            );
+                          },
+                          activeColor: AppTheme.primary,
+                        ),
+                        // Edit Button
+                        IconButton(
+                          icon: const Icon(Icons.edit, color: AppTheme.primary),
+                          onPressed: () {
+                            _showEditDialog(context, committee);
+                          },
+                        ),
+                        // Delete Button
+                        IconButton(
+                          icon: const Icon(Icons.delete, color: Colors.red),
+                          onPressed: () {
+                            _showDeleteDialog(context, committee.id);
+                          },
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               );

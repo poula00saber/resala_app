@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:resala/presentation/screens/contacts/contacts_screen.dart';
 import 'package:resala/presentation/screens/promotions/promotions_screen.dart';
-import 'package:resala/presentation/screens/settings/committees_management_screen.dart';
+import 'package:resala/presentation/screens/committees/committees_management_screen.dart';
 import 'package:resala/presentation/themes/app_theme.dart';
 import '../profiles/profiles_screen.dart';
 import '../events/events_screen.dart';
@@ -85,7 +85,7 @@ class HomeScreen extends StatelessWidget {
                   ),
                 );
               }),
-              _menuButton("اللجان", Icons.groups_2_outlined, () {
+              _menuButton("الهيكل", Icons.groups_2_outlined, () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -122,14 +122,14 @@ class HomeScreen extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 40, color: Colors.white),
+              Icon(icon, size: 60, color: Colors.white),
               const SizedBox(height: 12),
               Text(
                 title,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   color: Colors.white,
-                  fontSize: 16,
+                  fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
               ),

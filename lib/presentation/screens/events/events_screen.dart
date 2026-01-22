@@ -1,6 +1,7 @@
 // ============================================
 // FILE: lib/presentation/screens/events/events_screen.dart
 // UPDATED: Calculates shirt count from volunteers' hasTshirt field
+// UPDATED: Shows committee name for meetings (type: 'اجتماع')
 // ============================================
 
 import 'package:flutter/material.dart';
@@ -51,29 +52,41 @@ class EventsScreen extends StatelessWidget {
     BuildContext context,
     dynamic event,
   ) async {
-    if (event.type == 'إداري' && event.administrativeType != null) {
-      return 'نوع: ${event.administrativeType}';
-    } else if (event.type == 'اجتماع لجنة') {
-      // Show committee name from the event
+    // Check if it's a meeting event
+    if (event.type == 'اجتماع') {
+      // Show committee name or meeting type
       if (event.committeeName != null && event.committeeName!.isNotEmpty) {
         return 'لجنة: ${event.committeeName}';
+      } else if (event.administrativeType == 'اجتماع ليدرات') {
+        return 'اجتماع ليدرات';
+      } else if (event.administrativeType == 'اجتماع للكل') {
+        return 'اجتماع للكل';
       } else {
-        return 'اجتماع لجنة';
+        return 'اجتماع';
       }
-    } else if (event.type == 'كرنفال') {
+    }
+    // Check if it's an administrative event
+    else if (event.type == 'اداريات' && event.administrativeType != null) {
+      return 'نوع: ${event.administrativeType}';
+    }
+    // Check if it's a carnival
+    else if (event.type == 'كرنفال') {
       final shirtCount = await _calculateShirtCountFromVolunteers(
         context,
         event,
       );
       return 'كرنفال - التيشيرتات: $shirtCount';
-    } else if (event.type == 'يوم عائلي') {
+    }
+    // Check if it's a family day
+    else if (event.type == 'يوم عائلي') {
       final shirtCount = await _calculateShirtCountFromVolunteers(
         context,
         event,
       );
-      return 'يوم عائلي - : $shirtCount';
+      return 'يوم عائلي - التيشيرتات: $shirtCount';
     }
-    return '';
+    // For other event types
+    return event.type;
   }
 
   // Calculate shirt count from volunteers' hasTshirt field
@@ -107,14 +120,16 @@ class EventsScreen extends StatelessWidget {
 
   IconData _getEventTypeIcon(dynamic event) {
     switch (event.type) {
-      case 'إداري':
+      case 'اداريات':
         return Icons.admin_panel_settings;
-      case 'اجتماع لجنة':
+      case 'اجتماع':
         return Icons.groups;
       case 'كرنفال':
         return Icons.celebration;
       case 'يوم عائلي':
         return Icons.family_restroom;
+      case 'قافلة':
+        return Icons.directions_bus;
       default:
         return Icons.event;
     }
@@ -757,18 +772,20 @@ class _EventTileState extends State<_EventTile> {
   @override
   void initState() {
     super.initState();
+    // Load appropriate details based on event type
+    _loadEventDetails();
+  }
+
+  Future<void> _loadEventDetails() async {
+    // Check if it's a carnival or family day to load shirt count
     if (widget.event.type == 'كرنفال' || widget.event.type == 'يوم عائلي') {
-      _loadShirtCountAndDetails();
+      await _loadShirtCountAndDetails();
     } else {
-      _loadEventTypeDetails();
+      await _loadEventTypeDetails();
     }
   }
 
   Future<void> _loadShirtCountAndDetails() async {
-    if (widget.event.type != 'كرنفال' && widget.event.type != 'يوم عائلي') {
-      return;
-    }
-
     setState(() => _isLoadingShirtCount = true);
 
     try {
@@ -805,18 +822,27 @@ class _EventTileState extends State<_EventTile> {
   }
 
   Future<void> _loadEventTypeDetails() async {
-    if (widget.event.type == 'إداري' &&
-        widget.event.administrativeType != null) {
-      _eventTypeDetails = 'نوع: ${widget.event.administrativeType}';
-    } else if (widget.event.type == 'اجتماع لجنة') {
-      // Show committee name if available in the event
+    // For meeting events
+    if (widget.event.type == 'اجتماع') {
+      // Show committee name or meeting type
       if (widget.event.committeeName != null &&
           widget.event.committeeName!.isNotEmpty) {
         _eventTypeDetails = 'لجنة: ${widget.event.committeeName}';
+      } else if (widget.event.administrativeType == 'اجتماع ليدرات') {
+        _eventTypeDetails = 'اجتماع ليدرات';
+      } else if (widget.event.administrativeType == 'اجتماع للكل') {
+        _eventTypeDetails = 'اجتماع للكل';
       } else {
-        _eventTypeDetails = 'اجتماع لجنة';
+        _eventTypeDetails = 'اجتماع';
       }
-    } else {
+    }
+    // For administrative events
+    else if (widget.event.type == 'اداريات' &&
+        widget.event.administrativeType != null) {
+      _eventTypeDetails = 'نوع: ${widget.event.administrativeType}';
+    }
+    // For other event types
+    else {
       _eventTypeDetails = widget.event.type;
     }
 
