@@ -1,6 +1,6 @@
 // ============================================
 // FILE: lib/presentation/screens/promotions/volunteer_promotion_screen.dart
-// UPDATED: Uses PromotionProvider
+// UPDATED: New hierarchy with age checks
 // ============================================
 
 import 'package:flutter/material.dart';
@@ -38,7 +38,10 @@ class _VolunteerPromotionScreenState extends State<VolunteerPromotionScreen> {
       listen: false,
     );
 
-    final nextLevel = FirebaseConstants.getNextLevel(_currentLevel);
+    final nextLevel = FirebaseConstants.getNextLevel(
+      _currentLevel,
+      age: widget.volunteer.age,
+    );
 
     if (nextLevel != null) {
       await promotionProvider.loadPromotionRequirements(
@@ -70,9 +73,29 @@ class _VolunteerPromotionScreenState extends State<VolunteerPromotionScreen> {
   }
 
   Future<void> _promoteVolunteer() async {
-    final nextLevel = FirebaseConstants.getNextLevel(_currentLevel);
+    final nextLevel = FirebaseConstants.getNextLevel(
+      _currentLevel,
+      age: widget.volunteer.age,
+    );
 
     if (nextLevel != null) {
+      // Special check for شبل مميز to مشروع مسئول
+      if (_currentLevel == 'شبل مميز' && nextLevel == 'مشروع مسئول') {
+        if (widget.volunteer.age < 17) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text(
+                'لا يمكن الترقية: يجب أن يكون المتطوع فوق سن 17',
+                style: TextStyle(fontFamily: 'Cairo'),
+                textAlign: TextAlign.center,
+              ),
+              backgroundColor: Colors.orange,
+            ),
+          );
+          return;
+        }
+      }
+
       // Update volunteer level
       await Provider.of<VolunteerProvider>(
         context,
@@ -92,7 +115,10 @@ class _VolunteerPromotionScreenState extends State<VolunteerPromotionScreen> {
       });
 
       // Load new requirements for next level (if any)
-      final newNextLevel = FirebaseConstants.getNextLevel(nextLevel);
+      final newNextLevel = FirebaseConstants.getNextLevel(
+        nextLevel,
+        age: widget.volunteer.age,
+      );
       if (newNextLevel != null) {
         await promotionProvider.loadPromotionRequirements(
           volunteerId: widget.volunteer.id,
@@ -104,7 +130,7 @@ class _VolunteerPromotionScreenState extends State<VolunteerPromotionScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'تم ترقية ${widget.volunteer.name} إلى $_currentLevel',
+            'تم ترقية ${widget.volunteer.name} إلى $nextLevel',
             style: const TextStyle(fontFamily: 'Cairo'),
             textAlign: TextAlign.center,
           ),
@@ -117,7 +143,10 @@ class _VolunteerPromotionScreenState extends State<VolunteerPromotionScreen> {
   @override
   Widget build(BuildContext context) {
     final promotionProvider = Provider.of<PromotionProvider>(context);
-    final nextLevel = FirebaseConstants.getNextLevel(_currentLevel);
+    final nextLevel = FirebaseConstants.getNextLevel(
+      _currentLevel,
+      age: widget.volunteer.age,
+    );
     final bool isMaxLevel = nextLevel == null;
 
     return Scaffold(
@@ -184,6 +213,20 @@ class _VolunteerPromotionScreenState extends State<VolunteerPromotionScreen> {
                             color: AppTheme.primary,
                           ),
                         ),
+                        // Show age requirement warning for شبل مميز
+                        if (_currentLevel == 'شبل مميز' &&
+                            widget.volunteer.age < 17)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8),
+                            child: Text(
+                              'يجب أن يكون المتطوع فوق سن 17 للترقية',
+                              style: TextStyle(
+                                fontFamily: 'Cairo',
+                                fontSize: 12,
+                                color: Colors.orange[700],
+                              ),
+                            ),
+                          ),
                         if (!isMaxLevel) ...[
                           const SizedBox(height: 16),
                           Row(
@@ -278,7 +321,10 @@ class _VolunteerPromotionScreenState extends State<VolunteerPromotionScreen> {
                                   null &&
                               promotionProvider
                                   .currentPromotionRequirement!
-                                  .isComplete)
+                                  .isComplete &&
+                              // Additional check for age requirement
+                              !(_currentLevel == 'شبل مميز' &&
+                                  widget.volunteer.age < 17))
                           ? _promoteVolunteer
                           : null,
                       style: ElevatedButton.styleFrom(
@@ -288,7 +334,9 @@ class _VolunteerPromotionScreenState extends State<VolunteerPromotionScreen> {
                                     null &&
                                 promotionProvider
                                     .currentPromotionRequirement!
-                                    .isComplete)
+                                    .isComplete &&
+                                !(_currentLevel == 'شبل مميز' &&
+                                    widget.volunteer.age < 17))
                             ? AppTheme.primary
                             : Colors.grey,
                         foregroundColor: Colors.white,
@@ -301,6 +349,9 @@ class _VolunteerPromotionScreenState extends State<VolunteerPromotionScreen> {
                       child: Text(
                         isMaxLevel
                             ? 'أعلى مستوى'
+                            : (_currentLevel == 'شبل مميز' &&
+                                  widget.volunteer.age < 17)
+                            ? 'يجب أن يكون فوق 17 للترقية'
                             : 'ترقية من $_currentLevel إلى $nextLevel',
                         style: const TextStyle(
                           fontFamily: 'Cairo',
@@ -310,8 +361,6 @@ class _VolunteerPromotionScreenState extends State<VolunteerPromotionScreen> {
                       ),
                     ),
                   ),
-
-                  // ... rest of the UI remains the same
                 ],
               ),
             ),
@@ -319,6 +368,10 @@ class _VolunteerPromotionScreenState extends State<VolunteerPromotionScreen> {
   }
 
   Widget _buildRequirementItem(Requirement requirement, int index) {
+    // Special handling for age requirement in شبل مميز
+    bool isAgeRequirement = requirement.description.contains('فوق سن 17');
+    bool canToggle = !isAgeRequirement || widget.volunteer.age >= 17;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
@@ -330,7 +383,7 @@ class _VolunteerPromotionScreenState extends State<VolunteerPromotionScreen> {
         ),
       ),
       child: InkWell(
-        onTap: () => _toggleRequirement(index),
+        onTap: canToggle ? () => _toggleRequirement(index) : null,
         borderRadius: BorderRadius.circular(15),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -354,6 +407,8 @@ class _VolunteerPromotionScreenState extends State<VolunteerPromotionScreen> {
                 ),
                 child: requirement.isCompleted
                     ? const Icon(Icons.check, size: 16, color: Colors.white)
+                    : (isAgeRequirement && widget.volunteer.age < 17)
+                    ? Icon(Icons.block, size: 16, color: Colors.grey[400])
                     : null,
               ),
 
@@ -361,19 +416,34 @@ class _VolunteerPromotionScreenState extends State<VolunteerPromotionScreen> {
 
               // Requirement Description
               Expanded(
-                child: Text(
-                  requirement.description,
-                  style: TextStyle(
-                    fontFamily: 'Cairo',
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: requirement.isCompleted
-                        ? AppTheme.primary
-                        : Colors.black87,
-                  ),
-                  textAlign: TextAlign.right,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      requirement.description,
+                      style: TextStyle(
+                        fontFamily: 'Cairo',
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: requirement.isCompleted
+                            ? AppTheme.primary
+                            : Colors.black87,
+                      ),
+                      textAlign: TextAlign.right,
+                    ),
+                    if (isAgeRequirement && widget.volunteer.age < 17)
+                      const Padding(
+                        padding: EdgeInsets.only(top: 4),
+                        child: Text(
+                          'غير متاح (المتطوع تحت 17 سنة)',
+                          style: TextStyle(
+                            fontFamily: 'Cairo',
+                            fontSize: 10,
+                            color: Colors.orange,
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               ),
 

@@ -11,7 +11,6 @@ class FirebaseConstants {
   static const String evaluationsCollection = 'evaluations';
   static const String interviewsCollection = 'interviews';
 
-
   // Event Types
   static const String typeQafela = 'قافلة';
   static const String typeKarnafal = 'كرنفال';
@@ -28,26 +27,24 @@ class FirebaseConstants {
 
   // Administrative Types
   static const List<String> administrativeTypes = [
-    'تجهيز', 
-'طلبية', 
-'جرد', 
-'اداريات',
-'صرف', 
-'مشتريات', 
-'ميديا',
-'استكشاف',
-'متابعة',
-'اتصالات',
-'ورشة فنية'
+    'تجهيز',
+    'طلبية',
+    'جرد',
+    'اداريات',
+    'صرف',
+    'مشتريات',
+    'ميديا',
+    'استكشاف',
+    'متابعة',
+    'اتصالات',
+    'ورشة فنية',
   ];
 
   // Volunteer Status
   static const String statusActive = 'active';
   static const String statusInactive = 'inactive';
 
-
-
-// Interview Questions
+  // Interview Questions
   static const List<String> interviewQuestions = [
     'عرفتنا منين',
     'طريقة التواصل',
@@ -68,8 +65,6 @@ class FirebaseConstants {
   static const String interviewStatusPassed = 'passed';
   static const String interviewStatusFailed = 'failed';
 
-
-
   // Evaluation Criteria
   static const Map<String, String> evaluationCriteria = {
     'commitment': 'الالتزام',
@@ -80,60 +75,46 @@ class FirebaseConstants {
 
   // Genders (NEW)
   static const List<String> genders = ['ذكر', 'أنثى'];
-// Educational/Promotion Levels - UPDATED
+
+  // NEW: Educational/Promotion Levels with two separate paths
   static const List<String> educationalLevels = [
-    'شبل', // Under 17 years old
-    'جدد', // 17 or older
-    'داخل متابعة',
-    'تدريب',
-    'مشروع مسئول',
-    'مسئول',
+    'شبل', // Under 17 path start
+    'شبل مميز', // Under 17 path second level
+    'جدد', // 17+ path start
+    'تدريب', // 17+ path second level
+    'مشروع مسئول', // Both paths converge here
+    'مسئول', // Final level
   ];
 
-  // Educational Levels with Order (for sorting) - UPDATED
+  // NEW: Educational Levels with Order (for sorting)
   static const Map<String, int> educationalLevelsOrder = {
     'مسئول': 6,
     'مشروع مسئول': 5,
     'تدريب': 4,
-    'داخل متابعة': 3,
+    'شبل مميز': 3,
     'جدد': 2,
-    'شبل': 2, // SAME LEVEL as جدد
+    'شبل': 1,
     '': 0,
   };
 
-  // Promotion Requirements for each level - UPDATED
+  // NEW: Promotion Requirements for each level
   static const Map<String, List<String>> promotionRequirements = {
-    'شبل': [
-      'حضر 2 اجتماعات على الأقل',
-      'شارك في نشاط تطوعي واحد',
-      'أكمل ملف التعريف الشخصي',
-      'حضر جلسة تعريفية',
+    'شبل': ['مشاركة شهرين', 'انترفيو التسكين', 'التيشرت'],
+    'شبل مميز': [
+      'فوق سن 17',
+      'مشاركة 4 شهور',
+      'الميني كامب',
+      'انترفيو الاعمدة',
     ],
     'جدد': [
-      'حضر 4 اجتماعات على الأقل',
-      'شارك في نشاط تطوعي واحد',
-      'أكمل ملف التعريف الشخصي',
-      'حضر جلسة تعريفية',
+      'مشاركة شهرين',
+      'التيشيرت',
+      'الاورينتيشن',
+      'انترفيو التسكين',
+      'الميني كامب',
     ],
-    // Both شبل and جدد promote to داخل متابعة
-    'داخل متابعة': [
-      'حضر 8 اجتماعات على الأقل',
-      'قاد نشاط تطوعي صغير',
-      'قدم تقرير عن تجربته',
-      'حضر ورشة تدريبية',
-    ],
-    'تدريب': [
-      'أكمل برنامج التدريب الأساسي',
-      'شارك في 3 مشاريع كمساعد',
-      'قدم عرض تقديمي',
-      'حصل على تقييم إيجابي من المدرب',
-    ],
-    'مشروع مسئول': [
-      'قاد مشروع كامل بنجاح',
-      'درّب 2 متطوعين جدد',
-      'أعد خطة عمل لمشروع جديد',
-      'حصل على تقييم ممتاز من المشرف',
-    ],
+    'تدريب': ['انترفيو الاعمدة', 'مشاركة 4 شهور'],
+    'مشروع مسئول': ['كامب 48', 'تارجت رسالاوي', 'حفلة التخرج'],
   };
 
   // Helper method to determine initial educational level based on age
@@ -145,13 +126,15 @@ class FirebaseConstants {
     }
   }
 
-  // Helper method to get next level
-  static String? getNextLevel(String currentLevel) {
+  // Helper method to get next level based on current level and age
+  static String? getNextLevel(String currentLevel, {int? age}) {
     switch (currentLevel) {
       case 'شبل':
+        return 'شبل مميز';
+      case 'شبل مميز':
+        // Check if volunteer is above 17
+        return 'مشروع مسئول';
       case 'جدد':
-        return 'داخل متابعة';
-      case 'داخل متابعة':
         return 'تدريب';
       case 'تدريب':
         return 'مشروع مسئول';
@@ -160,7 +143,7 @@ class FirebaseConstants {
       case 'مسئول':
         return null;
       default:
-        return 'داخل متابعة';
+        return null;
     }
   }
 
@@ -183,6 +166,4 @@ class FirebaseConstants {
   static const String educationalLevelField = 'educationalLevel';
   static const String universityField = 'university';
   static const String profileImageField = 'profileImage';
-
-  
 }

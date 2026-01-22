@@ -1,6 +1,6 @@
 // ============================================
 // FILE: lib/presentation/screens/promotions/promotions_screen.dart
-// UPDATED: Sorts volunteers by higher degrees first
+// UPDATED: Supports new hierarchy
 // ============================================
 
 import 'package:flutter/material.dart';
@@ -20,35 +20,6 @@ class PromotionsScreen extends StatefulWidget {
 class _PromotionsScreenState extends State<PromotionsScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
-
-  // Define educational levels hierarchy (highest to lowest)
-  final Map<String, int> _educationalLevelsOrder =
-      FirebaseConstants.educationalLevelsOrder;
-
-  // Sort volunteers by educational level (higher first)
-  List<dynamic> _sortVolunteersByLevel(List<dynamic> volunteers) {
-    // Create a copy to avoid modifying the original list
-    final sortedVolunteers = List<dynamic>.from(volunteers);
-
-    sortedVolunteers.sort((a, b) {
-      final aLevel = a.educationalLevel ?? '';
-      final bLevel = b.educationalLevel ?? '';
-
-      // Get level order (higher number = higher level)
-      final aOrder = _educationalLevelsOrder[aLevel] ?? 0;
-      final bOrder = _educationalLevelsOrder[bLevel] ?? 0;
-
-      // Sort by level (higher first), then by name
-      if (bOrder != aOrder) {
-        return bOrder.compareTo(aOrder); // Descending order
-      } else {
-        // If same level, sort alphabetically by name
-        return a.name.compareTo(b.name);
-      }
-    });
-
-    return sortedVolunteers;
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -177,10 +148,13 @@ class _PromotionsScreenState extends State<PromotionsScreen> {
 
   Widget _buildVolunteerCard(dynamic volunteer) {
     final String currentLevel = volunteer.educationalLevel ?? 'جدد';
-    final bool canBePromoted = currentLevel != 'مسئول';
+    final nextLevel = FirebaseConstants.getNextLevel(
+      currentLevel,
+      age: volunteer.age,
+    );
+    final bool canBePromoted = nextLevel != null;
 
     // Determine color based on level
-    // In _buildVolunteerCard method
     Color levelColor;
     switch (currentLevel) {
       case 'مسئول':
@@ -192,7 +166,7 @@ class _PromotionsScreenState extends State<PromotionsScreen> {
       case 'تدريب':
         levelColor = const Color(0xFFFF9800); // Orange
         break;
-      case 'داخل متابعة':
+      case 'شبل مميز':
         levelColor = const Color(0xFF9C27B0); // Purple
         break;
       case 'جدد':
@@ -233,6 +207,44 @@ class _PromotionsScreenState extends State<PromotionsScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           child: Row(
             children: [
+              // Age indicator for شبل مميز
+              if (currentLevel == 'شبل مميز')
+                Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: volunteer.age >= 17
+                            ? Colors.green.withOpacity(0.1)
+                            : Colors.orange.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Text(
+                        '${volunteer.age ?? 0}',
+                        style: TextStyle(
+                          fontFamily: 'Cairo',
+                          color: volunteer.age >= 17
+                              ? Colors.green
+                              : Colors.orange,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'سنة',
+                      style: TextStyle(
+                        fontFamily: 'Cairo',
+                        color: Colors.grey,
+                        fontSize: 8,
+                      ),
+                    ),
+                  ],
+                ),
+
+              const SizedBox(width: 12),
+
               // Left - Level Indicator with level badge
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -311,6 +323,16 @@ class _PromotionsScreenState extends State<PromotionsScreen> {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
+                    // Show next level hint
+                    if (canBePromoted)
+                      Text(
+                        'التالي: $nextLevel',
+                        style: const TextStyle(
+                          fontFamily: 'Cairo',
+                          color: Colors.green,
+                          fontSize: 10,
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -340,7 +362,6 @@ class _PromotionsScreenState extends State<PromotionsScreen> {
   }
 
   // Helper method to get level number (for visual indicator)
-  // Update the helper method in PromotionsScreen
   int _getLevelNumber(String level) {
     switch (level) {
       case 'مسئول':
@@ -348,15 +369,39 @@ class _PromotionsScreenState extends State<PromotionsScreen> {
       case 'مشروع مسئول':
         return 5;
       case 'تدريب':
+      case 'شبل مميز':
         return 4;
-      case 'داخل متابعة':
-        return 3;
       case 'جدد':
-      case 'شبل': // BOTH SAME LEVEL
+        return 3;
+      case 'شبل':
         return 2;
       default:
         return 0;
     }
+  }
+
+  // Sort volunteers by educational level (higher first)
+  List<dynamic> _sortVolunteersByLevel(List<dynamic> volunteers) {
+    final Map<String, int> levelsOrder =
+        FirebaseConstants.educationalLevelsOrder;
+
+    final sortedVolunteers = List<dynamic>.from(volunteers);
+
+    sortedVolunteers.sort((a, b) {
+      final aLevel = a.educationalLevel ?? '';
+      final bLevel = b.educationalLevel ?? '';
+
+      final aOrder = levelsOrder[aLevel] ?? 0;
+      final bOrder = levelsOrder[bLevel] ?? 0;
+
+      if (bOrder != aOrder) {
+        return bOrder.compareTo(aOrder);
+      } else {
+        return a.name.compareTo(b.name);
+      }
+    });
+
+    return sortedVolunteers;
   }
 
   @override
