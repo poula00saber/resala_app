@@ -1,13 +1,16 @@
 // ============================================
 // FILE: lib/presentation/screens/settings/committee_volunteers_screen.dart
-// Shows volunteers for a specific committee with profiles design
+// UPDATED: Added Excel export functionality
 // ============================================
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:resala/presentation/screens/profiles/profile_details_screen.dart';
+import 'package:resala/services/excel_export_helper.dart';
 import '../../providers/volunteer_provider.dart';
+import '../../providers/committee_provider.dart';
 import '../../themes/app_theme.dart';
+import '../../../data/models/volunteer_model.dart';
 
 class CommitteeVolunteersScreen extends StatefulWidget {
   final String committeeId;
@@ -27,6 +30,57 @@ class CommitteeVolunteersScreen extends StatefulWidget {
 class _CommitteeVolunteersScreenState extends State<CommitteeVolunteersScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+  bool _isExporting = false;
+
+  Future<void> _exportToExcel(List<VolunteerModel> volunteers) async {
+    setState(() => _isExporting = true);
+
+    try {
+      // Get committee details
+      final committee = await Provider.of<CommitteeProvider>(
+        context,
+        listen: false,
+      ).getCommitteeById(widget.committeeId);
+
+      if (committee == null) {
+        throw Exception('لم يتم العثور على اللجنة');
+      }
+
+      // Export to Excel
+      await ExcelExportHelper.exportCommitteeToExcel(
+        committee: committee,
+        volunteers: volunteers,
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'تم تصدير البيانات بنجاح',
+              style: TextStyle(fontFamily: 'Cairo'),
+            ),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'فشل تصدير البيانات: $e',
+              style: const TextStyle(fontFamily: 'Cairo'),
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isExporting = false);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -49,6 +103,40 @@ class _CommitteeVolunteersScreenState extends State<CommitteeVolunteersScreen> {
           ),
         ),
         centerTitle: true,
+        actions: [
+          // Export to Excel Button
+          FutureBuilder(
+            future: Provider.of<VolunteerProvider>(
+              context,
+              listen: false,
+            ).getVolunteersByCommittee(widget.committeeId),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting ||
+                  !snapshot.hasData ||
+                  (snapshot.data?.isEmpty ?? true)) {
+                return const SizedBox.shrink();
+              }
+
+              return IconButton(
+                onPressed: _isExporting
+                    ? null
+                    : () =>
+                          _exportToExcel(snapshot.data as List<VolunteerModel>),
+                icon: _isExporting
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppTheme.primary,
+                        ),
+                      )
+                    : const Icon(Icons.file_download, color: AppTheme.primary),
+                tooltip: 'تصدير إلى Excel',
+              );
+            },
+          ),
+        ],
       ),
       body: Column(
         children: [

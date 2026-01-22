@@ -1,5 +1,6 @@
 // ============================================
 // FILE 2: lib/presentation/screens/home/volunteer_evaluation_details_screen.dart
+// UPDATED: Fixed notes display to show full text with wrapping
 // ============================================
 
 import 'package:flutter/material.dart';
@@ -206,12 +207,8 @@ class _VolunteerEvaluationDetailsScreenState
           );
         }
 
-        // Handle error state - FIXED HERE
+        // Handle error state
         if (snapshot.hasError) {
-          print('❌ Stream error: ${snapshot.error}');
-          print('📋 Stack trace: ${snapshot.stackTrace}');
-
-          // Check if the error is a Firebase permission error
           String errorMessage = 'حدث خطأ في تحميل التقييمات';
           if (snapshot.error.toString().contains('PERMISSION_DENIED') ||
               snapshot.error.toString().contains(
@@ -247,11 +244,8 @@ class _VolunteerEvaluationDetailsScreenState
         // Safely cast the data
         try {
           final evaluations = snapshot.data as List<dynamic>;
-          print('✅ Loaded ${evaluations.length} evaluations');
-
           return _buildEvaluationsTable(evaluations);
         } catch (e) {
-          print('❌ Error casting evaluations: $e');
           return Padding(
             padding: const EdgeInsets.all(40),
             child: Center(
@@ -280,7 +274,7 @@ class _VolunteerEvaluationDetailsScreenState
               _buildTableHeader('الاسم', flex: 2),
               _buildTableHeader('التقييم', flex: 2),
               _buildTableHeader('الشهر', flex: 2),
-              _buildTableHeader('ملاحظات', flex: 2),
+              _buildTableHeader('ملاحظات', flex: 2), // Increased flex for notes
             ],
           ),
         ),
@@ -297,7 +291,6 @@ class _VolunteerEvaluationDetailsScreenState
         else
           ...evaluations.map((evaluation) {
             try {
-              // Try to access properties safely
               final notes = evaluation.notes?.toString() ?? '-';
               final rating = evaluation.rating?.toString() ?? '0';
               final evaluatorName =
@@ -313,16 +306,17 @@ class _VolunteerEvaluationDetailsScreenState
                   border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
                 ),
                 child: Row(
+                  crossAxisAlignment:
+                      CrossAxisAlignment.start, // Align items to top
                   children: [
                     _buildTableCell(evaluatorName, flex: 2),
                     _buildTableCell('$rating/10', flex: 2),
                     _buildTableCell(month, flex: 2),
-                    _buildTableCell(notes, flex: 2),
+                    _buildNotesCell(notes, flex: 3), // Use special notes cell
                   ],
                 ),
               );
             } catch (e) {
-              print('❌ Error rendering evaluation: $e');
               return Container(
                 padding: const EdgeInsets.symmetric(
                   vertical: 12,
@@ -395,16 +389,40 @@ class _VolunteerEvaluationDetailsScreenState
   Widget _buildTableCell(String text, {int flex = 1}) {
     return Expanded(
       flex: flex,
-      child: Text(
-        text,
-        style: const TextStyle(
-          fontFamily: 'Cairo',
-          fontSize: 11,
-          color: Colors.black87,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        child: Text(
+          text,
+          style: const TextStyle(
+            fontFamily: 'Cairo',
+            fontSize: 11,
+            color: Colors.black87,
+          ),
+          textAlign: TextAlign.center,
+          maxLines: 2, // Allow 2 lines for other cells
+          overflow: TextOverflow.ellipsis,
         ),
-        textAlign: TextAlign.center,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
+      ),
+    );
+  }
+
+  // NEW: Special widget for notes that can expand
+  Widget _buildNotesCell(String text, {int flex = 1}) {
+    return Expanded(
+      flex: flex,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        child: Text(
+          text,
+          style: const TextStyle(
+            fontFamily: 'Cairo',
+            fontSize: 11,
+            color: Colors.black87,
+          ),
+          textAlign: TextAlign.right,
+          maxLines: null, // REMOVED line limit - allows wrapping
+          overflow: TextOverflow.visible, // Changed from ellipsis to visible
+        ),
       ),
     );
   }

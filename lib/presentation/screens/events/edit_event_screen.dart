@@ -1,10 +1,11 @@
 // ============================================
 // FILE: lib/presentation/screens/events/edit_event_screen.dart
-// FIXED: Added t-shirt checkbox + enabled volunteers for اداريات
+// UPDATED: Added Excel export functionality
 // ============================================
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:resala/services/excel_export_helper.dart';
 import '../../providers/event_provider.dart';
 import '../../providers/volunteer_provider.dart';
 import '../../themes/app_theme.dart';
@@ -29,8 +30,9 @@ class _EditEventScreenState extends State<EditEventScreen> {
   late TextEditingController _dateController;
   late TextEditingController _locationController;
   late List<String> _volunteerIds;
-  late Map<String, bool> _volunteerTshirtStatus; // Track t-shirt status
+  late Map<String, bool> _volunteerTshirtStatus;
   bool _isLoading = false;
+  bool _isExporting = false;
 
   @override
   void initState() {
@@ -44,15 +46,55 @@ class _EditEventScreenState extends State<EditEventScreen> {
     _volunteerTshirtStatus = {};
   }
 
-  // Allow volunteer management for all except meetings (اجتماع still can select from DB)
   bool _allowVolunteerManagement() {
-    return true; // Changed: Now all types can have volunteers
+    return true;
   }
 
   bool _canCreateNewVolunteer() {
-    // Only meetings and admin cannot create NEW volunteers
     return widget.event.type != FirebaseConstants.typeMeeting &&
         widget.event.type != FirebaseConstants.typeAdministrative;
+  }
+
+  Future<void> _exportToExcel(List<VolunteerModel> volunteers) async {
+    setState(() => _isExporting = true);
+
+    try {
+      await ExcelExportHelper.exportEventToExcel(
+        eventTitle: widget.event.title,
+        eventType: widget.event.type,
+        eventDate: widget.event.date,
+        eventLocation: widget.event.location,
+        volunteers: volunteers,
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'تم تصدير البيانات بنجاح',
+              style: TextStyle(fontFamily: 'Cairo'),
+            ),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'فشل تصدير البيانات: $e',
+              style: const TextStyle(fontFamily: 'Cairo'),
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isExporting = false);
+      }
+    }
   }
 
   Future<void> _selectDate() async {
@@ -160,7 +202,7 @@ class _EditEventScreenState extends State<EditEventScreen> {
       setState(() {
         if (!_volunteerIds.contains(result)) {
           _volunteerIds.add(result);
-          _volunteerTshirtStatus[result] = false; // Default: no t-shirt
+          _volunteerTshirtStatus[result] = false;
         }
       });
     }
@@ -171,7 +213,6 @@ class _EditEventScreenState extends State<EditEventScreen> {
 
     setState(() => _isLoading = true);
 
-    // Update t-shirt status for all volunteers
     final volunteerProvider = Provider.of<VolunteerProvider>(
       context,
       listen: false,
@@ -259,12 +300,45 @@ class _EditEventScreenState extends State<EditEventScreen> {
           ),
         ),
         centerTitle: true,
+        actions: [
+          // Export to Excel Button
+          FutureBuilder(
+            future: Provider.of<VolunteerProvider>(
+              context,
+              listen: false,
+            ).getVolunteersByIds(_volunteerIds),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting ||
+                  !snapshot.hasData ||
+                  (snapshot.data?.isEmpty ?? true)) {
+                return const SizedBox.shrink();
+              }
+
+              return IconButton(
+                onPressed: _isExporting
+                    ? null
+                    : () =>
+                          _exportToExcel(snapshot.data as List<VolunteerModel>),
+                icon: _isExporting
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppTheme.primary,
+                        ),
+                      )
+                    : const Icon(Icons.file_download, color: AppTheme.primary),
+                tooltip: 'تصدير إلى Excel',
+              );
+            },
+          ),
+        ],
       ),
       body: Form(
         key: _formKey,
         child: Column(
           children: [
-            // Date and Location Fields
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
               child: Row(
@@ -290,7 +364,6 @@ class _EditEventScreenState extends State<EditEventScreen> {
               ),
             ),
 
-            // Add Volunteer Buttons
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 40),
               child: Column(
@@ -314,7 +387,6 @@ class _EditEventScreenState extends State<EditEventScreen> {
 
             const SizedBox(height: 16),
 
-            // Volunteers Table
             Expanded(
               child: Container(
                 margin: const EdgeInsets.symmetric(horizontal: 40),
@@ -331,7 +403,6 @@ class _EditEventScreenState extends State<EditEventScreen> {
                 ),
                 child: Column(
                   children: [
-                    // Table Header
                     Container(
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       decoration: BoxDecoration(
@@ -352,7 +423,6 @@ class _EditEventScreenState extends State<EditEventScreen> {
                       ),
                     ),
 
-                    // Table Rows
                     Expanded(
                       child: FutureBuilder(
                         future: Provider.of<VolunteerProvider>(
@@ -371,7 +441,6 @@ class _EditEventScreenState extends State<EditEventScreen> {
 
                           final volunteers = snapshot.data ?? [];
 
-                          // Initialize t-shirt status from database
                           for (var volunteer in volunteers) {
                             if (!_volunteerTshirtStatus.containsKey(
                               volunteer.id,
@@ -414,7 +483,6 @@ class _EditEventScreenState extends State<EditEventScreen> {
                                         (index + 1).toString(),
                                       ),
                                     ),
-
                                     Expanded(
                                       flex: 3,
                                       child: _buildTableCell(volunteer.name),
@@ -423,7 +491,6 @@ class _EditEventScreenState extends State<EditEventScreen> {
                                       flex: 3,
                                       child: _buildTableCell(volunteer.phone),
                                     ),
-                                    // T-shirt Checkbox
                                     Expanded(
                                       flex: 2,
                                       child: Center(
@@ -458,7 +525,6 @@ class _EditEventScreenState extends State<EditEventScreen> {
 
             const SizedBox(height: 16),
 
-            // Save Button
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
               child: ElevatedButton(
