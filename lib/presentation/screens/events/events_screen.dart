@@ -2,6 +2,7 @@
 // FILE: lib/presentation/screens/events/events_screen.dart
 // UPDATED: Calculates shirt count from volunteers' hasTshirt field
 // UPDATED: Shows committee name for meetings (type: 'اجتماع')
+// UPDATED: Added long press delete functionality
 // ============================================
 
 import 'package:flutter/material.dart';
@@ -11,9 +12,23 @@ import '../../providers/volunteer_provider.dart';
 import '../../themes/app_theme.dart';
 import 'edit_event_screen.dart';
 import 'create_event_screen.dart';
+import '../../../services/auth_service.dart';
+import '../../../data/models/app_user_model.dart';
 
-class EventsScreen extends StatelessWidget {
+class EventsScreen extends StatefulWidget {
   const EventsScreen({super.key});
+
+  @override
+  State<EventsScreen> createState() => _EventsScreenState();
+}
+
+class _EventsScreenState extends State<EventsScreen> {
+  final AuthService _authService = AuthService();
+  bool _isDeleteMode = false;
+  Set<String> _selectedForDelete = {};
+
+  bool get _canDelete =>
+      _authService.isAdmin || _authService.canAddDeleteOnPage(AppPages.events);
 
   String _getArabicDayName(String date) {
     final dateTime = DateTime.parse(date);
@@ -270,7 +285,7 @@ class EventsScreen extends StatelessWidget {
                   // Title and Filter Row
                   Row(
                     children: [
-                      // Back Button
+                      // Back Button or Cancel Delete Mode
                       Container(
                         width: 44,
                         height: 44,
@@ -279,22 +294,33 @@ class EventsScreen extends StatelessWidget {
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: IconButton(
-                          icon: const Icon(
-                            Icons.arrow_back,
+                          icon: Icon(
+                            _isDeleteMode ? Icons.close : Icons.arrow_back,
                             color: Colors.black87,
                           ),
                           padding: EdgeInsets.zero,
-                          onPressed: () => Navigator.pop(context),
+                          onPressed: () {
+                            if (_isDeleteMode) {
+                              setState(() {
+                                _isDeleteMode = false;
+                                _selectedForDelete.clear();
+                              });
+                            } else {
+                              Navigator.pop(context);
+                            }
+                          },
                         ),
                       ),
 
                       const SizedBox(width: 16),
 
                       // Title
-                      const Expanded(
+                      Expanded(
                         child: Text(
-                          'الأحداث',
-                          style: TextStyle(
+                          _isDeleteMode
+                              ? 'حذف (${_selectedForDelete.length})'
+                              : 'الأحداث',
+                          style: const TextStyle(
                             fontFamily: 'Cairo',
                             color: Colors.black87,
                             fontSize: 28,
@@ -303,118 +329,135 @@ class EventsScreen extends StatelessWidget {
                         ),
                       ),
 
-                      // Filter Button
-                      Consumer<EventProvider>(
-                        builder: (context, eventProvider, _) {
-                          String filterText = '';
-                          IconData filterIcon = Icons.filter_list;
-
-                          switch (eventProvider.currentFilter) {
-                            case EventFilter.last7Days:
-                              filterText = 'منذ ٧ أيام';
-                              filterIcon = Icons.calendar_today;
-                              break;
-                            case EventFilter.lastMonth:
-                              filterText = 'منذ شهر';
-                              filterIcon = Icons.calendar_month;
-                              break;
-                            case EventFilter.all:
-                              filterText = 'الكل';
-                              filterIcon = Icons.event;
-                              break;
-                          }
-
-                          return InkWell(
-                            onTap: () =>
-                                _showFilterMenu(context, eventProvider),
+                      // Delete button when in delete mode
+                      if (_isDeleteMode && _selectedForDelete.isNotEmpty)
+                        Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: Colors.red.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(12),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 10,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppTheme.primary.withOpacity(0.05),
-                                border: Border.all(
-                                  color: AppTheme.primary.withOpacity(0.2),
-                                  width: 1.5,
+                          ),
+                          child: IconButton(
+                            icon: const Icon(Icons.delete, color: Colors.red),
+                            padding: EdgeInsets.zero,
+                            onPressed: _confirmDeleteSelected,
+                          ),
+                        )
+                      else
+                        // Filter Button
+                        Consumer<EventProvider>(
+                          builder: (context, eventProvider, _) {
+                            String filterText = '';
+                            IconData filterIcon = Icons.filter_list;
+
+                            switch (eventProvider.currentFilter) {
+                              case EventFilter.last7Days:
+                                filterText = 'منذ ٧ أيام';
+                                filterIcon = Icons.calendar_today;
+                                break;
+                              case EventFilter.lastMonth:
+                                filterText = 'منذ شهر';
+                                filterIcon = Icons.calendar_month;
+                                break;
+                              case EventFilter.all:
+                                filterText = 'الكل';
+                                filterIcon = Icons.event;
+                                break;
+                            }
+
+                            return InkWell(
+                              onTap: () =>
+                                  _showFilterMenu(context, eventProvider),
+                              borderRadius: BorderRadius.circular(12),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 10,
                                 ),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    filterIcon,
-                                    color: AppTheme.primary,
-                                    size: 18,
+                                decoration: BoxDecoration(
+                                  color: AppTheme.primary.withOpacity(0.05),
+                                  border: Border.all(
+                                    color: AppTheme.primary.withOpacity(0.2),
+                                    width: 1.5,
                                   ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    filterText,
-                                    style: const TextStyle(
-                                      fontFamily: 'Cairo',
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      filterIcon,
                                       color: AppTheme.primary,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
+                                      size: 18,
                                     ),
-                                  ),
-                                ],
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      filterText,
+                                      style: const TextStyle(
+                                        fontFamily: 'Cairo',
+                                        color: AppTheme.primary,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
-                          );
-                        },
-                      ),
+                            );
+                          },
+                        ),
                     ],
                   ),
 
                   const SizedBox(height: 32),
 
                   // Add Event Button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const CreateEventScreen(),
+                  if (!_isDeleteMode)
+                    SizedBox(
+                      width: double.infinity,
+                      height: 56,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const CreateEventScreen(),
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.primary,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
                           ),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primary,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
+                          elevation: 0,
+                          shadowColor: Colors.transparent,
                         ),
-                        elevation: 0,
-                        shadowColor: Colors.transparent,
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
-                              shape: BoxShape.circle,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.2),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.add, size: 20),
                             ),
-                            child: const Icon(Icons.add, size: 20),
-                          ),
-                          const SizedBox(width: 12),
-                          const Text(
-                            'إضافة حدث جديد',
-                            style: TextStyle(
-                              fontFamily: 'Cairo',
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
+                            const SizedBox(width: 12),
+                            const Text(
+                              'إضافة حدث جديد',
+                              style: TextStyle(
+                                fontFamily: 'Cairo',
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
-                  ),
                 ],
               ),
             ),
@@ -513,6 +556,26 @@ class EventsScreen extends StatelessWidget {
                           day: dateTime.day,
                           month: _getMonthName(dateTime.month),
                           getEventTypeIcon: _getEventTypeIcon,
+                          isDeleteMode: _isDeleteMode,
+                          selectedForDelete: _selectedForDelete,
+                          canDelete: _canDelete,
+                          onDeleteModeChanged: (isDelete, eventId) {
+                            setState(() {
+                              _isDeleteMode = isDelete;
+                              if (eventId != null) {
+                                _selectedForDelete.add(eventId);
+                              }
+                            });
+                          },
+                          onSelectionChanged: (eventId, isSelected) {
+                            setState(() {
+                              if (isSelected) {
+                                _selectedForDelete.add(eventId);
+                              } else {
+                                _selectedForDelete.remove(eventId);
+                              }
+                            });
+                          },
                         );
                       },
                     );
@@ -525,6 +588,62 @@ class EventsScreen extends StatelessWidget {
       ),
     );
   }
+
+  void _confirmDeleteSelected() {
+    showDialog(
+      context: context,
+      builder: (context) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          title: const Text(
+            'حذف الأحداث',
+            style: TextStyle(fontFamily: 'Cairo'),
+          ),
+          content: Text(
+            'هل أنت متأكد من حذف ${_selectedForDelete.length} حدث؟',
+            style: const TextStyle(fontFamily: 'Cairo'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('إلغاء', style: TextStyle(fontFamily: 'Cairo')),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.pop(context);
+                await _deleteSelected();
+              },
+              child: const Text(
+                'حذف',
+                style: TextStyle(fontFamily: 'Cairo', color: Colors.red),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _deleteSelected() async {
+    final provider = Provider.of<EventProvider>(context, listen: false);
+
+    for (final id in _selectedForDelete) {
+      await provider.deleteEvent(id);
+    }
+
+    if (mounted) {
+      setState(() {
+        _isDeleteMode = false;
+        _selectedForDelete.clear();
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('تم الحذف بنجاح'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    }
+  }
 }
 
 // Day Card Widget
@@ -535,6 +654,11 @@ class _DayCard extends StatefulWidget {
   final int day;
   final String month;
   final IconData Function(dynamic) getEventTypeIcon;
+  final bool isDeleteMode;
+  final Set<String> selectedForDelete;
+  final bool canDelete;
+  final Function(bool isDelete, String? eventId) onDeleteModeChanged;
+  final Function(String eventId, bool isSelected) onSelectionChanged;
 
   const _DayCard({
     required this.date,
@@ -543,6 +667,11 @@ class _DayCard extends StatefulWidget {
     required this.day,
     required this.month,
     required this.getEventTypeIcon,
+    required this.isDeleteMode,
+    required this.selectedForDelete,
+    required this.canDelete,
+    required this.onDeleteModeChanged,
+    required this.onSelectionChanged,
   });
 
   @override
@@ -738,6 +867,21 @@ class _DayCardState extends State<_DayCard>
                             child: _EventTile(
                               event: event,
                               getEventTypeIcon: widget.getEventTypeIcon,
+                              isDeleteMode: widget.isDeleteMode,
+                              isSelected: widget.selectedForDelete.contains(
+                                event.id,
+                              ),
+                              canDelete: widget.canDelete,
+                              onLongPress: () =>
+                                  widget.onDeleteModeChanged(true, event.id),
+                              onSelectionChanged: () {
+                                final isSelected = widget.selectedForDelete
+                                    .contains(event.id);
+                                widget.onSelectionChanged(
+                                  event.id,
+                                  !isSelected,
+                                );
+                              },
                             ),
                           ),
                         )
@@ -757,8 +901,21 @@ class _DayCardState extends State<_DayCard>
 class _EventTile extends StatefulWidget {
   final dynamic event;
   final IconData Function(dynamic) getEventTypeIcon;
+  final bool isDeleteMode;
+  final bool isSelected;
+  final bool canDelete;
+  final VoidCallback? onLongPress;
+  final VoidCallback? onSelectionChanged;
 
-  const _EventTile({required this.event, required this.getEventTypeIcon});
+  const _EventTile({
+    required this.event,
+    required this.getEventTypeIcon,
+    this.isDeleteMode = false,
+    this.isSelected = false,
+    this.canDelete = false,
+    this.onLongPress,
+    this.onSelectionChanged,
+  });
 
   @override
   State<_EventTile> createState() => _EventTileState();
@@ -872,172 +1029,206 @@ class _EventTileState extends State<_EventTile> {
           ),
         ],
       ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => EditEventScreen(event: widget.event),
-              ),
-            );
-          },
-          borderRadius: BorderRadius.circular(20),
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Event Title and Arrow
-                Row(
+      child: Stack(
+        children: [
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () {
+                if (widget.isDeleteMode) {
+                  widget.onSelectionChanged?.call();
+                } else {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          EditEventScreen(event: widget.event),
+                    ),
+                  );
+                }
+              },
+              onLongPress: widget.canDelete ? widget.onLongPress : null,
+              borderRadius: BorderRadius.circular(20),
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: Text(
-                        widget.event.title,
-                        style: const TextStyle(
-                          fontFamily: 'Cairo',
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.arrow_forward_ios,
-                        color: Colors.white,
-                        size: 16,
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 20),
-
-                // Event Type Details
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 10,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(typeIcon, color: Colors.white, size: 18),
-                      const SizedBox(width: 10),
-                      Flexible(
-                        child:
-                            _isLoadingShirtCount &&
-                                (widget.event.type == 'كرنفال' ||
-                                    widget.event.type == 'يوم عائلي')
-                            ? SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  color: Colors.white,
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : Text(
-                                _eventTypeDetails,
-                                style: const TextStyle(
-                                  fontFamily: 'Cairo',
-                                  color: Colors.white,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 16),
-
-                // Event Stats
-                Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
-                  children: [
-                    // Volunteers Count
-                    _buildStatItem(
-                      Icons.people,
-                      'المتطوعين',
-                      volunteerCount.toString().padLeft(2, '0'),
-                      Colors.white,
-                    ),
-
-                    // Shirt Count (for specific event types)
-                    if (widget.event.type == 'كرنفال' ||
-                        widget.event.type == 'يوم عائلي')
-                      _isLoadingShirtCount
-                          ? Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 10,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.15),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  color: Colors.white,
-                                  strokeWidth: 2,
-                                ),
-                              ),
-                            )
-                          : _buildStatItem(
-                              Icons.checkroom,
-                              'التيشيرتات',
-                              _shirtCount.toString().padLeft(2, '0'),
-                              Colors.white,
+                    // Event Title and Arrow
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            widget.event.title,
+                            style: const TextStyle(
+                              fontFamily: 'Cairo',
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
                             ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.arrow_forward_ios,
+                            color: Colors.white,
+                            size: 16,
+                          ),
+                        ),
+                      ],
+                    ),
 
-                    if (widget.event.location != null ||
-                        widget.event.meetingPlace != null)
-                      _buildStatItem(
-                        Icons.location_on,
-                        'المكان',
-                        widget.event.location ??
-                            widget.event.meetingPlace ??
-                            '',
-                        Colors.white,
+                    const SizedBox(height: 20),
+
+                    // Event Type Details
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(typeIcon, color: Colors.white, size: 18),
+                          const SizedBox(width: 10),
+                          Flexible(
+                            child:
+                                _isLoadingShirtCount &&
+                                    (widget.event.type == 'كرنفال' ||
+                                        widget.event.type == 'يوم عائلي')
+                                ? SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : Text(
+                                    _eventTypeDetails,
+                                    style: const TextStyle(
+                                      fontFamily: 'Cairo',
+                                      color: Colors.white,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // Event Stats
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      children: [
+                        // Volunteers Count
+                        _buildStatItem(
+                          Icons.people,
+                          'المتطوعين',
+                          volunteerCount.toString().padLeft(2, '0'),
+                          Colors.white,
+                        ),
+
+                        // Shirt Count (for specific event types)
+                        if (widget.event.type == 'كرنفال' ||
+                            widget.event.type == 'يوم عائلي')
+                          _isLoadingShirtCount
+                              ? Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 10,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.15),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ),
+                                  ),
+                                )
+                              : _buildStatItem(
+                                  Icons.checkroom,
+                                  'التيشيرتات',
+                                  _shirtCount.toString().padLeft(2, '0'),
+                                  Colors.white,
+                                ),
+
+                        if (widget.event.location != null ||
+                            widget.event.meetingPlace != null)
+                          _buildStatItem(
+                            Icons.location_on,
+                            'المكان',
+                            widget.event.location ??
+                                widget.event.meetingPlace ??
+                                '',
+                            Colors.white,
+                          ),
+                      ],
+                    ),
+
+                    // Comparison Section - Shows if we have enough shirts
+                    if ((widget.event.type == 'كرنفال' ||
+                            widget.event.type == 'يوم عائلي') &&
+                        volunteerCount > 0 &&
+                        !_isLoadingShirtCount)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 16),
+                        child: _buildComparisonBadge(
+                          volunteerCount,
+                          _shirtCount,
+                        ),
                       ),
                   ],
                 ),
-
-                // Comparison Section - Shows if we have enough shirts
-                if ((widget.event.type == 'كرنفال' ||
-                        widget.event.type == 'يوم عائلي') &&
-                    volunteerCount > 0 &&
-                    !_isLoadingShirtCount)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 16),
-                    child: _buildComparisonBadge(volunteerCount, _shirtCount),
-                  ),
-              ],
+              ),
             ),
           ),
-        ),
+          // Selection indicator for delete mode
+          if (widget.isDeleteMode)
+            Positioned(
+              top: 8,
+              left: 8,
+              child: Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: widget.isSelected ? Colors.red : Colors.white,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: widget.isSelected ? Colors.red : Colors.grey,
+                    width: 2,
+                  ),
+                ),
+                child: widget.isSelected
+                    ? const Icon(Icons.check, color: Colors.white, size: 18)
+                    : null,
+              ),
+            ),
+        ],
       ),
     );
   }

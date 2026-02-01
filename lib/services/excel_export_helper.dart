@@ -7,8 +7,9 @@ import 'dart:io';
 import 'package:excel/excel.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
-import '../../data/models/volunteer_model.dart';
-import '../../data/models/committee_model.dart';
+import '../data/models/volunteer_model.dart';
+import '../data/models/committee_model.dart';
+import '../data/models/report_data_model.dart';
 
 class ExcelExportHelper {
   // Export committee with its volunteers
@@ -588,5 +589,589 @@ class ExcelExportHelper {
   static bool _containsArabic(String text) {
     final arabicRegex = RegExp(r'[\u0600-\u06FF]');
     return arabicRegex.hasMatch(text);
+  }
+
+  // ============================================
+  // REPORT EXPORT FUNCTIONS
+  // ============================================
+
+  // Export Comprehensive Report (الكلي)
+  static Future<void> exportComprehensiveReport({
+    required List<VolunteerReportData> reportData,
+    String? filterMonth,
+  }) async {
+    try {
+      var excel = Excel.createExcel();
+      Sheet sheet = excel['تقرير الكلي'];
+      _setSheetToRTL(sheet);
+
+      // Title
+      sheet.merge(CellIndex.indexByString('A1'), CellIndex.indexByString('H1'));
+      var titleCell = sheet.cell(CellIndex.indexByString('A1'));
+      titleCell.value = TextCellValue(
+        filterMonth != null ? 'تقرير الكلي - $filterMonth' : 'تقرير الكلي',
+      );
+      titleCell.cellStyle = CellStyle(
+        bold: true,
+        fontSize: 16,
+        horizontalAlign: HorizontalAlign.Center,
+        verticalAlign: VerticalAlign.Center,
+      );
+
+      // Headers
+      var headers = [
+        '#',
+        'الاسم',
+        'الدرجة التطوعية',
+        'الشهور',
+        'اجتماع اللجنة',
+        'يوم عائلي',
+        'اجتماع الفريق',
+        'احداث',
+        'الإجمالي',
+      ];
+
+      for (var i = 0; i < headers.length; i++) {
+        var cell = sheet.cell(
+          CellIndex.indexByColumnRow(columnIndex: i, rowIndex: 2),
+        );
+        cell.value = TextCellValue(headers[i]);
+        cell.cellStyle = CellStyle(
+          bold: true,
+          backgroundColorHex: ExcelColor.fromHexString('#8A3A4A'),
+          fontColorHex: ExcelColor.white,
+          horizontalAlign: HorizontalAlign.Center,
+          verticalAlign: VerticalAlign.Center,
+        );
+      }
+
+      // Data rows
+      for (var i = 0; i < reportData.length; i++) {
+        var data = reportData[i];
+        var rowIndex = i + 3;
+
+        var rowData = [
+          (i + 1).toString(),
+          data.volunteerName,
+          data.educationalLevel ?? '-',
+          data.monthsString, // comma-separated month numbers
+          data.committeeMeetingCount.toString(),
+          data.familyDayCount.toString(),
+          data.teamMeetingCount.toString(),
+          data.eventsCount.toString(),
+          data.totalEvents.toString(),
+        ];
+
+        for (var j = 0; j < rowData.length; j++) {
+          var cell = sheet.cell(
+            CellIndex.indexByColumnRow(columnIndex: j, rowIndex: rowIndex),
+          );
+          cell.value = TextCellValue(rowData[j]);
+          cell.cellStyle = CellStyle(
+            horizontalAlign: j == 1
+                ? HorizontalAlign.Right
+                : HorizontalAlign.Center,
+            verticalAlign: VerticalAlign.Center,
+          );
+        }
+      }
+
+      // Set column widths
+      sheet.setColumnWidth(0, 8);
+      sheet.setColumnWidth(1, 25);
+      for (var i = 2; i < headers.length; i++) {
+        sheet.setColumnWidth(i, 15);
+      }
+
+      await _saveAndShareExcel(
+        excel,
+        'تقرير_الكلي_${DateTime.now().millisecondsSinceEpoch}',
+      );
+    } catch (e) {
+      print('Error exporting comprehensive report: $e');
+      rethrow;
+    }
+  }
+
+  // Export Family Day Report (اليوم العائلي)
+  static Future<void> exportFamilyDayReport({
+    required List<VolunteerReportData> reportData,
+    required bool isCubs,
+    String? filterMonth,
+  }) async {
+    try {
+      var excel = Excel.createExcel();
+      String sheetName = isCubs
+          ? 'تقرير اليوم العائلي - الأشبال'
+          : 'تقرير اليوم العائلي - الفريق';
+      Sheet sheet = excel[sheetName];
+      _setSheetToRTL(sheet);
+
+      // Title
+      sheet.merge(CellIndex.indexByString('A1'), CellIndex.indexByString('D1'));
+      var titleCell = sheet.cell(CellIndex.indexByString('A1'));
+      titleCell.value = TextCellValue(
+        filterMonth != null ? '$sheetName - $filterMonth' : sheetName,
+      );
+      titleCell.cellStyle = CellStyle(
+        bold: true,
+        fontSize: 16,
+        horizontalAlign: HorizontalAlign.Center,
+        verticalAlign: VerticalAlign.Center,
+      );
+
+      // Headers
+      var headers = ['#', 'الاسم', 'الدرجة التطوعية', 'يوم عائلي', 'الشهور'];
+
+      for (var i = 0; i < headers.length; i++) {
+        var cell = sheet.cell(
+          CellIndex.indexByColumnRow(columnIndex: i, rowIndex: 2),
+        );
+        cell.value = TextCellValue(headers[i]);
+        cell.cellStyle = CellStyle(
+          bold: true,
+          backgroundColorHex: ExcelColor.fromHexString('#8A3A4A'),
+          fontColorHex: ExcelColor.white,
+          horizontalAlign: HorizontalAlign.Center,
+          verticalAlign: VerticalAlign.Center,
+        );
+      }
+
+      // Data rows
+      for (var i = 0; i < reportData.length; i++) {
+        var data = reportData[i];
+        var rowIndex = i + 3;
+
+        var rowData = [
+          (i + 1).toString(),
+          data.volunteerName,
+          data.educationalLevel ?? '-',
+          data.familyDayCount.toString(),
+          data.monthsString, // comma-separated month numbers
+        ];
+
+        for (var j = 0; j < rowData.length; j++) {
+          var cell = sheet.cell(
+            CellIndex.indexByColumnRow(columnIndex: j, rowIndex: rowIndex),
+          );
+          cell.value = TextCellValue(rowData[j]);
+          cell.cellStyle = CellStyle(
+            horizontalAlign: j == 1
+                ? HorizontalAlign.Right
+                : HorizontalAlign.Center,
+            verticalAlign: VerticalAlign.Center,
+          );
+        }
+      }
+
+      // Set column widths
+      sheet.setColumnWidth(0, 8);
+      sheet.setColumnWidth(1, 25);
+      sheet.setColumnWidth(2, 18);
+      sheet.setColumnWidth(3, 12);
+      sheet.setColumnWidth(4, 10);
+
+      await _saveAndShareExcel(
+        excel,
+        'تقرير_اليوم_العائلي_${DateTime.now().millisecondsSinceEpoch}',
+      );
+    } catch (e) {
+      print('Error exporting family day report: $e');
+      rethrow;
+    }
+  }
+
+  // Export Cubs Report (الأشبال)
+  static Future<void> exportCubsReport({
+    required List<VolunteerReportData> reportData,
+    required String category,
+    String? filterMonth,
+  }) async {
+    try {
+      var excel = Excel.createExcel();
+      Sheet sheet = excel['تقرير الأشبال - $category'];
+      _setSheetToRTL(sheet);
+
+      // Title
+      sheet.merge(CellIndex.indexByString('A1'), CellIndex.indexByString('F1'));
+      var titleCell = sheet.cell(CellIndex.indexByString('A1'));
+      titleCell.value = TextCellValue(
+        filterMonth != null
+            ? 'تقرير الأشبال - $category - $filterMonth'
+            : 'تقرير الأشبال - $category',
+      );
+      titleCell.cellStyle = CellStyle(
+        bold: true,
+        fontSize: 16,
+        horizontalAlign: HorizontalAlign.Center,
+        verticalAlign: VerticalAlign.Center,
+      );
+
+      // Headers
+      var headers = [
+        '#',
+        'الاسم',
+        'الدرجة التطوعية',
+        'يوم عائلي',
+        'ايفنت الأشبال',
+        'الأحداث',
+        'الشهور',
+      ];
+
+      for (var i = 0; i < headers.length; i++) {
+        var cell = sheet.cell(
+          CellIndex.indexByColumnRow(columnIndex: i, rowIndex: 2),
+        );
+        cell.value = TextCellValue(headers[i]);
+        cell.cellStyle = CellStyle(
+          bold: true,
+          backgroundColorHex: ExcelColor.fromHexString('#8A3A4A'),
+          fontColorHex: ExcelColor.white,
+          horizontalAlign: HorizontalAlign.Center,
+          verticalAlign: VerticalAlign.Center,
+        );
+      }
+
+      // Data rows
+      for (var i = 0; i < reportData.length; i++) {
+        var data = reportData[i];
+        var rowIndex = i + 3;
+
+        var rowData = [
+          (i + 1).toString(),
+          data.volunteerName,
+          data.educationalLevel ?? '-',
+          data.familyDayCount.toString(),
+          data.cubsEventCount.toString(),
+          data.eventsCount.toString(),
+          data.monthsString, // comma-separated month numbers
+        ];
+
+        for (var j = 0; j < rowData.length; j++) {
+          var cell = sheet.cell(
+            CellIndex.indexByColumnRow(columnIndex: j, rowIndex: rowIndex),
+          );
+          cell.value = TextCellValue(rowData[j]);
+          cell.cellStyle = CellStyle(
+            horizontalAlign: j == 1
+                ? HorizontalAlign.Right
+                : HorizontalAlign.Center,
+            verticalAlign: VerticalAlign.Center,
+          );
+        }
+      }
+
+      // Set column widths
+      sheet.setColumnWidth(0, 8);
+      sheet.setColumnWidth(1, 25);
+      for (var i = 2; i < headers.length; i++) {
+        sheet.setColumnWidth(i, 15);
+      }
+
+      await _saveAndShareExcel(
+        excel,
+        'تقرير_الأشبال_${DateTime.now().millisecondsSinceEpoch}',
+      );
+    } catch (e) {
+      print('Error exporting cubs report: $e');
+      rethrow;
+    }
+  }
+
+  // Export Meetings Report (الأجتماعات)
+  static Future<void> exportMeetingsReport({
+    required List<VolunteerReportData> reportData,
+    String? filterMonth,
+  }) async {
+    try {
+      var excel = Excel.createExcel();
+      Sheet sheet = excel['تقرير الأجتماعات'];
+      _setSheetToRTL(sheet);
+
+      // Title
+      sheet.merge(CellIndex.indexByString('A1'), CellIndex.indexByString('F1'));
+      var titleCell = sheet.cell(CellIndex.indexByString('A1'));
+      titleCell.value = TextCellValue(
+        filterMonth != null
+            ? 'تقرير الأجتماعات - $filterMonth'
+            : 'تقرير الأجتماعات',
+      );
+      titleCell.cellStyle = CellStyle(
+        bold: true,
+        fontSize: 16,
+        horizontalAlign: HorizontalAlign.Center,
+        verticalAlign: VerticalAlign.Center,
+      );
+
+      // Headers
+      var headers = [
+        '#',
+        'الاسم',
+        'اللجنة',
+        'اجتماع اللجنة',
+        'اجتماع الفريق',
+        'اجتماع الليدرات',
+        'الشهور',
+      ];
+
+      for (var i = 0; i < headers.length; i++) {
+        var cell = sheet.cell(
+          CellIndex.indexByColumnRow(columnIndex: i, rowIndex: 2),
+        );
+        cell.value = TextCellValue(headers[i]);
+        cell.cellStyle = CellStyle(
+          bold: true,
+          backgroundColorHex: ExcelColor.fromHexString('#8A3A4A'),
+          fontColorHex: ExcelColor.white,
+          horizontalAlign: HorizontalAlign.Center,
+          verticalAlign: VerticalAlign.Center,
+        );
+      }
+
+      // Data rows
+      for (var i = 0; i < reportData.length; i++) {
+        var data = reportData[i];
+        var rowIndex = i + 3;
+
+        var rowData = [
+          (i + 1).toString(),
+          data.volunteerName,
+          data.committeeName ?? '-',
+          data.committeeMeetingCount.toString(),
+          data.teamMeetingCount.toString(),
+          data.leadersMeetingCount.toString(),
+          data.monthsString, // comma-separated month numbers
+        ];
+
+        for (var j = 0; j < rowData.length; j++) {
+          var cell = sheet.cell(
+            CellIndex.indexByColumnRow(columnIndex: j, rowIndex: rowIndex),
+          );
+          cell.value = TextCellValue(rowData[j]);
+          cell.cellStyle = CellStyle(
+            horizontalAlign: (j == 1 || j == 2)
+                ? HorizontalAlign.Right
+                : HorizontalAlign.Center,
+            verticalAlign: VerticalAlign.Center,
+          );
+        }
+      }
+
+      // Set column widths
+      sheet.setColumnWidth(0, 8);
+      sheet.setColumnWidth(1, 25);
+      sheet.setColumnWidth(2, 18);
+      for (var i = 3; i < headers.length; i++) {
+        sheet.setColumnWidth(i, 15);
+      }
+
+      await _saveAndShareExcel(
+        excel,
+        'تقرير_الأجتماعات_${DateTime.now().millisecondsSinceEpoch}',
+      );
+    } catch (e) {
+      print('Error exporting meetings report: $e');
+      rethrow;
+    }
+  }
+
+  // Export Fund Report (الصندوق)
+  static Future<void> exportFundReport({
+    required List<VolunteerReportData> reportData,
+    required double totalFund,
+    String? filterMonth,
+  }) async {
+    try {
+      var excel = Excel.createExcel();
+      Sheet sheet = excel['تقرير الصندوق'];
+      _setSheetToRTL(sheet);
+
+      // Title
+      sheet.merge(CellIndex.indexByString('A1'), CellIndex.indexByString('E1'));
+      var titleCell = sheet.cell(CellIndex.indexByString('A1'));
+      titleCell.value = TextCellValue(
+        filterMonth != null ? 'تقرير الصندوق - $filterMonth' : 'تقرير الصندوق',
+      );
+      titleCell.cellStyle = CellStyle(
+        bold: true,
+        fontSize: 16,
+        horizontalAlign: HorizontalAlign.Center,
+        verticalAlign: VerticalAlign.Center,
+      );
+
+      // Total fund row
+      sheet.merge(CellIndex.indexByString('A2'), CellIndex.indexByString('C2'));
+      var totalLabelCell = sheet.cell(CellIndex.indexByString('A2'));
+      totalLabelCell.value = TextCellValue('إجمالي ما في الصندوق:');
+      totalLabelCell.cellStyle = CellStyle(
+        bold: true,
+        horizontalAlign: HorizontalAlign.Right,
+        verticalAlign: VerticalAlign.Center,
+      );
+
+      sheet.merge(CellIndex.indexByString('D2'), CellIndex.indexByString('E2'));
+      var totalValueCell = sheet.cell(CellIndex.indexByString('D2'));
+      totalValueCell.value = TextCellValue(
+        '${totalFund.toStringAsFixed(0)} جنيه',
+      );
+      totalValueCell.cellStyle = CellStyle(
+        bold: true,
+        fontSize: 14,
+        horizontalAlign: HorizontalAlign.Center,
+        verticalAlign: VerticalAlign.Center,
+      );
+
+      // Headers
+      var headers = [
+        '#',
+        'الاسم',
+        'الدرجة التطوعية',
+        'الصندوق',
+        'الإجمالي',
+        'الشهور',
+      ];
+
+      for (var i = 0; i < headers.length; i++) {
+        var cell = sheet.cell(
+          CellIndex.indexByColumnRow(columnIndex: i, rowIndex: 3),
+        );
+        cell.value = TextCellValue(headers[i]);
+        cell.cellStyle = CellStyle(
+          bold: true,
+          backgroundColorHex: ExcelColor.fromHexString('#8A3A4A'),
+          fontColorHex: ExcelColor.white,
+          horizontalAlign: HorizontalAlign.Center,
+          verticalAlign: VerticalAlign.Center,
+        );
+      }
+
+      // Data rows
+      for (var i = 0; i < reportData.length; i++) {
+        var data = reportData[i];
+        var rowIndex = i + 4;
+
+        var rowData = [
+          (i + 1).toString(),
+          data.volunteerName,
+          data.educationalLevel ?? '-',
+          data.fundCount.toString(), // Number of contributions
+          data.totalFundAmount.toStringAsFixed(0),
+          data.monthsString, // comma-separated month numbers
+        ];
+
+        for (var j = 0; j < rowData.length; j++) {
+          var cell = sheet.cell(
+            CellIndex.indexByColumnRow(columnIndex: j, rowIndex: rowIndex),
+          );
+          cell.value = TextCellValue(rowData[j]);
+          cell.cellStyle = CellStyle(
+            horizontalAlign: j == 1
+                ? HorizontalAlign.Right
+                : HorizontalAlign.Center,
+            verticalAlign: VerticalAlign.Center,
+          );
+        }
+      }
+
+      // Set column widths
+      sheet.setColumnWidth(0, 8);
+      sheet.setColumnWidth(1, 25);
+      sheet.setColumnWidth(2, 18);
+      sheet.setColumnWidth(3, 12);
+      sheet.setColumnWidth(4, 12);
+      sheet.setColumnWidth(5, 10);
+
+      await _saveAndShareExcel(
+        excel,
+        'تقرير_الصندوق_${DateTime.now().millisecondsSinceEpoch}',
+      );
+    } catch (e) {
+      print('Error exporting fund report: $e');
+      rethrow;
+    }
+  }
+
+  // Export Marketing Report (الدعايا)
+  static Future<void> exportMarketingReport({
+    required List<VolunteerReportData> reportData,
+    String? filterMonth,
+  }) async {
+    try {
+      var excel = Excel.createExcel();
+      Sheet sheet = excel['تقرير الدعايا'];
+      _setSheetToRTL(sheet);
+
+      // Title
+      sheet.merge(CellIndex.indexByString('A1'), CellIndex.indexByString('D1'));
+      var titleCell = sheet.cell(CellIndex.indexByString('A1'));
+      titleCell.value = TextCellValue(
+        filterMonth != null ? 'تقرير الدعايا - $filterMonth' : 'تقرير الدعايا',
+      );
+      titleCell.cellStyle = CellStyle(
+        bold: true,
+        fontSize: 16,
+        horizontalAlign: HorizontalAlign.Center,
+        verticalAlign: VerticalAlign.Center,
+      );
+
+      // Headers
+      var headers = ['#', 'الاسم', 'الدرجة التطوعية', 'الستوري', 'الشهور'];
+
+      for (var i = 0; i < headers.length; i++) {
+        var cell = sheet.cell(
+          CellIndex.indexByColumnRow(columnIndex: i, rowIndex: 2),
+        );
+        cell.value = TextCellValue(headers[i]);
+        cell.cellStyle = CellStyle(
+          bold: true,
+          backgroundColorHex: ExcelColor.fromHexString('#8A3A4A'),
+          fontColorHex: ExcelColor.white,
+          horizontalAlign: HorizontalAlign.Center,
+          verticalAlign: VerticalAlign.Center,
+        );
+      }
+
+      // Data rows
+      for (var i = 0; i < reportData.length; i++) {
+        var data = reportData[i];
+        var rowIndex = i + 3;
+
+        var rowData = [
+          (i + 1).toString(),
+          data.volunteerName,
+          data.educationalLevel ?? '-',
+          data.storyCount.toString(),
+          data.monthsString, // comma-separated month numbers
+        ];
+
+        for (var j = 0; j < rowData.length; j++) {
+          var cell = sheet.cell(
+            CellIndex.indexByColumnRow(columnIndex: j, rowIndex: rowIndex),
+          );
+          cell.value = TextCellValue(rowData[j]);
+          cell.cellStyle = CellStyle(
+            horizontalAlign: j == 1
+                ? HorizontalAlign.Right
+                : HorizontalAlign.Center,
+            verticalAlign: VerticalAlign.Center,
+          );
+        }
+      }
+
+      // Set column widths
+      sheet.setColumnWidth(0, 8);
+      sheet.setColumnWidth(1, 25);
+      sheet.setColumnWidth(2, 18);
+      sheet.setColumnWidth(3, 12);
+      sheet.setColumnWidth(4, 10);
+
+      await _saveAndShareExcel(
+        excel,
+        'تقرير_الدعايا_${DateTime.now().millisecondsSinceEpoch}',
+      );
+    } catch (e) {
+      print('Error exporting marketing report: $e');
+      rethrow;
+    }
   }
 }

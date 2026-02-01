@@ -8,6 +8,8 @@ import 'package:provider/provider.dart';
 import '../../providers/volunteer_provider.dart';
 import '../../themes/app_theme.dart';
 import 'profile_details_screen.dart';
+import '../../../services/auth_service.dart';
+import '../../../data/models/app_user_model.dart';
 
 class ProfilesScreen extends StatefulWidget {
   const ProfilesScreen({super.key});
@@ -18,7 +20,14 @@ class ProfilesScreen extends StatefulWidget {
 
 class _ProfilesScreenState extends State<ProfilesScreen> {
   final TextEditingController _searchController = TextEditingController();
+  final AuthService _authService = AuthService();
   String _searchQuery = '';
+  bool _isDeleteMode = false;
+  Set<String> _selectedForDelete = {};
+
+  bool get _canDelete =>
+      _authService.isAdmin ||
+      _authService.canAddDeleteOnPage(AppPages.profiles);
 
   @override
   Widget build(BuildContext context) {
@@ -27,13 +36,23 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
       appBar: AppBar(
         backgroundColor: AppTheme.background,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'البروفايلات',
-          style: TextStyle(
+        leading: _isDeleteMode
+            ? IconButton(
+                icon: const Icon(Icons.close, color: Colors.black),
+                onPressed: () {
+                  setState(() {
+                    _isDeleteMode = false;
+                    _selectedForDelete.clear();
+                  });
+                },
+              )
+            : IconButton(
+                icon: const Icon(Icons.arrow_back, color: Colors.black),
+                onPressed: () => Navigator.pop(context),
+              ),
+        title: Text(
+          _isDeleteMode ? 'حذف (${_selectedForDelete.length})' : 'البروفايلات',
+          style: const TextStyle(
             fontFamily: 'Cairo',
             color: Colors.black,
             fontSize: 20,
@@ -41,6 +60,14 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
           ),
         ),
         centerTitle: true,
+        actions: _isDeleteMode && _selectedForDelete.isNotEmpty
+            ? [
+                IconButton(
+                  icon: const Icon(Icons.delete, color: Colors.red),
+                  onPressed: _confirmDeleteSelected,
+                ),
+              ]
+            : null,
       ),
       body: Column(
         children: [
@@ -143,10 +170,12 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
   }
 
   Widget _buildProfileCard(dynamic volunteer) {
+    final isSelected = _selectedForDelete.contains(volunteer.id);
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: AppTheme.primary,
+        color: isSelected ? Colors.red.shade400 : AppTheme.primary,
         borderRadius: BorderRadius.circular(30),
         boxShadow: [
           BoxShadow(
@@ -158,32 +187,62 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
       ),
       child: InkWell(
         onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => ProfileDetailsScreen(
-                volunteer: volunteer,
-              ), // inside constructor:
-            ),
-          );
+          if (_isDeleteMode) {
+            setState(() {
+              if (isSelected) {
+                _selectedForDelete.remove(volunteer.id);
+              } else {
+                _selectedForDelete.add(volunteer.id);
+              }
+            });
+          } else {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) =>
+                    ProfileDetailsScreen(volunteer: volunteer),
+              ),
+            );
+          }
         },
+        onLongPress: _canDelete
+            ? () {
+                setState(() {
+                  _isDeleteMode = true;
+                  _selectedForDelete.add(volunteer.id);
+                });
+              }
+            : null,
         borderRadius: BorderRadius.circular(30),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           child: Row(
             children: [
-              // Left - Edit Icon
+              // Left - Profile Image or Icon
               Container(
-                padding: const EdgeInsets.all(10),
-                decoration: const BoxDecoration(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
                   color: Colors.white,
                   shape: BoxShape.circle,
+                  image:
+                      volunteer.profileImage != null &&
+                          volunteer.profileImage.isNotEmpty
+                      ? DecorationImage(
+                          image: NetworkImage(volunteer.profileImage),
+                          fit: BoxFit.cover,
+                        )
+                      : null,
                 ),
-                child: const Icon(
-                  Icons.person,
-                  color: AppTheme.primary,
-                  size: 20,
-                ),
+                child:
+                    volunteer.profileImage == null ||
+                        volunteer.profileImage.isEmpty
+                    ? const Icon(
+                        Icons.person,
+                        color: AppTheme.primary,
+                        size: 24,
+                      )
+                    : null,
               ),
               const Spacer(),
 
@@ -206,24 +265,93 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
 
               const SizedBox(width: 12),
 
-              // Profile Circle
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
+              // Selection indicator or Edit icon
+              if (_isDeleteMode)
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? Colors.white
+                        : Colors.white.withOpacity(0.3),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    isSelected ? Icons.check : Icons.circle_outlined,
+                    color: isSelected ? Colors.red : Colors.white,
+                    size: 20,
+                  ),
+                )
+              else
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.edit,
+                    color: AppTheme.primary,
+                    size: 20,
+                  ),
                 ),
-                child: const Icon(
-                  Icons.edit,
-                  color: AppTheme.primary,
-                  size: 20,
-                ),
-              ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  void _confirmDeleteSelected() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text(
+          'حذف المتطوعين',
+          style: TextStyle(fontFamily: 'Cairo'),
+        ),
+        content: Text(
+          'هل أنت متأكد من حذف ${_selectedForDelete.length} متطوع؟',
+          style: const TextStyle(fontFamily: 'Cairo'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('إلغاء', style: TextStyle(fontFamily: 'Cairo')),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await _deleteSelected();
+            },
+            child: const Text(
+              'حذف',
+              style: TextStyle(fontFamily: 'Cairo', color: Colors.red),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _deleteSelected() async {
+    final provider = Provider.of<VolunteerProvider>(context, listen: false);
+
+    for (final id in _selectedForDelete) {
+      await provider.deleteVolunteer(id);
+    }
+
+    if (mounted) {
+      setState(() {
+        _isDeleteMode = false;
+        _selectedForDelete.clear();
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('تم الحذف بنجاح'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    }
   }
 
   @override
