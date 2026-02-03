@@ -56,7 +56,7 @@ class VolunteerProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      // Validate age
+      // Validate age - allow any age from 1 to 100
       if (age < 1 || age > 100) {
         throw Exception('العمر يجب أن يكون بين 1 و 100 سنة');
       }
@@ -78,6 +78,41 @@ class VolunteerProvider with ChangeNotifier {
       );
 
       final id = await _repository.createVolunteer(volunteer);
+      _isLoading = false;
+      notifyListeners();
+      return id;
+    } catch (e) {
+      _error = e.toString();
+      _isLoading = false;
+      notifyListeners();
+      return null;
+    }
+  }
+
+  // Add volunteer with full model
+  Future<String?> addVolunteer(VolunteerModel volunteer) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      // Validate age if present
+      if (volunteer.age != null &&
+          (volunteer.age! < 1 || volunteer.age! > 100)) {
+        throw Exception('العمر يجب أن يكون بين 1 و 100 سنة');
+      }
+
+      // Auto-set educational level based on age if not provided
+      final volunteerToCreate =
+          volunteer.educationalLevel == null && volunteer.age != null
+          ? volunteer.copyWith(
+              educationalLevel: FirebaseConstants.getInitialEducationalLevel(
+                volunteer.age!,
+              ),
+            )
+          : volunteer;
+
+      final id = await _repository.createVolunteer(volunteerToCreate);
       _isLoading = false;
       notifyListeners();
       return id;

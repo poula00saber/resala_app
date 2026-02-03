@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import '../../providers/volunteer_provider.dart';
 import '../../themes/app_theme.dart';
 import 'profile_details_screen.dart';
+import 'add_existing_volunteer_screen.dart';
 import '../../../services/auth_service.dart';
 import '../../../data/models/app_user_model.dart';
 
@@ -26,6 +27,10 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
   Set<String> _selectedForDelete = {};
 
   bool get _canDelete =>
+      _authService.isAdmin ||
+      _authService.canAddDeleteOnPage(AppPages.profiles);
+
+  bool get _canAdd =>
       _authService.isAdmin ||
       _authService.canAddDeleteOnPage(AppPages.profiles);
 
@@ -65,6 +70,21 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
                 IconButton(
                   icon: const Icon(Icons.delete, color: Colors.red),
                   onPressed: _confirmDeleteSelected,
+                ),
+              ]
+            : _canAdd
+            ? [
+                IconButton(
+                  icon: const Icon(Icons.add, color: AppTheme.primary),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            const AddExistingVolunteerScreen(),
+                      ),
+                    );
+                  },
                 ),
               ]
             : null,

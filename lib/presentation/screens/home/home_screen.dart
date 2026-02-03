@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:resala/presentation/screens/contacts/contacts_screen.dart';
 import 'package:resala/presentation/screens/promotions/promotions_screen.dart';
 import 'package:resala/presentation/screens/committees/committees_management_screen.dart';
+import 'package:resala/presentation/screens/login/login_screen.dart';
 import 'package:resala/presentation/themes/app_theme.dart';
 import '../profiles/profiles_screen.dart';
 import '../events/events_screen.dart';
@@ -23,16 +24,83 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final AuthService _authService = AuthService();
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    // Auto-login as admin for testing
-    _authService.setAdminForTesting();
+    _initializeAuth();
+  }
+
+  Future<void> _initializeAuth() async {
+    // If user is not loaded yet, load from Firestore
+    if (_authService.currentUser == null) {
+      await _authService.initialize();
+    }
+    if (mounted) {
+      setState(() => _isLoading = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    // Show loading while initializing auth
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: AppTheme.background,
+        body: const Center(
+          child: CircularProgressIndicator(color: AppTheme.primary),
+        ),
+      );
+    }
+
+    // Get menu buttons based on permissions
+    final menuButtons = _buildMenuButtons(context);
+
+    // If no permissions and not admin, show message
+    if (menuButtons.isEmpty && !_authService.isAdmin) {
+      return Scaffold(
+        key: _scaffoldKey,
+        appBar: AppBar(
+          title: const Text("الصفحة الرئيسية"),
+          centerTitle: true,
+          backgroundColor: AppTheme.primary,
+          foregroundColor: Colors.white,
+          leading: IconButton(
+            icon: const Icon(Icons.menu),
+            onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+          ),
+        ),
+        drawer: _buildDrawer(context),
+        body: const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.lock_outline, size: 80, color: Colors.grey),
+              SizedBox(height: 16),
+              Text(
+                'لا توجد صلاحيات',
+                style: TextStyle(
+                  fontFamily: 'Cairo',
+                  fontSize: 20,
+                  color: Colors.grey,
+                ),
+              ),
+              SizedBox(height: 8),
+              Text(
+                'تواصل مع المسؤول للحصول على الصلاحيات',
+                style: TextStyle(
+                  fontFamily: 'Cairo',
+                  fontSize: 14,
+                  color: Colors.grey,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       key: _scaffoldKey,
       appBar: AppBar(
@@ -54,7 +122,7 @@ class _HomeScreenState extends State<HomeScreen> {
             childAspectRatio: 1,
             crossAxisSpacing: 15,
             mainAxisSpacing: 15,
-            children: _buildMenuButtons(context),
+            children: menuButtons,
           ),
         ),
       ),
@@ -134,9 +202,54 @@ class _HomeScreenState extends State<HomeScreen> {
                 style: TextStyle(fontFamily: 'Cairo', color: Colors.red),
               ),
               onTap: () async {
-                await _authService.signOut();
-                if (mounted) {
-                  Navigator.of(context).popUntil((route) => route.isFirst);
+                // Close the drawer first
+                Navigator.pop(context);
+
+                // Show confirmation dialog
+                final shouldLogout = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text(
+                      'تسجيل الخروج',
+                      style: TextStyle(fontFamily: 'Cairo'),
+                      textAlign: TextAlign.center,
+                    ),
+                    content: const Text(
+                      'هل أنت متأكد من تسجيل الخروج؟',
+                      style: TextStyle(fontFamily: 'Cairo'),
+                      textAlign: TextAlign.center,
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text(
+                          'إلغاء',
+                          style: TextStyle(fontFamily: 'Cairo'),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        child: const Text(
+                          'تسجيل الخروج',
+                          style: TextStyle(
+                            fontFamily: 'Cairo',
+                            color: Colors.red,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+
+                if (shouldLogout == true && mounted) {
+                  await _authService.signOut();
+                  if (mounted) {
+                    // Navigate to login and remove all previous routes
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(builder: (_) => const LoginScreen()),
+                      (route) => false,
+                    );
+                  }
                 }
               },
             ),

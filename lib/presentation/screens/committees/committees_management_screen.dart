@@ -1,6 +1,7 @@
 // ============================================
 // FILE: lib/presentation/screens/settings/committees_management_screen.dart
 // UPDATED: Added navigation to committee volunteers screen
+// UPDATED: Added permission checks for add/edit/delete
 // ============================================
 
 import 'package:flutter/material.dart';
@@ -8,9 +9,24 @@ import 'package:provider/provider.dart';
 import '../../providers/committee_provider.dart';
 import '../../themes/app_theme.dart';
 import 'committee_volunteers_screen.dart';
+import '../../../services/auth_service.dart';
+import '../../../data/models/app_user_model.dart';
 
-class CommitteesManagementScreen extends StatelessWidget {
+class CommitteesManagementScreen extends StatefulWidget {
   const CommitteesManagementScreen({super.key});
+
+  @override
+  State<CommitteesManagementScreen> createState() =>
+      _CommitteesManagementScreenState();
+}
+
+class _CommitteesManagementScreenState
+    extends State<CommitteesManagementScreen> {
+  final AuthService _authService = AuthService();
+
+  bool get _canAddDelete =>
+      _authService.isAdmin ||
+      _authService.canAddDeleteOnPage(AppPages.committees);
 
   @override
   Widget build(BuildContext context) {
@@ -167,35 +183,48 @@ class CommitteesManagementScreen extends StatelessWidget {
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Toggle Active Status
-                        Switch(
-                          value: committee.isActive,
-                          onChanged: (value) async {
-                            final provider = Provider.of<CommitteeProvider>(
-                              context,
-                              listen: false,
-                            );
-                            await provider.toggleCommitteeStatus(
-                              committee.id,
-                              value,
-                            );
-                          },
-                          activeColor: AppTheme.primary,
-                        ),
-                        // Edit Button
-                        IconButton(
-                          icon: const Icon(Icons.edit, color: AppTheme.primary),
-                          onPressed: () {
-                            _showEditDialog(context, committee);
-                          },
-                        ),
-                        // Delete Button
-                        IconButton(
-                          icon: const Icon(Icons.delete, color: Colors.red),
-                          onPressed: () {
-                            _showDeleteDialog(context, committee.id);
-                          },
-                        ),
+                        // Toggle Active Status (only if can add/delete)
+                        if (_canAddDelete)
+                          Switch(
+                            value: committee.isActive,
+                            onChanged: (value) async {
+                              final provider = Provider.of<CommitteeProvider>(
+                                context,
+                                listen: false,
+                              );
+                              await provider.toggleCommitteeStatus(
+                                committee.id,
+                                value,
+                              );
+                            },
+                            activeColor: AppTheme.primary,
+                          ),
+                        // Edit Button (only if can add/delete)
+                        if (_canAddDelete)
+                          IconButton(
+                            icon: const Icon(
+                              Icons.edit,
+                              color: AppTheme.primary,
+                            ),
+                            onPressed: () {
+                              _showEditDialog(context, committee);
+                            },
+                          ),
+                        // Delete Button (only if can add/delete)
+                        if (_canAddDelete)
+                          IconButton(
+                            icon: const Icon(Icons.delete, color: Colors.red),
+                            onPressed: () {
+                              _showDeleteDialog(context, committee.id);
+                            },
+                          ),
+                        // Show arrow icon for navigation when no permissions
+                        if (!_canAddDelete)
+                          const Icon(
+                            Icons.arrow_forward_ios,
+                            color: Colors.grey,
+                            size: 16,
+                          ),
                       ],
                     ),
                   ),
@@ -205,19 +234,21 @@ class CommitteesManagementScreen extends StatelessWidget {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showAddDialog(context),
-        backgroundColor: AppTheme.primary,
-        icon: const Icon(Icons.add, color: Colors.white),
-        label: const Text(
-          'إضافة لجنة',
-          style: TextStyle(
-            fontFamily: 'Cairo',
-            color: Colors.white,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
+      floatingActionButton: _canAddDelete
+          ? FloatingActionButton.extended(
+              onPressed: () => _showAddDialog(context),
+              backgroundColor: AppTheme.primary,
+              icon: const Icon(Icons.add, color: Colors.white),
+              label: const Text(
+                'إضافة لجنة',
+                style: TextStyle(
+                  fontFamily: 'Cairo',
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            )
+          : null,
     );
   }
 

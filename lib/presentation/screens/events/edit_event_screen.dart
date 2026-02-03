@@ -467,50 +467,132 @@ class _EditEventScreenState extends State<EditEventScreen> {
                             itemCount: volunteers.length,
                             itemBuilder: (context, index) {
                               final volunteer = volunteers[index];
-                              return Container(
-                                decoration: BoxDecoration(
-                                  border: Border(
-                                    bottom: BorderSide(
-                                      color: Colors.grey[200]!,
-                                    ),
+                              return Dismissible(
+                                key: Key(volunteer.id),
+                                direction: DismissDirection.endToStart,
+                                background: Container(
+                                  alignment: Alignment.centerLeft,
+                                  padding: const EdgeInsets.only(left: 20),
+                                  color: Colors.red,
+                                  child: const Icon(
+                                    Icons.delete,
+                                    color: Colors.white,
                                   ),
                                 ),
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                      flex: 1,
-                                      child: _buildTableCell(
-                                        (index + 1).toString(),
+                                confirmDismiss: (direction) async {
+                                  return await showDialog(
+                                    context: context,
+                                    builder: (context) => Directionality(
+                                      textDirection: TextDirection.rtl,
+                                      child: AlertDialog(
+                                        title: const Text(
+                                          'حذف متطوع',
+                                          style: TextStyle(fontFamily: 'Cairo'),
+                                        ),
+                                        content: Text(
+                                          'هل أنت متأكد من حذف ${volunteer.name} من هذا الحدث؟',
+                                          style: const TextStyle(
+                                            fontFamily: 'Cairo',
+                                          ),
+                                        ),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () =>
+                                                Navigator.pop(context, false),
+                                            child: const Text(
+                                              'إلغاء',
+                                              style: TextStyle(
+                                                fontFamily: 'Cairo',
+                                              ),
+                                            ),
+                                          ),
+                                          TextButton(
+                                            onPressed: () =>
+                                                Navigator.pop(context, true),
+                                            child: const Text(
+                                              'حذف',
+                                              style: TextStyle(
+                                                fontFamily: 'Cairo',
+                                                color: Colors.red,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
-                                    Expanded(
-                                      flex: 3,
-                                      child: _buildTableCell(volunteer.name),
-                                    ),
-                                    Expanded(
-                                      flex: 3,
-                                      child: _buildTableCell(volunteer.phone),
-                                    ),
-                                    Expanded(
-                                      flex: 2,
-                                      child: Center(
-                                        child: Checkbox(
-                                          value:
-                                              _volunteerTshirtStatus[volunteer
-                                                  .id] ??
-                                              false,
-                                          onChanged: (value) {
-                                            setState(() {
-                                              _volunteerTshirtStatus[volunteer
-                                                      .id] =
-                                                  value ?? false;
-                                            });
-                                          },
-                                          activeColor: AppTheme.primary,
+                                  );
+                                },
+                                onDismissed: (direction) {
+                                  setState(() {
+                                    _volunteerIds.remove(volunteer.id);
+                                    _volunteerTshirtStatus.remove(volunteer.id);
+                                  });
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'تم حذف ${volunteer.name} من الحدث',
+                                        style: const TextStyle(
+                                          fontFamily: 'Cairo',
                                         ),
                                       ),
+                                      backgroundColor: Colors.orange,
+                                      action: SnackBarAction(
+                                        label: 'تراجع',
+                                        textColor: Colors.white,
+                                        onPressed: () {
+                                          setState(() {
+                                            _volunteerIds.add(volunteer.id);
+                                          });
+                                        },
+                                      ),
                                     ),
-                                  ],
+                                  );
+                                },
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    border: Border(
+                                      bottom: BorderSide(
+                                        color: Colors.grey[200]!,
+                                      ),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        flex: 1,
+                                        child: _buildTableCell(
+                                          (index + 1).toString(),
+                                        ),
+                                      ),
+                                      Expanded(
+                                        flex: 3,
+                                        child: _buildTableCell(volunteer.name),
+                                      ),
+                                      Expanded(
+                                        flex: 3,
+                                        child: _buildTableCell(volunteer.phone),
+                                      ),
+                                      Expanded(
+                                        flex: 2,
+                                        child: Center(
+                                          child: Checkbox(
+                                            value:
+                                                _volunteerTshirtStatus[volunteer
+                                                    .id] ??
+                                                false,
+                                            onChanged: (value) {
+                                              setState(() {
+                                                _volunteerTshirtStatus[volunteer
+                                                        .id] =
+                                                    value ?? false;
+                                              });
+                                            },
+                                            activeColor: AppTheme.primary,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               );
                             },

@@ -4,6 +4,8 @@
 // ============================================
 
 import 'package:flutter/foundation.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../data/models/app_user_model.dart';
 import '../data/repositories/app_user_repository.dart';
 
@@ -27,10 +29,48 @@ class AuthService extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
-    _currentUser = await _userRepository.getCurrentUser();
+    final firebaseUser = FirebaseAuth.instance.currentUser;
+    if (firebaseUser != null) {
+      // Try to get existing user document
+      _currentUser = await _userRepository.getUserById(firebaseUser.uid);
+
+      // If user document doesn't exist, create it
+      if (_currentUser == null) {
+        await _createUserDocument(firebaseUser);
+        _currentUser = await _userRepository.getUserById(firebaseUser.uid);
+      }
+    }
 
     _isLoading = false;
     notifyListeners();
+  }
+
+  // Create user document for Firebase Auth user
+  Future<void> _createUserDocument(User firebaseUser) async {
+    // Check if this is an admin email (you can customize this list)
+    final adminEmails = [
+      'admin.resala@gmail.com',
+      'admin@resala.org',
+      'admin@resala.com',
+    ];
+
+    final isAdminEmail = adminEmails.contains(
+      firebaseUser.email?.toLowerCase(),
+    );
+
+    final newUser = AppUserModel(
+      id: firebaseUser.uid,
+      email: firebaseUser.email ?? '',
+      displayName: firebaseUser.displayName,
+      isAdmin: isAdminEmail, // Set as admin if email is in admin list
+      permissions: isAdminEmail ? [] : AppPages.getAllPagesDefault(),
+      createdAt: DateTime.now(),
+    );
+
+    await FirebaseFirestore.instance
+        .collection('app_users')
+        .doc(firebaseUser.uid)
+        .set(newUser.toFirestore());
   }
 
   // Sign in
@@ -63,11 +103,13 @@ class AuthService extends ChangeNotifier {
 
   // Check if user can access a page
   bool canAccessPage(String pageId) {
+    if (isAdmin) return true;
     return _currentUser?.canAccessPage(pageId) ?? false;
   }
 
   // Check if user can add/delete on a page
   bool canAddDeleteOnPage(String pageId) {
+    if (isAdmin) return true;
     return _currentUser?.canAddDeleteOnPage(pageId) ?? false;
   }
 

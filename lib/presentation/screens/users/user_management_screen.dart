@@ -6,6 +6,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import '../../themes/app_theme.dart';
 import '../../../data/models/app_user_model.dart';
 import '../../../data/repositories/app_user_repository.dart';
@@ -177,16 +178,35 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     List<PagePermission> permissions,
   ) async {
     try {
-      // Store current user credentials
-      final currentUser = FirebaseAuth.instance.currentUser;
+      // Store current admin's credentials
+      final currentAdmin = FirebaseAuth.instance.currentUser;
+      if (currentAdmin == null) {
+        throw Exception('يجب تسجيل الدخول أولاً');
+      }
+      final adminEmail = currentAdmin.email;
 
-      // Create the new user
-      final userCredential = await FirebaseAuth.instance
-          .createUserWithEmailAndPassword(email: email, password: password);
+      // Create a secondary Firebase app for user creation
+      FirebaseApp? secondaryApp;
+      try {
+        secondaryApp = Firebase.app('SecondaryApp');
+      } catch (e) {
+        // App doesn't exist, create it
+        secondaryApp = await Firebase.initializeApp(
+          name: 'SecondaryApp',
+          options: Firebase.app().options,
+        );
+      }
+
+      // Create the new user using the secondary app
+      final secondaryAuth = FirebaseAuth.instanceFor(app: secondaryApp);
+      final userCredential = await secondaryAuth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
 
       final newUserId = userCredential.user!.uid;
 
-      // Create user document
+      // Create user document in Firestore
       final newUser = AppUserModel(
         id: newUserId,
         email: email,
@@ -201,30 +221,30 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
           .doc(newUserId)
           .set(newUser.toFirestore());
 
-      // Sign out the new user and sign back in as admin
-      await FirebaseAuth.instance.signOut();
-
-      // Note: In a production app, you would need to re-authenticate the admin
-      // For now, the admin will need to sign in again
+      // Sign out from secondary app
+      await secondaryAuth.signOut();
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text(
-              'تم إنشاء المستخدم بنجاح. يرجى تسجيل الدخول مرة أخرى.',
-            ),
+            content: Text('تم إنشاء المستخدم بنجاح'),
             backgroundColor: Colors.green,
           ),
         );
-        Navigator.of(context).popUntil((route) => route.isFirst);
+        Navigator.pop(context);
       }
     } on FirebaseAuthException catch (e) {
+      String message = 'حدث خطأ';
+      if (e.code == 'weak-password') {
+        message = 'كلمة المرور ضعيفة جداً';
+      } else if (e.code == 'email-already-in-use') {
+        message = 'البريد الإلكتروني مستخدم بالفعل';
+      } else if (e.code == 'invalid-email') {
+        message = 'البريد الإلكتروني غير صالح';
+      }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('خطأ: ${e.message}'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text(message), backgroundColor: Colors.red),
         );
       }
     } catch (e) {

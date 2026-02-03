@@ -27,7 +27,7 @@ class _EventsScreenState extends State<EventsScreen> {
   bool _isDeleteMode = false;
   Set<String> _selectedForDelete = {};
 
-  bool get _canDelete =>
+  bool get _canAddDelete =>
       _authService.isAdmin || _authService.canAddDeleteOnPage(AppPages.events);
 
   String _getArabicDayName(String date) {
@@ -411,8 +411,8 @@ class _EventsScreenState extends State<EventsScreen> {
 
                   const SizedBox(height: 32),
 
-                  // Add Event Button
-                  if (!_isDeleteMode)
+                  // Add Event Button - Only show if user can add
+                  if (!_isDeleteMode && _canAddDelete)
                     SizedBox(
                       width: double.infinity,
                       height: 56,
@@ -558,7 +558,7 @@ class _EventsScreenState extends State<EventsScreen> {
                           getEventTypeIcon: _getEventTypeIcon,
                           isDeleteMode: _isDeleteMode,
                           selectedForDelete: _selectedForDelete,
-                          canDelete: _canDelete,
+                          canDelete: _canAddDelete,
                           onDeleteModeChanged: (isDelete, eventId) {
                             setState(() {
                               _isDeleteMode = isDelete;

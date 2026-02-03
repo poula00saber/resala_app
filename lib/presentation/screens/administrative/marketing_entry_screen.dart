@@ -1,6 +1,7 @@
 // ============================================
 // FILE: lib/presentation/screens/administrative/marketing_entry_screen.dart
 // الدعايا - Marketing Entry Screen (Data Entry)
+// UPDATED: Added permission checks for add/delete
 // ============================================
 
 import 'package:flutter/material.dart';
@@ -8,6 +9,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../themes/app_theme.dart';
 import '../../../data/models/marketing_model.dart';
 import '../../../data/repositories/marketing_repository.dart';
+import '../../../services/auth_service.dart';
+import '../../../data/models/app_user_model.dart';
 
 class MarketingEntryScreen extends StatefulWidget {
   const MarketingEntryScreen({super.key});
@@ -19,6 +22,11 @@ class MarketingEntryScreen extends StatefulWidget {
 class _MarketingEntryScreenState extends State<MarketingEntryScreen> {
   final MarketingRepository _marketingRepository = MarketingRepository();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final AuthService _authService = AuthService();
+
+  bool get _canAddDelete =>
+      _authService.isAdmin ||
+      _authService.canAddDeleteOnPage(AppPages.administrative);
 
   List<Map<String, dynamic>> _volunteers = [];
   String? _selectedVolunteerId;
@@ -405,38 +413,64 @@ class _MarketingEntryScreenState extends State<MarketingEntryScreen> {
                     ),
                     const SizedBox(height: 24),
 
-                    // Save Button
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: _isSaving ? null : _saveMarketingEntry,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.primary,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                    // Save Button (only if can add/delete)
+                    if (_canAddDelete)
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: _isSaving ? null : _saveMarketingEntry,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.primary,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
-                        ),
-                        child: _isSaving
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  color: Colors.white,
-                                  strokeWidth: 2,
+                          child: _isSaving
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Text(
+                                  'تسجيل الستوري',
+                                  style: TextStyle(
+                                    fontFamily: 'Cairo',
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 18,
+                                    color: Colors.white,
+                                  ),
                                 ),
-                              )
-                            : const Text(
-                                'تسجيل الستوري',
+                        ),
+                      ),
+                    // No permission message
+                    if (!_canAddDelete)
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.orange),
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.info_outline, color: Colors.orange),
+                            SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'ليس لديك صلاحية لإضافة سجلات',
                                 style: TextStyle(
                                   fontFamily: 'Cairo',
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 18,
-                                  color: Colors.white,
+                                  color: Colors.orange,
                                 ),
                               ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
                     const SizedBox(height: 32),
 
                     // Recent Records Section

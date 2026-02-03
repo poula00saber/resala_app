@@ -1,6 +1,6 @@
 // ============================================
-// FILE: lib/presentation/screens/home/profile_details_screen.dart
-// REDESIGNED - Exact match to your image layout
+// FILE: lib/presentation/screens/profiles/add_existing_volunteer_screen.dart
+// Add existing volunteer with full data from volunteer model
 // ============================================
 
 import 'dart:io';
@@ -12,85 +12,42 @@ import 'package:resala/services/image_upload_service.dart';
 import '../../providers/volunteer_provider.dart';
 import '../../providers/committee_provider.dart';
 import '../../themes/app_theme.dart';
-import '../../../services/auth_service.dart';
-import '../../../data/models/app_user_model.dart';
+import '../../../data/models/volunteer_model.dart';
 
-class ProfileDetailsScreen extends StatefulWidget {
-  final dynamic volunteer;
-
-  const ProfileDetailsScreen({super.key, required this.volunteer});
+class AddExistingVolunteerScreen extends StatefulWidget {
+  const AddExistingVolunteerScreen({super.key});
 
   @override
-  State<ProfileDetailsScreen> createState() => _ProfileDetailsScreenState();
+  State<AddExistingVolunteerScreen> createState() =>
+      _AddExistingVolunteerScreenState();
 }
 
-class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
+class _AddExistingVolunteerScreenState
+    extends State<AddExistingVolunteerScreen> {
   final _formKey = GlobalKey<FormState>();
-  final AuthService _authService = AuthService();
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _ageController = TextEditingController();
+  final TextEditingController _addressController = TextEditingController();
+  final TextEditingController _nationalIdController = TextEditingController();
+  final TextEditingController _birthDateController = TextEditingController();
+  final TextEditingController _universityController = TextEditingController();
 
-  bool get _canAddDelete =>
-      _authService.isAdmin ||
-      _authService.canAddDeleteOnPage(AppPages.profiles);
-
-  late TextEditingController _nameController;
-  late TextEditingController _phoneController;
-  late TextEditingController _ageController;
-  late TextEditingController _addressController;
-  late TextEditingController _nationalIdController;
-  late TextEditingController _birthDateController;
-  late TextEditingController _joinDateController;
-  late TextEditingController _educationalLevelController;
-  late TextEditingController _universityController;
   File? _selectedImage;
-  String? _imageUrl;
   bool _uploadingImage = false;
   final ImageUploadService _imageUploadService = ImageUploadService();
 
   bool _isLoading = false;
   bool _hasTshirt = false;
+  bool _hasInterview = false;
   String? _selectedCommitteeId;
   String? _selectedCommitteeName;
   String? _selectedGender;
+  String? _selectedEducationalLevel;
   bool _committeesLoaded = false;
   final List<String> _genders = FirebaseConstants.genders;
   final List<String> _educationalLevels = FirebaseConstants.educationalLevels;
-
-  @override
-  void initState() {
-    super.initState();
-    _nameController = TextEditingController(text: widget.volunteer.name ?? '');
-    _phoneController = TextEditingController(
-      text: widget.volunteer.phone ?? '',
-    );
-    _ageController = TextEditingController(
-      text: widget.volunteer.age?.toString() ?? '',
-    );
-    _addressController = TextEditingController(
-      text: widget.volunteer.address ?? '',
-    );
-    _nationalIdController = TextEditingController(
-      text: widget.volunteer.nationalId ?? '',
-    );
-    _birthDateController = TextEditingController(
-      text: widget.volunteer.birthDate ?? '',
-    );
-    _joinDateController = TextEditingController(
-      text: _formatDate(widget.volunteer.createdAt),
-    );
-    _educationalLevelController = TextEditingController(
-      text: widget.volunteer.educationalLevel ?? '',
-    );
-    _universityController = TextEditingController(
-      text: widget.volunteer.university ?? '',
-    );
-
-    // Initialize with volunteer's current data
-    _selectedCommitteeId = widget.volunteer.committeeId;
-    _selectedCommitteeName = widget.volunteer.committeeName;
-    _hasTshirt = widget.volunteer.hasTshirt ?? false;
-    _selectedGender = widget.volunteer.gender;
-    _imageUrl = widget.volunteer.profileImage; // Initialize with existing image
-  }
 
   String _formatDate(DateTime? date) {
     if (date == null) return '';
@@ -132,7 +89,6 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
       setState(() {
         _selectedImage = imageFile;
       });
-      await _uploadImageToStorage();
     }
   }
 
@@ -142,49 +98,31 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
       setState(() {
         _selectedImage = imageFile;
       });
-      await _uploadImageToStorage();
     }
   }
 
-  Future<void> _uploadImageToStorage() async {
-    if (_selectedImage == null) return;
-
-    setState(() => _uploadingImage = true);
+  Future<String?> _uploadImageToStorage(String volunteerId) async {
+    if (_selectedImage == null) return null;
 
     try {
       final newImageUrl = await _imageUploadService.uploadImage(
         imageFile: _selectedImage!,
-        volunteerId: widget.volunteer.id,
-        oldImageUrl: _imageUrl,
+        volunteerId: volunteerId,
+        oldImageUrl: null,
       );
-
-      if (newImageUrl != null) {
-        setState(() {
-          _imageUrl = newImageUrl;
-          _uploadingImage = false;
-        });
-
-        // Update in Firestore immediately
-        await Provider.of<VolunteerProvider>(
-          context,
-          listen: false,
-        ).updateVolunteerData(widget.volunteer.id, {
-          'profileImage': newImageUrl,
-        });
-      }
+      return newImageUrl;
     } catch (e) {
-      setState(() => _uploadingImage = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('خطأ في رفع الصورة: ${e.toString()}'),
           backgroundColor: Colors.red,
         ),
       );
+      return null;
     }
   }
 
-  // Update the save method to include profileImage
-  Future<void> _saveProfile() async {
+  Future<void> _saveVolunteer() async {
     if (!_formKey.currentState!.validate()) return;
 
     if (_selectedCommitteeId == null) {
@@ -205,44 +143,69 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
         listen: false,
       );
 
-      final updateData = {
-        'name': _nameController.text.trim(),
-        'phone': _phoneController.text.trim(),
-        'age': int.tryParse(_ageController.text.trim()),
-        'address': _addressController.text.trim(),
-        'nationalId': _nationalIdController.text.trim(),
-        'birthDate': _birthDateController.text.trim(),
-        'committeeId': _selectedCommitteeId,
-        'committeeName': _selectedCommitteeName,
-        'gender': _selectedGender,
-        'hasTshirt': _hasTshirt,
-        // Educational level is managed from promotions screen - not included here
-        'university': _universityController.text.trim(),
-      };
-
-      // Only add profileImage if it exists
-      if (_imageUrl != null && _imageUrl!.isNotEmpty) {
-        updateData['profileImage'] = _imageUrl;
-      }
-
-      await volunteerProvider.updateVolunteerData(
-        widget.volunteer.id,
-        updateData,
+      // Create new volunteer with all fields
+      final newVolunteer = VolunteerModel(
+        id: '', // Will be assigned by Firestore
+        name: _nameController.text.trim(),
+        phone: _phoneController.text.trim(),
+        email: _emailController.text.trim(),
+        address: _addressController.text.trim(),
+        nationalId: _nationalIdController.text.trim().isNotEmpty
+            ? _nationalIdController.text.trim()
+            : null,
+        age: int.tryParse(_ageController.text.trim()),
+        committeeId: _selectedCommitteeId,
+        committeeName: _selectedCommitteeName,
+        hasInterview: _hasInterview,
+        hasTshirt: _hasTshirt,
+        createdAt: DateTime.now(),
+        birthDate: _birthDateController.text.trim().isNotEmpty
+            ? _birthDateController.text.trim()
+            : null,
+        gender: _selectedGender,
+        educationalLevel: _selectedEducationalLevel,
+        university: _universityController.text.trim().isNotEmpty
+            ? _universityController.text.trim()
+            : null,
+        profileImage: null, // Will be updated after volunteer is created
       );
 
-      setState(() => _isLoading = false);
+      // Add volunteer and get the ID
+      final volunteerId = await volunteerProvider.addVolunteer(newVolunteer);
 
-      if (mounted) {
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('تم حفظ البيانات بنجاح'),
-            backgroundColor: Colors.green,
-          ),
-        );
+      if (volunteerId != null) {
+        // Upload image if selected
+        if (_selectedImage != null) {
+          setState(() => _uploadingImage = true);
+          final imageUrl = await _uploadImageToStorage(volunteerId);
+          if (imageUrl != null) {
+            // Update volunteer with image URL
+            await volunteerProvider.updateVolunteerData(volunteerId, {
+              'profileImage': imageUrl,
+            });
+          }
+          setState(() => _uploadingImage = false);
+        }
+
+        setState(() => _isLoading = false);
+
+        if (mounted) {
+          Navigator.pop(context, volunteerId);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('تم إضافة المتطوع بنجاح'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } else {
+        throw Exception('فشل في إضافة المتطوع');
       }
     } catch (e) {
-      setState(() => _isLoading = false);
+      setState(() {
+        _isLoading = false;
+        _uploadingImage = false;
+      });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -251,6 +214,25 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
           ),
         );
       }
+    }
+  }
+
+  // Get available educational levels based on age
+  List<String> _getAvailableLevels() {
+    final ageText = _ageController.text.trim();
+    final age = int.tryParse(ageText);
+
+    if (age == null) {
+      // If no age entered yet, show all levels
+      return _educationalLevels;
+    }
+
+    if (age <= 16) {
+      // Under 17: only شبل and شبل مميز
+      return ['شبل', 'شبل مميز'];
+    } else {
+      // 17 and above: جدد and higher (no شبل options)
+      return ['جدد', 'تدريب', 'مشروع مسئول', 'مسئول'];
     }
   }
 
@@ -300,7 +282,7 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
                     const Expanded(
                       child: Center(
                         child: Text(
-                          'تفاصيل الملف الشخصي',
+                          'إضافة متطوع جديد',
                           style: TextStyle(
                             fontFamily: 'Cairo',
                             fontSize: 20,
@@ -347,40 +329,11 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
                                       _selectedImage!,
                                       fit: BoxFit.cover,
                                     )
-                                  : (_imageUrl != null && _imageUrl!.isNotEmpty
-                                        ? Image.network(
-                                            _imageUrl!,
-                                            fit: BoxFit.cover,
-                                            loadingBuilder:
-                                                (
-                                                  context,
-                                                  child,
-                                                  loadingProgress,
-                                                ) {
-                                                  if (loadingProgress == null)
-                                                    return child;
-                                                  return const Center(
-                                                    child:
-                                                        CircularProgressIndicator(
-                                                          color:
-                                                              AppTheme.primary,
-                                                        ),
-                                                  );
-                                                },
-                                            errorBuilder:
-                                                (context, error, stackTrace) {
-                                                  return const Icon(
-                                                    Icons.person,
-                                                    size: 60,
-                                                    color: AppTheme.primary,
-                                                  );
-                                                },
-                                          )
-                                        : const Icon(
-                                            Icons.person,
-                                            size: 60,
-                                            color: AppTheme.primary,
-                                          ))),
+                                  : const Icon(
+                                      Icons.person,
+                                      size: 60,
+                                      color: AppTheme.primary,
+                                    )),
                       ),
                     ),
                     Positioned(
@@ -434,6 +387,30 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
                           }
                           return null;
                         },
+                        onChanged: (value) {
+                          // Reset educational level when age changes
+                          final age = int.tryParse(value);
+                          if (age != null) {
+                            setState(() {
+                              // Clear selection if it's not valid for the new age
+                              if (age <= 16 &&
+                                  _selectedEducationalLevel != null &&
+                                  ![
+                                    'شبل',
+                                    'شبل مميز',
+                                  ].contains(_selectedEducationalLevel)) {
+                                _selectedEducationalLevel = null;
+                              } else if (age >= 17 &&
+                                  _selectedEducationalLevel != null &&
+                                  [
+                                    'شبل',
+                                    'شبل مميز',
+                                  ].contains(_selectedEducationalLevel)) {
+                                _selectedEducationalLevel = null;
+                              }
+                            });
+                          }
+                        },
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -446,6 +423,15 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
                       ),
                     ),
                   ],
+                ),
+
+                const SizedBox(height: 16),
+
+                // Email - البريد الإلكتروني
+                _buildLabeledTextField(
+                  controller: _emailController,
+                  label: 'البريد الإلكتروني',
+                  keyboardType: TextInputType.emailAddress,
                 ),
 
                 const SizedBox(height: 16),
@@ -475,14 +461,22 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Padding(
-                            padding: EdgeInsets.only(bottom: 8, right: 4),
-                            child: Text(
-                              'اللجنة',
-                              style: TextStyle(
-                                fontFamily: 'Cairo',
-                                fontSize: 14,
-                                color: AppTheme.primary,
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 8, right: 4),
+                            child: RichText(
+                              text: const TextSpan(
+                                text: 'اللجنة',
+                                style: TextStyle(
+                                  fontFamily: 'Cairo',
+                                  fontSize: 14,
+                                  color: AppTheme.primary,
+                                ),
+                                children: [
+                                  TextSpan(
+                                    text: ' *',
+                                    style: TextStyle(color: Colors.red),
+                                  ),
+                                ],
                               ),
                             ),
                           ),
@@ -498,15 +492,12 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
                               }
 
                               if (snapshot.hasError) {
-                                // Log the actual error
                                 print(
                                   'Committee loading error: ${snapshot.error}',
                                 );
-                                print('Stack trace: ${snapshot.stackTrace}');
                                 return _buildErrorDropdown();
                               }
 
-                              // Add this null check
                               if (!snapshot.hasData || snapshot.data == null) {
                                 return _buildEmptyDropdown();
                               }
@@ -609,15 +600,78 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
 
                 const SizedBox(height: 16),
 
-                // Gender and Join Date Row - النوع و تاريخ الانضمام
+                // Gender and Educational Level Row - النوع و الدرجة التطوعية
                 Row(
                   children: [
-                    // Join Date - تاريخ الانضمام
+                    // Educational Level Dropdown - الدرجة التطوعية
                     Expanded(
-                      child: _buildDateFieldWithLabel(
-                        controller: _joinDateController,
-                        label: 'تاريخ الانضمام',
-                        enabled: false,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Padding(
+                            padding: EdgeInsets.only(bottom: 8, right: 4),
+                            child: Text(
+                              'الدرجة التطوعية',
+                              style: TextStyle(
+                                fontFamily: 'Cairo',
+                                fontSize: 14,
+                                color: AppTheme.primary,
+                              ),
+                            ),
+                          ),
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: AppTheme.primary,
+                                width: 1.5,
+                              ),
+                            ),
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<String>(
+                                value: _selectedEducationalLevel,
+                                isExpanded: true,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                ),
+                                style: const TextStyle(
+                                  fontFamily: 'Cairo',
+                                  fontSize: 14,
+                                  color: Colors.black,
+                                ),
+                                items: [
+                                  const DropdownMenuItem(
+                                    value: null,
+                                    child: Text(
+                                      'اختر الدرجة',
+                                      style: TextStyle(
+                                        fontFamily: 'Cairo',
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                  ),
+                                  ..._getAvailableLevels().map(
+                                    (level) => DropdownMenuItem(
+                                      value: level,
+                                      child: Text(
+                                        level,
+                                        style: const TextStyle(
+                                          fontFamily: 'Cairo',
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                                onChanged: (value) {
+                                  setState(() {
+                                    _selectedEducationalLevel = value;
+                                  });
+                                },
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -697,120 +751,75 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
 
                 const SizedBox(height: 16),
 
-                // Educational Level and University Row - الدرجة التعليمية و الجامعة
-                Row(
-                  children: [
-                    // University - الجامعة
-                    Expanded(
-                      child: _buildLabeledTextField(
-                        controller: _universityController,
-                        label: 'الجامعة',
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    // Educational Level - الدرجة التعليمية (READ ONLY)
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Padding(
-                            padding: EdgeInsets.only(bottom: 8, right: 4),
-                            child: Text(
-                              'الدرجة التطوعية',
-                              style: TextStyle(
-                                fontFamily: 'Cairo',
-                                fontSize: 14,
-                                color: AppTheme.primary,
-                              ),
-                            ),
-                          ),
-                          // Changed from DropdownButton to a read-only display
-                          Container(
-                            height: 56, // Match the dropdown height
-                            width: double.infinity,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 14,
-                            ),
-                            decoration: BoxDecoration(
-                              color:
-                                  Colors.grey[100], // Light grey for read-only
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: Colors
-                                    .grey[400]!, // Grey border for read-only
-                                width: 1.5,
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                const Icon(
-                                  Icons.school,
-                                  size: 20,
-                                  color: Colors.grey,
-                                ),
-                                Expanded(
-                                  child: Text(
-                                    _educationalLevelController.text.isNotEmpty
-                                        ? _educationalLevelController.text
-                                        : 'لا توجد درجة',
-                                    style: TextStyle(
-                                      fontFamily: 'Cairo',
-                                      fontSize: 14,
-                                      color:
-                                          _educationalLevelController
-                                              .text
-                                              .isNotEmpty
-                                          ? Colors.black
-                                          : Colors.grey,
-                                      fontWeight:
-                                          _educationalLevelController
-                                              .text
-                                              .isNotEmpty
-                                          ? FontWeight.w500
-                                          : FontWeight.normal,
-                                    ),
-                                    textAlign: TextAlign.right,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          // Help text
-                        ],
-                      ),
-                    ),
-                  ],
+                // University - الجامعة
+                _buildLabeledTextField(
+                  controller: _universityController,
+                  label: 'الجامعة',
                 ),
 
                 const SizedBox(height: 24),
 
-                // T-shirt Checkbox - التيشيرت
+                // Interview and T-shirt Checkboxes Row
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
                   children: [
-                    const Text(
-                      'التيشيرت',
-                      style: TextStyle(
-                        fontFamily: 'Cairo',
-                        fontSize: 16,
-                        color: AppTheme.primary,
-                        fontWeight: FontWeight.w600,
+                    // Has Interview Checkbox
+                    Expanded(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'المقابلة',
+                            style: TextStyle(
+                              fontFamily: 'Cairo',
+                              fontSize: 16,
+                              color: AppTheme.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Checkbox(
+                            value: _hasInterview,
+                            onChanged: (value) {
+                              setState(() {
+                                _hasInterview = value ?? false;
+                              });
+                            },
+                            activeColor: AppTheme.primary,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    Checkbox(
-                      value: _hasTshirt,
-                      onChanged: (value) {
-                        setState(() {
-                          _hasTshirt = value ?? false;
-                        });
-                      },
-                      activeColor: AppTheme.primary,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(4),
+                    // T-shirt Checkbox
+                    Expanded(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'التيشيرت',
+                            style: TextStyle(
+                              fontFamily: 'Cairo',
+                              fontSize: 16,
+                              color: AppTheme.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Checkbox(
+                            value: _hasTshirt,
+                            onChanged: (value) {
+                              setState(() {
+                                _hasTshirt = value ?? false;
+                              });
+                            },
+                            activeColor: AppTheme.primary,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -818,66 +827,40 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
 
                 const SizedBox(height: 32),
 
-                // Save Button - حفظ (only if has permission)
-                if (_canAddDelete)
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: ElevatedButton(
-                      onPressed: _isLoading ? null : _saveProfile,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primary,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        elevation: 4,
-                        shadowColor: AppTheme.primary.withOpacity(0.3),
+                // Save Button - حفظ
+                SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: ElevatedButton(
+                    onPressed: _isLoading ? null : _saveVolunteer,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primary,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
                       ),
-                      child: _isLoading
-                          ? const SizedBox(
-                              height: 24,
-                              width: 24,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2.5,
-                              ),
-                            )
-                          : const Text(
-                              'حفظ',
-                              style: TextStyle(
-                                fontFamily: 'Cairo',
-                                fontSize: 18,
-                                fontWeight: FontWeight.w700,
-                              ),
+                      elevation: 4,
+                      shadowColor: AppTheme.primary.withOpacity(0.3),
+                    ),
+                    child: _isLoading || _uploadingImage
+                        ? const SizedBox(
+                            height: 24,
+                            width: 24,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2.5,
                             ),
-                    ),
-                  ),
-                // No permission message
-                if (!_canAddDelete)
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.orange.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.orange),
-                    ),
-                    child: const Row(
-                      children: [
-                        Icon(Icons.info_outline, color: Colors.orange),
-                        SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            'ليس لديك صلاحية لتعديل البيانات',
+                          )
+                        : const Text(
+                            'إضافة المتطوع',
                             style: TextStyle(
                               fontFamily: 'Cairo',
-                              color: Colors.orange,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
-                        ),
-                      ],
-                    ),
                   ),
+                ),
 
                 const SizedBox(height: 20),
               ],
@@ -894,6 +877,7 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
     String? Function(String?)? validator,
     TextInputType? keyboardType,
     bool isRequired = false,
+    void Function(String)? onChanged,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -954,7 +938,13 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
               fontSize: 13,
             ),
           ),
-          validator: validator,
+          validator:
+              validator ??
+              (isRequired
+                  ? (value) =>
+                        value?.isEmpty ?? true ? 'يرجى إدخال $label' : null
+                  : null),
+          onChanged: onChanged,
         ),
       ],
     );
@@ -1080,12 +1070,11 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
   void dispose() {
     _nameController.dispose();
     _phoneController.dispose();
+    _emailController.dispose();
     _ageController.dispose();
     _addressController.dispose();
     _nationalIdController.dispose();
     _birthDateController.dispose();
-    _joinDateController.dispose();
-    _educationalLevelController.dispose();
     _universityController.dispose();
     super.dispose();
   }

@@ -1,6 +1,7 @@
 // ============================================
 // FILE: lib/presentation/screens/settings/committee_volunteers_screen.dart
 // UPDATED: Added Excel export functionality
+// UPDATED: Added permission checks for profile access
 // ============================================
 
 import 'package:flutter/material.dart';
@@ -11,6 +12,8 @@ import '../../providers/volunteer_provider.dart';
 import '../../providers/committee_provider.dart';
 import '../../themes/app_theme.dart';
 import '../../../data/models/volunteer_model.dart';
+import '../../../services/auth_service.dart';
+import '../../../data/models/app_user_model.dart';
 
 class CommitteeVolunteersScreen extends StatefulWidget {
   final String committeeId;
@@ -29,8 +32,12 @@ class CommitteeVolunteersScreen extends StatefulWidget {
 
 class _CommitteeVolunteersScreenState extends State<CommitteeVolunteersScreen> {
   final TextEditingController _searchController = TextEditingController();
+  final AuthService _authService = AuthService();
   String _searchQuery = '';
   bool _isExporting = false;
+
+  bool get _canAccessProfiles =>
+      _authService.isAdmin || _authService.canAccessPage(AppPages.profiles);
 
   Future<void> _exportToExcel(List<VolunteerModel> volunteers) async {
     setState(() => _isExporting = true);
@@ -289,12 +296,25 @@ class _CommitteeVolunteersScreenState extends State<CommitteeVolunteersScreen> {
       ),
       child: InkWell(
         onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => ProfileDetailsScreen(volunteer: volunteer),
-            ),
-          );
+          if (_canAccessProfiles) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) =>
+                    ProfileDetailsScreen(volunteer: volunteer),
+              ),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                  'ليس لديك صلاحية للوصول إلى البروفايلات',
+                  style: TextStyle(fontFamily: 'Cairo'),
+                ),
+                backgroundColor: Colors.orange,
+              ),
+            );
+          }
         },
         borderRadius: BorderRadius.circular(30),
         child: Padding(
