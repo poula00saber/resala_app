@@ -53,11 +53,11 @@ class _LoginScreenState extends State<LoginScreen> {
       String password = _passwordController.text.trim();
 
       // Auto-login with default admin credentials if "auto" is entered or fields are empty
-      if (email.toLowerCase() == 'auto' ||
-          (email.isEmpty && password.isEmpty)) {
-        email = _defaultAdminEmail;
-        password = _defaultAdminPassword;
-      }
+      // if (email.toLowerCase() == 'auto' ||
+      //     (email.isEmpty && password.isEmpty)) {
+      //   email = _defaultAdminEmail;
+      //   password = _defaultAdminPassword;
+      // }
 
       // Disable reCAPTCHA verification for testing
       FirebaseAuth.instance.setSettings(
@@ -268,7 +268,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           _buildModernTextField(
                             controller: _emailController,
                             label: 'البريد الإلكتروني',
-                            hint: 'أدخل البريد أو اكتب auto',
+                            hint: 'أدخل البريد الإلكتروني',
                             icon: Icons.email_outlined,
                             keyboardType: TextInputType.emailAddress,
                           ),

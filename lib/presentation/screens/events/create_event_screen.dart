@@ -43,13 +43,6 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
     FirebaseConstants.meetingOfflineExternal,
   ];
 
-  // NEW: List of administrative types (without اجتماع لجنة)
-  final List<String> _administrativeTypes = [
-    'اجتماع ليدرات', // Leaders meeting
-    'اجتماع للكل', // Everyone meeting
-    'مهام إدارية أخرى', // Other administrative tasks
-  ];
-
   bool _isLoading = false;
   bool _showCustomEventTypeField = false;
   bool _showCommitteeSelection = false;
@@ -393,7 +386,9 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                             border: OutlineInputBorder(),
                             prefixIcon: Icon(Icons.admin_panel_settings),
                           ),
-                          items: _administrativeTypes.map((String type) {
+                          items: FirebaseConstants.administrativeTypes.map((
+                            String type,
+                          ) {
                             return DropdownMenuItem<String>(
                               value: type,
                               child: Text(type),
