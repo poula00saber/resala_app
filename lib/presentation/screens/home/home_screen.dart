@@ -13,6 +13,10 @@ import '../administrative/administrative_screen.dart';
 import '../users/user_management_screen.dart';
 import '../../../services/auth_service.dart';
 import '../../../data/models/app_user_model.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+// Key for tracking if user just logged out
+const String _justLoggedOutKey = 'just_logged_out';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -242,6 +246,13 @@ class _HomeScreenState extends State<HomeScreen> {
                 );
 
                 if (shouldLogout == true && mounted) {
+                  // Set flag to prevent auto-login on next app start
+                  // Use delayed execution to avoid SharedPreferences channel error
+                  Future.delayed(Duration.zero, () async {
+                    final prefs = await SharedPreferences.getInstance();
+                    await prefs.setBool(_justLoggedOutKey, true);
+                  });
+
                   await _authService.signOut();
                   if (mounted) {
                     // Navigate to login and remove all previous routes

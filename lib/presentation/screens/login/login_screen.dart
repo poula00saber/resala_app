@@ -6,6 +6,9 @@ import 'package:resala/presentation/themes/app_theme.dart';
 import 'package:resala/services/auth_service.dart';
 import '../home/home_screen.dart';
 
+// Key for tracking if user just logged out
+const String _justLoggedOutKey = 'just_logged_out';
+
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -21,11 +24,17 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _obscurePassword = true;
   bool _rememberMe = false;
   String? _errorMessage;
+  bool _isAutoLoggingIn = false;
+
+  // List of saved accounts for account switching
+  List<Map<String, String>> _savedAccounts = [];
+  String? _selectedAccountEmail;
 
   // Shared preferences keys
   static const String _rememberMeKey = 'remember_me';
   static const String _savedEmailKey = 'saved_email';
   static const String _savedPasswordKey = 'saved_password';
+  static const String _accountsKey = 'saved_accounts';
 
   // Default admin credentials
   static const String _defaultAdminEmail = 'admin.resala@gmail.com';
@@ -40,7 +49,150 @@ class _LoginScreenState extends State<LoginScreen> {
         appVerificationDisabledForTesting: true,
       );
     }
-    _loadSavedCredentials();
+    // Set auth persistence to LOCAL to maintain session across app restarts
+    _setAuthPersistence();
+
+    // Delay SharedPreferences calls until after widget is mounted
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadSavedCredentials();
+      _loadSavedAccounts();
+      // Check if already logged in and auto-login
+      _checkAutoLogin();
+    });
+  }
+
+  Future<void> _setAuthPersistence() async {
+    try {
+      await FirebaseAuth.instance.setPersistence(Persistence.LOCAL);
+      debugPrint('Firebase Auth persistence set to LOCAL');
+    } catch (e) {
+      debugPrint('Error setting auth persistence: $e');
+    }
+  }
+
+  Future<void> _checkAutoLogin() async {
+    // Check if user just logged out (don't auto-login in this case)
+    final prefs = await SharedPreferences.getInstance();
+    final justLoggedOut = prefs.getBool(_justLoggedOutKey) ?? false;
+
+    if (justLoggedOut) {
+      // User explicitly logged out, don't auto-login
+      await prefs.setBool(_justLoggedOutKey, false);
+      debugPrint('User just logged out, skipping auto-login');
+      return;
+    }
+
+    // Check if user is already logged in with Firebase
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser != null) {
+      debugPrint('User already logged in: ${currentUser.email}');
+      // Navigate to home directly
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const HomeScreen()),
+        );
+        return;
+      }
+    }
+
+    // If remember me is checked and credentials exist, auto-login
+    final rememberMe = prefs.getBool(_rememberMeKey) ?? false;
+
+    if (rememberMe) {
+      final savedEmail = prefs.getString(_savedEmailKey) ?? '';
+      final savedPassword = prefs.getString(_savedPasswordKey) ?? '';
+
+      if (savedEmail.isNotEmpty && savedPassword.isNotEmpty) {
+        debugPrint('Auto-login with saved credentials for: $savedEmail');
+        setState(() {
+          _isAutoLoggingIn = true;
+          _emailController.text = savedEmail;
+          _passwordController.text = savedPassword;
+        });
+        // Auto-login after a small delay to allow UI to render
+        await Future.delayed(const Duration(milliseconds: 100));
+        if (mounted) {
+          await _login();
+        }
+      }
+    }
+  }
+
+  Future<void> _loadSavedAccounts() async {
+    final prefs = await SharedPreferences.getInstance();
+    final accountsJson = prefs.getStringList(_accountsKey) ?? [];
+
+    List<Map<String, String>> accounts = [];
+    for (String accountJson in accountsJson) {
+      // Format: email|password|name
+      final parts = accountJson.split('|');
+      if (parts.length >= 2) {
+        accounts.add({
+          'email': parts[0],
+          'password': parts[1],
+          'name': parts.length > 2 ? parts[2] : parts[0].split('@')[0],
+        });
+      }
+    }
+
+    if (mounted) {
+      setState(() {
+        _savedAccounts = accounts;
+      });
+    }
+  }
+
+  Future<void> _saveAccountToList(
+    String email,
+    String password,
+    String name,
+  ) async {
+    final prefs = await SharedPreferences.getInstance();
+    final accountsJson = prefs.getStringList(_accountsKey) ?? [];
+
+    // Check if account already exists, if so update it
+    final existingIndex = accountsJson.indexWhere(
+      (acc) => acc.startsWith('$email|'),
+    );
+
+    if (existingIndex == -1) {
+      // Add new account: email|password|name
+      accountsJson.add('$email|$password|$name');
+    } else {
+      // Update existing account
+      accountsJson[existingIndex] = '$email|$password|$name';
+    }
+
+    await prefs.setStringList(_accountsKey, accountsJson);
+    await _loadSavedAccounts();
+  }
+
+  Future<void> _removeAccountFromList(String email) async {
+    final prefs = await SharedPreferences.getInstance();
+    final accountsJson = prefs.getStringList(_accountsKey) ?? [];
+
+    accountsJson.removeWhere((acc) => acc.startsWith('$email|'));
+    await prefs.setStringList(_accountsKey, accountsJson);
+    await _loadSavedAccounts();
+  }
+
+  void _selectAccount(String email, String password) {
+    setState(() {
+      _emailController.text = email;
+      _passwordController.text = password;
+      _selectedAccountEmail = email;
+      _rememberMe = true;
+    });
+
+    // Auto-login when account is selected
+    if (password.isNotEmpty) {
+      Future.delayed(const Duration(milliseconds: 100), () {
+        if (mounted) {
+          _login();
+        }
+      });
+    }
   }
 
   Future<void> _loadSavedCredentials() async {
@@ -61,11 +213,19 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _saveCredentials() async {
     final prefs = await SharedPreferences.getInstance();
+    final email = _emailController.text.trim();
 
     if (_rememberMe) {
       await prefs.setBool(_rememberMeKey, true);
-      await prefs.setString(_savedEmailKey, _emailController.text.trim());
+      await prefs.setString(_savedEmailKey, email);
       await prefs.setString(_savedPasswordKey, _passwordController.text);
+
+      // Also save to accounts list for account switching
+      await _saveAccountToList(
+        email,
+        _passwordController.text,
+        email.split('@')[0],
+      );
     } else {
       await prefs.setBool(_rememberMeKey, false);
       await prefs.remove(_savedEmailKey);
@@ -106,13 +266,6 @@ class _LoginScreenState extends State<LoginScreen> {
         });
         return;
       }
-
-      // Auto-login with default admin credentials if "auto" is entered or fields are empty
-      // if (email.toLowerCase() == 'auto' ||
-      //     (email.isEmpty && password.isEmpty)) {
-      //   email = _defaultAdminEmail;
-      //   password = _defaultAdminPassword;
-      // }
 
       // Disable reCAPTCHA verification for testing
       FirebaseAuth.instance.setSettings(
@@ -337,6 +490,90 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ),
 
+                          // Account switching UI (Facebook-like)
+                          if (_savedAccounts.isNotEmpty)
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              margin: const EdgeInsets.only(bottom: 16),
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade50,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'اختر حساباً',
+                                    style: TextStyle(
+                                      fontFamily: 'Cairo',
+                                      fontSize: 12,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  SingleChildScrollView(
+                                    scrollDirection: Axis.horizontal,
+                                    child: Row(
+                                      children: _savedAccounts.map((account) {
+                                        final isSelected =
+                                            account['email'] ==
+                                            _selectedAccountEmail;
+                                        return GestureDetector(
+                                          onTap: () {
+                                            _selectAccount(
+                                              account['email']!,
+                                              account['password'] ?? '',
+                                            );
+                                          },
+                                          child: Container(
+                                            margin: const EdgeInsets.only(
+                                              right: 12,
+                                            ),
+                                            child: Column(
+                                              children: [
+                                                CircleAvatar(
+                                                  radius: 28,
+                                                  backgroundColor: isSelected
+                                                      ? AppTheme.primary
+                                                      : Colors.grey.shade300,
+                                                  child: Icon(
+                                                    Icons.person,
+                                                    color: isSelected
+                                                        ? Colors.white
+                                                        : Colors.grey.shade600,
+                                                    size: 28,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 4),
+                                                SizedBox(
+                                                  width: 60,
+                                                  child: Text(
+                                                    account['name']!,
+                                                    style: TextStyle(
+                                                      fontFamily: 'Cairo',
+                                                      fontSize: 10,
+                                                      color: isSelected
+                                                          ? AppTheme.primary
+                                                          : Colors
+                                                                .grey
+                                                                .shade600,
+                                                    ),
+                                                    textAlign: TextAlign.center,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        );
+                                      }).toList(),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
                           // Email field
                           _buildModernTextField(
                             controller: _emailController,
@@ -398,7 +635,9 @@ class _LoginScreenState extends State<LoginScreen> {
                           SizedBox(
                             height: 56,
                             child: ElevatedButton(
-                              onPressed: _isLoading ? null : _login,
+                              onPressed: _isLoading || _isAutoLoggingIn
+                                  ? null
+                                  : _login,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppTheme.primary,
                                 foregroundColor: Colors.white,
@@ -408,7 +647,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                                 shadowColor: AppTheme.primary.withOpacity(0.4),
                               ),
-                              child: _isLoading
+                              child: _isLoading || _isAutoLoggingIn
                                   ? const SizedBox(
                                       height: 24,
                                       width: 24,
@@ -442,38 +681,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   const SizedBox(height: 24),
 
-                  // Quick login button
-                  // TextButton.icon(
-                  //   onPressed: _isLoading
-                  //       ? null
-                  //       : () {
-                  //           _emailController.text = 'auto';
-                  //           _login();
-                  //         },
-                  //   icon: const Icon(Icons.flash_on, color: AppTheme.primary),
-                  //   label: const Text(
-                  //     'دخول سريع',
-                  //     style: TextStyle(
-                  //       fontFamily: 'Cairo',
-                  //       fontSize: 16,
-                  //       color: AppTheme.primary,
-                  //       fontWeight: FontWeight.w600,
-                  //     ),
-                  //   ),
-                  //   style: TextButton.styleFrom(
-                  //     padding: const EdgeInsets.symmetric(
-                  //       horizontal: 24,
-                  //       vertical: 12,
-                  //     ),
-                  //     shape: RoundedRectangleBorder(
-                  //       borderRadius: BorderRadius.circular(12),
-                  //       side: const BorderSide(
-                  //         color: AppTheme.primary,
-                  //         width: 1.5,
-                  //       ),
-                  //     ),
-                  //   ),
-                  // ),
                   const SizedBox(height: 40),
 
                   // Footer
@@ -502,64 +709,75 @@ class _LoginScreenState extends State<LoginScreen> {
     required String hint,
     required IconData icon,
     bool isPassword = false,
-    TextInputType keyboardType = TextInputType.text,
+    TextInputType? keyboardType,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.only(right: 4, bottom: 8),
-          child: Text(
-            label,
-            style: const TextStyle(
-              fontFamily: 'Cairo',
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: AppTheme.primary,
-            ),
+        Text(
+          label,
+          style: const TextStyle(
+            fontFamily: 'Cairo',
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: AppTheme.primary,
           ),
         ),
-        Container(
-          decoration: BoxDecoration(
-            color: const Color(0xFFF5F5F5),
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: Colors.grey.shade200, width: 1.5),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: controller,
+          obscureText: isPassword && _obscurePassword,
+          keyboardType: keyboardType,
+          style: const TextStyle(
+            fontFamily: 'Cairo',
+            fontSize: 15,
+            color: Colors.black87,
           ),
-          child: TextField(
-            controller: controller,
-            obscureText: isPassword ? _obscurePassword : false,
-            keyboardType: keyboardType,
-            textDirection: TextDirection.rtl,
-            style: const TextStyle(fontFamily: 'Cairo', fontSize: 16),
-            decoration: InputDecoration(
-              hintText: hint,
-              hintStyle: TextStyle(
-                fontFamily: 'Cairo',
-                color: Colors.grey.shade400,
-                fontSize: 14,
-              ),
-              prefixIcon: Icon(icon, color: AppTheme.primary, size: 22),
-              suffixIcon: isPassword
-                  ? IconButton(
-                      icon: Icon(
-                        _obscurePassword
-                            ? Icons.visibility_off_outlined
-                            : Icons.visibility_outlined,
-                        color: Colors.grey,
-                        size: 22,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _obscurePassword = !_obscurePassword;
-                        });
-                      },
-                    )
-                  : null,
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 16,
-              ),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: TextStyle(
+              fontFamily: 'Cairo',
+              fontSize: 14,
+              color: Colors.grey.shade400,
+            ),
+            prefixIcon: Icon(
+              icon,
+              color: AppTheme.primary.withOpacity(0.7),
+              size: 22,
+            ),
+            suffixIcon: isPassword
+                ? IconButton(
+                    icon: Icon(
+                      _obscurePassword
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
+                      color: AppTheme.primary.withOpacity(0.5),
+                      size: 22,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _obscurePassword = !_obscurePassword;
+                      });
+                    },
+                  )
+                : null,
+            filled: true,
+            fillColor: Colors.grey.shade50,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 16,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(color: Colors.grey.shade200, width: 1),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(color: Colors.grey.shade200, width: 1),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: const BorderSide(color: AppTheme.primary, width: 2),
             ),
           ),
         ),
