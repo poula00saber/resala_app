@@ -12,6 +12,7 @@ import 'package:resala/presentation/providers/evaluation_provider.dart';
 import 'package:resala/presentation/providers/interview_provider.dart';
 import 'package:resala/presentation/providers/promotion_provider.dart'; // ADD THIS
 import 'package:resala/presentation/screens/login/login_screen.dart';
+import 'package:resala/services/auth_service.dart';
 import 'firebase_options.dart';
 import 'presentation/providers/event_provider.dart';
 import 'presentation/providers/volunteer_provider.dart';
@@ -45,6 +46,7 @@ class MyApp extends StatelessWidget {
         ),
         // ADD THIS:
         ChangeNotifierProvider(create: (_) => PromotionProvider()),
+        ChangeNotifierProvider(create: (_) => AuthService()..initialize()),
       ],
       child: MaterialApp(
         title: 'Resala Events',

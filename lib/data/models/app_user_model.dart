@@ -5,25 +5,75 @@
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+// Sub-permission for nested pages (reports sub-pages, administrative sub-pages)
+class SubPermission {
+  final String subPageId;
+  final String subPageName;
+  final bool canAccess;
+
+  SubPermission({
+    required this.subPageId,
+    required this.subPageName,
+    this.canAccess = false,
+  });
+
+  factory SubPermission.fromMap(Map<String, dynamic> map) {
+    return SubPermission(
+      subPageId: map['subPageId'] ?? '',
+      subPageName: map['subPageName'] ?? '',
+      canAccess: map['canAccess'] ?? false,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'subPageId': subPageId,
+      'subPageName': subPageName,
+      'canAccess': canAccess,
+    };
+  }
+
+  SubPermission copyWith({
+    String? subPageId,
+    String? subPageName,
+    bool? canAccess,
+  }) {
+    return SubPermission(
+      subPageId: subPageId ?? this.subPageId,
+      subPageName: subPageName ?? this.subPageName,
+      canAccess: canAccess ?? this.canAccess,
+    );
+  }
+}
+
 class PagePermission {
   final String pageId;
   final String pageName;
   final bool canAccess;
   final bool canAddDelete; // true = can add/delete, false = read only
+  final List<SubPermission> subPermissions; // Sub-permissions for nested pages
 
   PagePermission({
     required this.pageId,
     required this.pageName,
     this.canAccess = false,
     this.canAddDelete = false,
+    this.subPermissions = const [],
   });
 
   factory PagePermission.fromMap(Map<String, dynamic> map) {
+    List<SubPermission> subPerms = [];
+    if (map['subPermissions'] != null) {
+      subPerms = (map['subPermissions'] as List<dynamic>)
+          .map((s) => SubPermission.fromMap(s as Map<String, dynamic>))
+          .toList();
+    }
     return PagePermission(
       pageId: map['pageId'] ?? '',
       pageName: map['pageName'] ?? '',
       canAccess: map['canAccess'] ?? false,
       canAddDelete: map['canAddDelete'] ?? false,
+      subPermissions: subPerms,
     );
   }
 
@@ -33,6 +83,7 @@ class PagePermission {
       'pageName': pageName,
       'canAccess': canAccess,
       'canAddDelete': canAddDelete,
+      'subPermissions': subPermissions.map((s) => s.toMap()).toList(),
     };
   }
 
@@ -41,12 +92,14 @@ class PagePermission {
     String? pageName,
     bool? canAccess,
     bool? canAddDelete,
+    List<SubPermission>? subPermissions,
   }) {
     return PagePermission(
       pageId: pageId ?? this.pageId,
       pageName: pageName ?? this.pageName,
       canAccess: canAccess ?? this.canAccess,
       canAddDelete: canAddDelete ?? this.canAddDelete,
+      subPermissions: subPermissions ?? this.subPermissions,
     );
   }
 }
@@ -126,6 +179,22 @@ class AppUserModel {
     return permission.canAccess && permission.canAddDelete;
   }
 
+  // Check if user can access a specific sub-page
+  bool canAccessSubPage(String pageId, String subPageId) {
+    if (isAdmin) return true;
+    final permission = permissions.firstWhere(
+      (p) => p.pageId == pageId,
+      orElse: () => PagePermission(pageId: pageId, pageName: ''),
+    );
+    if (!permission.canAccess) return false;
+
+    final subPermission = permission.subPermissions.firstWhere(
+      (s) => s.subPageId == subPageId,
+      orElse: () => SubPermission(subPageId: subPageId, subPageName: ''),
+    );
+    return subPermission.canAccess;
+  }
+
   AppUserModel copyWith({
     String? id,
     String? email,
@@ -159,6 +228,70 @@ class AppPages {
   static const String committees = 'committees';
   static const String administrative = 'administrative';
 
+  // Reports sub-pages
+  static const String reportComprehensive = 'report_comprehensive';
+  static const String reportFamilyDay = 'report_family_day';
+  static const String reportCubs = 'report_cubs';
+  static const String reportMeetings = 'report_meetings';
+  static const String reportFund = 'report_fund';
+  static const String reportMarketing = 'report_marketing';
+
+  // Administrative sub-pages
+  static const String adminFund = 'admin_fund';
+  static const String adminMarketing = 'admin_marketing';
+
+  // Get default sub-permissions for reports
+  static List<SubPermission> getReportsSubPermissions() {
+    return [
+      SubPermission(
+        subPageId: reportComprehensive,
+        subPageName: 'الكلي',
+        canAccess: false,
+      ),
+      SubPermission(
+        subPageId: reportFamilyDay,
+        subPageName: 'اليوم العائلي',
+        canAccess: false,
+      ),
+      SubPermission(
+        subPageId: reportCubs,
+        subPageName: 'الأشبال',
+        canAccess: false,
+      ),
+      SubPermission(
+        subPageId: reportMeetings,
+        subPageName: 'الاجتماعات',
+        canAccess: false,
+      ),
+      SubPermission(
+        subPageId: reportFund,
+        subPageName: 'الصندوق',
+        canAccess: false,
+      ),
+      SubPermission(
+        subPageId: reportMarketing,
+        subPageName: 'الدعايا',
+        canAccess: false,
+      ),
+    ];
+  }
+
+  // Get default sub-permissions for administrative
+  static List<SubPermission> getAdministrativeSubPermissions() {
+    return [
+      SubPermission(
+        subPageId: adminFund,
+        subPageName: 'الصندوق',
+        canAccess: false,
+      ),
+      SubPermission(
+        subPageId: adminMarketing,
+        subPageName: 'الدعايا',
+        canAccess: false,
+      ),
+    ];
+  }
+
   static List<PagePermission> getAllPagesDefault() {
     return [
       PagePermission(
@@ -172,6 +305,7 @@ class AppPages {
         pageName: 'تقارير',
         canAccess: false,
         canAddDelete: false,
+        subPermissions: getReportsSubPermissions(),
       ),
       PagePermission(
         pageId: events,
@@ -214,6 +348,7 @@ class AppPages {
         pageName: 'اداريات',
         canAccess: false,
         canAddDelete: false,
+        subPermissions: getAdministrativeSubPermissions(),
       ),
     ];
   }

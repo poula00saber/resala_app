@@ -132,7 +132,7 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
       setState(() {
         _selectedImage = imageFile;
       });
-      await _uploadImageToStorage();
+      // Image will be uploaded during save
     }
   }
 
@@ -142,14 +142,12 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
       setState(() {
         _selectedImage = imageFile;
       });
-      await _uploadImageToStorage();
+      // Image will be uploaded during save
     }
   }
 
-  Future<void> _uploadImageToStorage() async {
-    if (_selectedImage == null) return;
-
-    setState(() => _uploadingImage = true);
+  Future<String?> _uploadImageToStorage() async {
+    if (_selectedImage == null) return null;
 
     try {
       final newImageUrl = await _imageUploadService.uploadImage(
@@ -157,29 +155,15 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
         volunteerId: widget.volunteer.id,
         oldImageUrl: _imageUrl,
       );
-
-      if (newImageUrl != null) {
-        setState(() {
-          _imageUrl = newImageUrl;
-          _uploadingImage = false;
-        });
-
-        // Update in Firestore immediately
-        await Provider.of<VolunteerProvider>(
-          context,
-          listen: false,
-        ).updateVolunteerData(widget.volunteer.id, {
-          'profileImage': newImageUrl,
-        });
-      }
+      return newImageUrl;
     } catch (e) {
-      setState(() => _uploadingImage = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('خطأ في رفع الصورة: ${e.toString()}'),
           backgroundColor: Colors.red,
         ),
       );
+      return null;
     }
   }
 
@@ -205,6 +189,18 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
         listen: false,
       );
 
+      // Upload image if one was selected
+      String? newImageUrl = _imageUrl;
+      if (_selectedImage != null) {
+        setState(() => _uploadingImage = true);
+        final uploadedUrl = await _uploadImageToStorage();
+        if (uploadedUrl != null) {
+          newImageUrl = uploadedUrl;
+          _imageUrl = uploadedUrl;
+        }
+        setState(() => _uploadingImage = false);
+      }
+
       final updateData = {
         'name': _nameController.text.trim(),
         'phone': _phoneController.text.trim(),
@@ -221,8 +217,8 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
       };
 
       // Only add profileImage if it exists
-      if (_imageUrl != null && _imageUrl!.isNotEmpty) {
-        updateData['profileImage'] = _imageUrl;
+      if (newImageUrl != null && newImageUrl.isNotEmpty) {
+        updateData['profileImage'] = newImageUrl;
       }
 
       await volunteerProvider.updateVolunteerData(

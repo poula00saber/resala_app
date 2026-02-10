@@ -4,7 +4,10 @@
 // ============================================
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../themes/app_theme.dart';
+import '../../../services/auth_service.dart';
+import '../../../data/models/app_user_model.dart';
 import 'fund_entry_screen.dart';
 import 'marketing_entry_screen.dart';
 
@@ -13,6 +16,8 @@ class AdministrativeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final authService = Provider.of<AuthService>(context);
+
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
@@ -39,33 +44,42 @@ class AdministrativeScreen extends StatelessWidget {
           child: Column(
             children: [
               const SizedBox(height: 40),
-              _buildMenuButton(
-                context,
-                title: 'الصندوق',
-                icon: Icons.account_balance_wallet,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const FundEntryScreen(),
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(height: 24),
-              _buildMenuButton(
-                context,
-                title: 'الدعايا',
-                icon: Icons.campaign,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const MarketingEntryScreen(),
-                    ),
-                  );
-                },
-              ),
+              if (authService.canAccessSubPage(
+                AppPages.administrative,
+                AppPages.adminFund,
+              )) ...[
+                _buildMenuButton(
+                  context,
+                  title: 'الصندوق',
+                  icon: Icons.account_balance_wallet,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const FundEntryScreen(),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 24),
+              ],
+              if (authService.canAccessSubPage(
+                AppPages.administrative,
+                AppPages.adminMarketing,
+              ))
+                _buildMenuButton(
+                  context,
+                  title: 'الدعايا',
+                  icon: Icons.campaign,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const MarketingEntryScreen(),
+                      ),
+                    );
+                  },
+                ),
             ],
           ),
         ),

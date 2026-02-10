@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:resala/presentation/themes/app_theme.dart';
 import 'package:resala/services/auth_service.dart';
 import '../home/home_screen.dart';
@@ -18,7 +19,13 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
   bool _obscurePassword = true;
+  bool _rememberMe = false;
   String? _errorMessage;
+
+  // Shared preferences keys
+  static const String _rememberMeKey = 'remember_me';
+  static const String _savedEmailKey = 'saved_email';
+  static const String _savedPasswordKey = 'saved_password';
 
   // Default admin credentials
   static const String _defaultAdminEmail = 'admin.resala@gmail.com';
@@ -32,6 +39,37 @@ class _LoginScreenState extends State<LoginScreen> {
       FirebaseAuth.instance.setSettings(
         appVerificationDisabledForTesting: true,
       );
+    }
+    _loadSavedCredentials();
+  }
+
+  Future<void> _loadSavedCredentials() async {
+    final prefs = await SharedPreferences.getInstance();
+    final rememberMe = prefs.getBool(_rememberMeKey) ?? false;
+
+    if (rememberMe) {
+      final savedEmail = prefs.getString(_savedEmailKey) ?? '';
+      final savedPassword = prefs.getString(_savedPasswordKey) ?? '';
+
+      setState(() {
+        _rememberMe = rememberMe;
+        _emailController.text = savedEmail;
+        _passwordController.text = savedPassword;
+      });
+    }
+  }
+
+  Future<void> _saveCredentials() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    if (_rememberMe) {
+      await prefs.setBool(_rememberMeKey, true);
+      await prefs.setString(_savedEmailKey, _emailController.text.trim());
+      await prefs.setString(_savedPasswordKey, _passwordController.text);
+    } else {
+      await prefs.setBool(_rememberMeKey, false);
+      await prefs.remove(_savedEmailKey);
+      await prefs.remove(_savedPasswordKey);
     }
   }
 
@@ -50,7 +88,24 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       String email = _emailController.text.trim();
-      String password = _passwordController.text.trim();
+      String password = _passwordController
+          .text; // Don't trim password - might have intentional spaces
+
+      // Validate inputs
+      if (email.isEmpty) {
+        setState(() {
+          _errorMessage = 'يرجى إدخال البريد الإلكتروني';
+          _isLoading = false;
+        });
+        return;
+      }
+      if (password.isEmpty) {
+        setState(() {
+          _errorMessage = 'يرجى إدخال كلمة المرور';
+          _isLoading = false;
+        });
+        return;
+      }
 
       // Auto-login with default admin credentials if "auto" is entered or fields are empty
       // if (email.toLowerCase() == 'auto' ||
@@ -65,20 +120,38 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       // Sign in with Firebase Auth
+      debugPrint('Attempting login with email: $email');
       await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
+      debugPrint('Firebase Auth login successful');
+
+      // Save credentials if remember me is checked (don't let this break login)
+      try {
+        await _saveCredentials();
+        debugPrint('Credentials saved successfully');
+      } catch (e) {
+        debugPrint('Error saving credentials: $e');
+      }
 
       // Initialize AuthService to load user permissions from Firestore
-      final authService = AuthService();
-      await authService.initialize();
+      try {
+        final authService = AuthService();
+        await authService.initialize();
+        debugPrint('AuthService initialized successfully');
+      } catch (e) {
+        debugPrint('Error initializing AuthService: $e');
+        // Continue anyway - user can still access the app
+      }
 
+      debugPrint('About to navigate to HomeScreen, mounted: $mounted');
       if (mounted) {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => const HomeScreen()),
         );
+        debugPrint('Navigation to HomeScreen triggered');
       }
     } on FirebaseAuthException catch (e) {
       String message = _getErrorMessage(e.code);
@@ -284,7 +357,42 @@ class _LoginScreenState extends State<LoginScreen> {
                             isPassword: true,
                           ),
 
-                          const SizedBox(height: 30),
+                          const SizedBox(height: 16),
+
+                          // Remember Me checkbox
+                          Row(
+                            children: [
+                              Checkbox(
+                                value: _rememberMe,
+                                onChanged: (value) {
+                                  setState(() {
+                                    _rememberMe = value ?? false;
+                                  });
+                                },
+                                activeColor: AppTheme.primary,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                              ),
+                              GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    _rememberMe = !_rememberMe;
+                                  });
+                                },
+                                child: const Text(
+                                  'تذكرني',
+                                  style: TextStyle(
+                                    fontFamily: 'Cairo',
+                                    fontSize: 14,
+                                    color: AppTheme.primary,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+
+                          const SizedBox(height: 20),
 
                           // Login button
                           SizedBox(

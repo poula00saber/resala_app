@@ -3,6 +3,7 @@
 // UPDATED: Calculates shirt count from volunteers' hasTshirt field
 // UPDATED: Shows committee name for meetings (type: 'اجتماع')
 // UPDATED: Added long press delete functionality
+// UPDATED: Added bulk select and export to Excel functionality
 // ============================================
 
 import 'package:flutter/material.dart';
@@ -14,6 +15,8 @@ import 'edit_event_screen.dart';
 import 'create_event_screen.dart';
 import '../../../services/auth_service.dart';
 import '../../../data/models/app_user_model.dart';
+import '../../../data/models/event_model.dart';
+import '../../../services/excel_export_helper.dart';
 
 class EventsScreen extends StatefulWidget {
   const EventsScreen({super.key});
@@ -22,10 +25,17 @@ class EventsScreen extends StatefulWidget {
   State<EventsScreen> createState() => _EventsScreenState();
 }
 
+enum SelectionMode { none, delete, export }
+
 class _EventsScreenState extends State<EventsScreen> {
   final AuthService _authService = AuthService();
-  bool _isDeleteMode = false;
-  Set<String> _selectedForDelete = {};
+  SelectionMode _selectionMode = SelectionMode.none;
+  Set<String> _selectedEvents = {};
+  bool _isExporting = false;
+
+  // Legacy getters for compatibility
+  bool get _isDeleteMode => _selectionMode == SelectionMode.delete;
+  Set<String> get _selectedForDelete => _selectedEvents;
 
   bool get _canAddDelete =>
       _authService.isAdmin || _authService.canAddDeleteOnPage(AppPages.events);
@@ -285,7 +295,7 @@ class _EventsScreenState extends State<EventsScreen> {
                   // Title and Filter Row
                   Row(
                     children: [
-                      // Back Button or Cancel Delete Mode
+                      // Back Button or Cancel Selection Mode
                       Container(
                         width: 44,
                         height: 44,
@@ -295,15 +305,17 @@ class _EventsScreenState extends State<EventsScreen> {
                         ),
                         child: IconButton(
                           icon: Icon(
-                            _isDeleteMode ? Icons.close : Icons.arrow_back,
+                            _selectionMode != SelectionMode.none
+                                ? Icons.close
+                                : Icons.arrow_back,
                             color: Colors.black87,
                           ),
                           padding: EdgeInsets.zero,
                           onPressed: () {
-                            if (_isDeleteMode) {
+                            if (_selectionMode != SelectionMode.none) {
                               setState(() {
-                                _isDeleteMode = false;
-                                _selectedForDelete.clear();
+                                _selectionMode = SelectionMode.none;
+                                _selectedEvents.clear();
                               });
                             } else {
                               Navigator.pop(context);
@@ -317,8 +329,10 @@ class _EventsScreenState extends State<EventsScreen> {
                       // Title
                       Expanded(
                         child: Text(
-                          _isDeleteMode
-                              ? 'حذف (${_selectedForDelete.length})'
+                          _selectionMode == SelectionMode.delete
+                              ? 'حذف (${_selectedEvents.length})'
+                              : _selectionMode == SelectionMode.export
+                              ? 'تصدير (${_selectedEvents.length})'
                               : 'الأحداث',
                           style: const TextStyle(
                             fontFamily: 'Cairo',
@@ -329,8 +343,9 @@ class _EventsScreenState extends State<EventsScreen> {
                         ),
                       ),
 
-                      // Delete button when in delete mode
-                      if (_isDeleteMode && _selectedForDelete.isNotEmpty)
+                      // Action buttons based on selection mode
+                      if (_selectionMode == SelectionMode.delete &&
+                          _selectedEvents.isNotEmpty)
                         Container(
                           width: 44,
                           height: 44,
@@ -344,7 +359,33 @@ class _EventsScreenState extends State<EventsScreen> {
                             onPressed: _confirmDeleteSelected,
                           ),
                         )
-                      else
+                      else if (_selectionMode == SelectionMode.export &&
+                          _selectedEvents.isNotEmpty)
+                        Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: Colors.green.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: _isExporting
+                              ? const Padding(
+                                  padding: EdgeInsets.all(10),
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.green,
+                                  ),
+                                )
+                              : IconButton(
+                                  icon: const Icon(
+                                    Icons.file_download,
+                                    color: Colors.green,
+                                  ),
+                                  padding: EdgeInsets.zero,
+                                  onPressed: _exportSelectedEvents,
+                                ),
+                        )
+                      else if (_selectionMode == SelectionMode.none)
                         // Filter Button
                         Consumer<EventProvider>(
                           builder: (context, eventProvider, _) {
@@ -556,23 +597,23 @@ class _EventsScreenState extends State<EventsScreen> {
                           day: dateTime.day,
                           month: _getMonthName(dateTime.month),
                           getEventTypeIcon: _getEventTypeIcon,
-                          isDeleteMode: _isDeleteMode,
-                          selectedForDelete: _selectedForDelete,
+                          selectionMode: _selectionMode,
+                          selectedEvents: _selectedEvents,
                           canDelete: _canAddDelete,
-                          onDeleteModeChanged: (isDelete, eventId) {
+                          onSelectionModeChanged: (mode, eventId) {
                             setState(() {
-                              _isDeleteMode = isDelete;
+                              _selectionMode = mode;
                               if (eventId != null) {
-                                _selectedForDelete.add(eventId);
+                                _selectedEvents.add(eventId);
                               }
                             });
                           },
                           onSelectionChanged: (eventId, isSelected) {
                             setState(() {
                               if (isSelected) {
-                                _selectedForDelete.add(eventId);
+                                _selectedEvents.add(eventId);
                               } else {
-                                _selectedForDelete.remove(eventId);
+                                _selectedEvents.remove(eventId);
                               }
                             });
                           },
@@ -633,8 +674,9 @@ class _EventsScreenState extends State<EventsScreen> {
 
     if (mounted) {
       setState(() {
-        _isDeleteMode = false;
+        _selectionMode = SelectionMode.none;
         _selectedForDelete.clear();
+        _selectedEvents.clear();
       });
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -642,6 +684,58 @@ class _EventsScreenState extends State<EventsScreen> {
           backgroundColor: Colors.green,
         ),
       );
+    }
+  }
+
+  Future<void> _exportSelectedEvents() async {
+    if (_selectedEvents.isEmpty) return;
+
+    setState(() => _isExporting = true);
+
+    try {
+      final eventProvider = Provider.of<EventProvider>(context, listen: false);
+      final volunteerProvider = Provider.of<VolunteerProvider>(
+        context,
+        listen: false,
+      );
+
+      // Get all events that match the selected IDs
+      final List<EventModel> eventsToExport = [];
+      for (final eventId in _selectedEvents) {
+        final event = eventProvider.events.firstWhere(
+          (e) => e.id == eventId,
+          orElse: () => throw Exception('Event not found'),
+        );
+        eventsToExport.add(event);
+      }
+
+      // Export using the new multi-event method
+      await ExcelExportHelper.exportMultipleEventsToExcel(
+        events: eventsToExport,
+        getVolunteersByIds: (volunteerIds) =>
+            volunteerProvider.getVolunteersByIds(volunteerIds),
+      );
+
+      if (mounted) {
+        setState(() {
+          _selectionMode = SelectionMode.none;
+          _selectedEvents.clear();
+          _isExporting = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('تم التصدير بنجاح'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isExporting = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('حدث خطأ: $e'), backgroundColor: Colors.red),
+        );
+      }
     }
   }
 }
@@ -654,10 +748,10 @@ class _DayCard extends StatefulWidget {
   final int day;
   final String month;
   final IconData Function(dynamic) getEventTypeIcon;
-  final bool isDeleteMode;
-  final Set<String> selectedForDelete;
+  final SelectionMode selectionMode;
+  final Set<String> selectedEvents;
   final bool canDelete;
-  final Function(bool isDelete, String? eventId) onDeleteModeChanged;
+  final Function(SelectionMode mode, String? eventId) onSelectionModeChanged;
   final Function(String eventId, bool isSelected) onSelectionChanged;
 
   const _DayCard({
@@ -667,10 +761,10 @@ class _DayCard extends StatefulWidget {
     required this.day,
     required this.month,
     required this.getEventTypeIcon,
-    required this.isDeleteMode,
-    required this.selectedForDelete,
+    required this.selectionMode,
+    required this.selectedEvents,
     required this.canDelete,
-    required this.onDeleteModeChanged,
+    required this.onSelectionModeChanged,
     required this.onSelectionChanged,
   });
 
@@ -712,6 +806,58 @@ class _DayCardState extends State<_DayCard>
         _animationController.reverse();
       }
     });
+  }
+
+  void _showSelectionModeDialog(BuildContext context, String eventId) {
+    showDialog(
+      context: context,
+      builder: (context) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          title: const Text(
+            'اختر الإجراء',
+            style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.download, color: Colors.green),
+                title: const Text(
+                  'تصدير إلى Excel',
+                  style: TextStyle(fontFamily: 'Cairo'),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  widget.onSelectionModeChanged(SelectionMode.export, eventId);
+                },
+              ),
+              if (widget.canDelete)
+                ListTile(
+                  leading: const Icon(Icons.delete, color: Colors.red),
+                  title: const Text(
+                    'حذف الأحداث',
+                    style: TextStyle(fontFamily: 'Cairo'),
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+                    widget.onSelectionModeChanged(
+                      SelectionMode.delete,
+                      eventId,
+                    );
+                  },
+                ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('إلغاء', style: TextStyle(fontFamily: 'Cairo')),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -867,15 +1013,16 @@ class _DayCardState extends State<_DayCard>
                             child: _EventTile(
                               event: event,
                               getEventTypeIcon: widget.getEventTypeIcon,
-                              isDeleteMode: widget.isDeleteMode,
-                              isSelected: widget.selectedForDelete.contains(
+                              selectionMode: widget.selectionMode,
+                              isSelected: widget.selectedEvents.contains(
                                 event.id,
                               ),
                               canDelete: widget.canDelete,
-                              onLongPress: () =>
-                                  widget.onDeleteModeChanged(true, event.id),
+                              onLongPress: () {
+                                _showSelectionModeDialog(context, event.id);
+                              },
                               onSelectionChanged: () {
-                                final isSelected = widget.selectedForDelete
+                                final isSelected = widget.selectedEvents
                                     .contains(event.id);
                                 widget.onSelectionChanged(
                                   event.id,
@@ -901,7 +1048,7 @@ class _DayCardState extends State<_DayCard>
 class _EventTile extends StatefulWidget {
   final dynamic event;
   final IconData Function(dynamic) getEventTypeIcon;
-  final bool isDeleteMode;
+  final SelectionMode selectionMode;
   final bool isSelected;
   final bool canDelete;
   final VoidCallback? onLongPress;
@@ -910,7 +1057,7 @@ class _EventTile extends StatefulWidget {
   const _EventTile({
     required this.event,
     required this.getEventTypeIcon,
-    this.isDeleteMode = false,
+    this.selectionMode = SelectionMode.none,
     this.isSelected = false,
     this.canDelete = false,
     this.onLongPress,
@@ -1035,7 +1182,7 @@ class _EventTileState extends State<_EventTile> {
             color: Colors.transparent,
             child: InkWell(
               onTap: () {
-                if (widget.isDeleteMode) {
+                if (widget.selectionMode != SelectionMode.none) {
                   widget.onSelectionChanged?.call();
                 } else {
                   Navigator.push(
@@ -1047,7 +1194,7 @@ class _EventTileState extends State<_EventTile> {
                   );
                 }
               },
-              onLongPress: widget.canDelete ? widget.onLongPress : null,
+              onLongPress: widget.onLongPress,
               borderRadius: BorderRadius.circular(20),
               child: Padding(
                 padding: const EdgeInsets.all(20),
@@ -1207,8 +1354,8 @@ class _EventTileState extends State<_EventTile> {
               ),
             ),
           ),
-          // Selection indicator for delete mode
-          if (widget.isDeleteMode)
+          // Selection indicator for delete/export mode
+          if (widget.selectionMode != SelectionMode.none)
             Positioned(
               top: 8,
               left: 8,
@@ -1216,10 +1363,18 @@ class _EventTileState extends State<_EventTile> {
                 width: 28,
                 height: 28,
                 decoration: BoxDecoration(
-                  color: widget.isSelected ? Colors.red : Colors.white,
+                  color: widget.isSelected
+                      ? (widget.selectionMode == SelectionMode.delete
+                            ? Colors.red
+                            : Colors.green)
+                      : Colors.white,
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: widget.isSelected ? Colors.red : Colors.grey,
+                    color: widget.isSelected
+                        ? (widget.selectionMode == SelectionMode.delete
+                              ? Colors.red
+                              : Colors.green)
+                        : Colors.grey,
                     width: 2,
                   ),
                 ),

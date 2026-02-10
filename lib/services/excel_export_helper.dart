@@ -6,10 +6,11 @@
 import 'dart:io';
 import 'package:excel/excel.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:resala/data/models/report_data_model.dart';
 import 'package:share_plus/share_plus.dart';
 import '../data/models/volunteer_model.dart';
 import '../data/models/committee_model.dart';
-import '../data/models/report_data_model.dart';
+import '../data/models/event_model.dart';
 
 class ExcelExportHelper {
   // Export committee with its volunteers
@@ -474,6 +475,186 @@ class ExcelExportHelper {
       print('Error exporting event to Excel: $e');
       rethrow;
     }
+  }
+
+  // Export multiple events to a single Excel file (one sheet per event)
+  static Future<void> exportMultipleEventsToExcel({
+    required List<EventModel> events,
+    required Future<List<VolunteerModel>> Function(List<String> volunteerIds)
+    getVolunteersByIds,
+  }) async {
+    try {
+      var excel = Excel.createExcel();
+
+      // Remove default Sheet1
+      excel.delete('Sheet1');
+
+      for (var eventIndex = 0; eventIndex < events.length; eventIndex++) {
+        final event = events[eventIndex];
+
+        // Create a sheet for this event (limit name to 31 chars for Excel)
+        String sheetName = '${eventIndex + 1}_${event.title}';
+        if (sheetName.length > 31) {
+          sheetName = sheetName.substring(0, 31);
+        }
+
+        Sheet sheet = excel[sheetName];
+        _setSheetToRTL(sheet);
+
+        // Event info header - only 4 columns needed
+        sheet.merge(
+          CellIndex.indexByString('A1'),
+          CellIndex.indexByString('D1'),
+        );
+        var eventHeaderCell = sheet.cell(CellIndex.indexByString('A1'));
+        eventHeaderCell.value = TextCellValue('معلومات الحدث');
+        eventHeaderCell.cellStyle = CellStyle(
+          bold: true,
+          fontSize: 16,
+          horizontalAlign: HorizontalAlign.Center,
+          verticalAlign: VerticalAlign.Center,
+        );
+
+        // Event details
+        _setCellWithStyle(sheet, 'A2', 'عنوان الحدث:');
+        _setCellWithStyle(sheet, 'B2', event.title);
+        _setCellWithStyle(sheet, 'A3', 'نوع الحدث:');
+        _setCellWithStyle(sheet, 'B3', event.type);
+        _setCellWithStyle(sheet, 'A4', 'التاريخ:');
+        _setCellWithStyle(sheet, 'B4', event.date);
+        _setCellWithStyle(sheet, 'A5', 'المكان:');
+        _setCellWithStyle(sheet, 'B5', event.location ?? 'غير محدد');
+
+        // Get volunteers for this event
+        List<VolunteerModel> volunteers = [];
+        if (event.volunteerIds.isNotEmpty) {
+          volunteers = await getVolunteersByIds(event.volunteerIds);
+        }
+
+        // Volunteers table header - only 4 columns
+        sheet.merge(
+          CellIndex.indexByString('A7'),
+          CellIndex.indexByString('D7'),
+        );
+        var volunteersHeaderCell = sheet.cell(CellIndex.indexByString('A7'));
+        volunteersHeaderCell.value = TextCellValue(
+          'المتطوعون (${volunteers.length})',
+        );
+        volunteersHeaderCell.cellStyle = CellStyle(
+          bold: true,
+          fontSize: 14,
+          horizontalAlign: HorizontalAlign.Center,
+          verticalAlign: VerticalAlign.Center,
+        );
+
+        // Column headers
+        var headers = ['تيشيرت', 'الهاتف', 'الاسم', '#'];
+        for (var i = 0; i < headers.length; i++) {
+          var cell = sheet.cell(
+            CellIndex.indexByColumnRow(columnIndex: i, rowIndex: 8),
+          );
+          cell.value = TextCellValue(headers[i]);
+          cell.cellStyle = CellStyle(
+            bold: true,
+            backgroundColorHex: ExcelColor.green,
+            fontColorHex: ExcelColor.white,
+            horizontalAlign: HorizontalAlign.Center,
+            verticalAlign: VerticalAlign.Center,
+          );
+        }
+
+        // Add volunteers data
+        for (var i = 0; i < volunteers.length; i++) {
+          var volunteer = volunteers[i];
+          var rowIndex = i + 9;
+
+          sheet
+              .cell(
+                CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: rowIndex),
+              )
+              .value = TextCellValue(
+            volunteer.hasTshirt ? 'نعم' : 'لا',
+          );
+          sheet
+              .cell(
+                CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: rowIndex),
+              )
+              .cellStyle = CellStyle(
+            horizontalAlign: HorizontalAlign.Center,
+          );
+
+          sheet
+              .cell(
+                CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: rowIndex),
+              )
+              .value = TextCellValue(
+            volunteer.phone,
+          );
+          sheet
+              .cell(
+                CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: rowIndex),
+              )
+              .cellStyle = CellStyle(
+            horizontalAlign: HorizontalAlign.Right,
+          );
+
+          sheet
+              .cell(
+                CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: rowIndex),
+              )
+              .value = TextCellValue(
+            volunteer.name,
+          );
+          sheet
+              .cell(
+                CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: rowIndex),
+              )
+              .cellStyle = CellStyle(
+            horizontalAlign: HorizontalAlign.Right,
+          );
+
+          sheet
+              .cell(
+                CellIndex.indexByColumnRow(columnIndex: 3, rowIndex: rowIndex),
+              )
+              .value = TextCellValue(
+            (i + 1).toString(),
+          );
+          sheet
+              .cell(
+                CellIndex.indexByColumnRow(columnIndex: 3, rowIndex: rowIndex),
+              )
+              .cellStyle = CellStyle(
+            horizontalAlign: HorizontalAlign.Center,
+          );
+        }
+
+        // Set column widths
+        sheet.setColumnWidth(0, 12);
+        sheet.setColumnWidth(1, 18);
+        sheet.setColumnWidth(2, 25);
+        sheet.setColumnWidth(3, 8);
+      }
+
+      // Save and share file
+      await _saveAndShareExcel(
+        excel,
+        'أحداث_متعددة_${events.length}_${DateTime.now().millisecondsSinceEpoch}',
+      );
+    } catch (e) {
+      print('Error exporting multiple events to Excel: $e');
+      rethrow;
+    }
+  }
+
+  // Helper method to set cell value with right alignment
+  static void _setCellWithStyle(Sheet sheet, String cellIndex, String value) {
+    var cell = sheet.cell(CellIndex.indexByString(cellIndex));
+    cell.value = TextCellValue(value);
+    cell.cellStyle = CellStyle(
+      horizontalAlign: HorizontalAlign.Right,
+      verticalAlign: VerticalAlign.Center,
+    );
   }
 
   // Helper method to set sheet RTL properties

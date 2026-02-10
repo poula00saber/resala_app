@@ -4,7 +4,10 @@
 // ============================================
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:resala/presentation/themes/app_theme.dart';
+import 'package:resala/services/auth_service.dart';
+import 'package:resala/data/models/app_user_model.dart';
 import 'comprehensive_report_screen.dart';
 import 'family_day_report_screen.dart';
 import 'cubs_report_screen.dart';
@@ -17,6 +20,8 @@ class ReportsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final authService = Provider.of<AuthService>(context);
+
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
@@ -44,71 +49,101 @@ class ReportsScreen extends StatelessWidget {
             child: Column(
               children: [
                 const SizedBox(height: 20),
-                _buildReportButton(
-                  context,
-                  title: 'الكلي',
-                  onTap: () => Navigator.push(
+                if (authService.canAccessSubPage(
+                  AppPages.reports,
+                  AppPages.reportComprehensive,
+                )) ...[
+                  _buildReportButton(
                     context,
-                    MaterialPageRoute(
-                      builder: (context) => const ComprehensiveReportScreen(),
+                    title: 'الكلي',
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ComprehensiveReportScreen(),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                _buildReportButton(
-                  context,
-                  title: 'اليوم العائلي',
-                  onTap: () => Navigator.push(
+                  const SizedBox(height: 16),
+                ],
+                if (authService.canAccessSubPage(
+                  AppPages.reports,
+                  AppPages.reportFamilyDay,
+                )) ...[
+                  _buildReportButton(
                     context,
-                    MaterialPageRoute(
-                      builder: (context) => const FamilyDayReportScreen(),
+                    title: 'اليوم العائلي',
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const FamilyDayReportScreen(),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                _buildReportButton(
-                  context,
-                  title: 'الأشبال',
-                  onTap: () => Navigator.push(
+                  const SizedBox(height: 16),
+                ],
+                if (authService.canAccessSubPage(
+                  AppPages.reports,
+                  AppPages.reportCubs,
+                )) ...[
+                  _buildReportButton(
                     context,
-                    MaterialPageRoute(
-                      builder: (context) => const CubsReportScreen(),
+                    title: 'الأشبال',
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const CubsReportScreen(),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                _buildReportButton(
-                  context,
-                  title: 'الأجتماعات',
-                  onTap: () => Navigator.push(
+                  const SizedBox(height: 16),
+                ],
+                if (authService.canAccessSubPage(
+                  AppPages.reports,
+                  AppPages.reportMeetings,
+                )) ...[
+                  _buildReportButton(
                     context,
-                    MaterialPageRoute(
-                      builder: (context) => const MeetingsReportScreen(),
+                    title: 'الاجتماعات',
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const MeetingsReportScreen(),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                _buildReportButton(
-                  context,
-                  title: 'الصندوق',
-                  onTap: () => Navigator.push(
+                  const SizedBox(height: 16),
+                ],
+                if (authService.canAccessSubPage(
+                  AppPages.reports,
+                  AppPages.reportFund,
+                )) ...[
+                  _buildReportButton(
                     context,
-                    MaterialPageRoute(
-                      builder: (context) => const FundReportScreen(),
+                    title: 'الصندوق',
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const FundReportScreen(),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                _buildReportButton(
-                  context,
-                  title: 'الدعايا',
-                  onTap: () => Navigator.push(
+                  const SizedBox(height: 16),
+                ],
+                if (authService.canAccessSubPage(
+                  AppPages.reports,
+                  AppPages.reportMarketing,
+                )) ...[
+                  _buildReportButton(
                     context,
-                    MaterialPageRoute(
-                      builder: (context) => const MarketingReportScreen(),
+                    title: 'الدعايا',
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const MarketingReportScreen(),
+                      ),
                     ),
                   ),
-                ),
+                ],
               ],
             ),
           ),

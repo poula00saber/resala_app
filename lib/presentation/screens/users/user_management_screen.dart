@@ -355,10 +355,42 @@ class _AddEditUserDialogState extends State<_AddEditUserDialog> {
       _emailController.text = widget.user!.email;
       _displayNameController.text = widget.user!.displayName ?? '';
       _isAdmin = widget.user!.isAdmin;
-      _permissions = List.from(widget.user!.permissions);
+      // Merge existing permissions with defaults to ensure sub-permissions exist
+      _permissions = _mergePermissions(widget.user!.permissions);
     } else {
       _permissions = AppPages.getAllPagesDefault();
     }
+  }
+
+  // Merge user permissions with default to ensure all sub-permissions exist
+  List<PagePermission> _mergePermissions(List<PagePermission> userPermissions) {
+    final defaults = AppPages.getAllPagesDefault();
+    return defaults.map((defaultPerm) {
+      final userPerm = userPermissions.firstWhere(
+        (p) => p.pageId == defaultPerm.pageId,
+        orElse: () => defaultPerm,
+      );
+
+      // Merge sub-permissions
+      List<SubPermission> mergedSubPerms = [];
+      if (defaultPerm.subPermissions.isNotEmpty) {
+        mergedSubPerms = defaultPerm.subPermissions.map((defaultSub) {
+          final userSub = userPerm.subPermissions.firstWhere(
+            (s) => s.subPageId == defaultSub.subPageId,
+            orElse: () => defaultSub,
+          );
+          return userSub;
+        }).toList();
+      }
+
+      return PagePermission(
+        pageId: userPerm.pageId,
+        pageName: defaultPerm.pageName,
+        canAccess: userPerm.canAccess,
+        canAddDelete: userPerm.canAddDelete,
+        subPermissions: mergedSubPerms,
+      );
+    }).toList();
   }
 
   @override
@@ -545,6 +577,8 @@ class _AddEditUserDialogState extends State<_AddEditUserDialog> {
   }
 
   Widget _buildPermissionTile(PagePermission permission, int index) {
+    final hasSubPermissions = permission.subPermissions.isNotEmpty;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
@@ -554,6 +588,7 @@ class _AddEditUserDialogState extends State<_AddEditUserDialog> {
         border: Border.all(color: Colors.grey.shade300),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
@@ -571,11 +606,20 @@ class _AddEditUserDialogState extends State<_AddEditUserDialog> {
                 activeColor: AppTheme.primary,
                 onChanged: (value) {
                   setState(() {
+                    // If disabling access, also disable all sub-permissions
+                    List<SubPermission> updatedSubPerms =
+                        permission.subPermissions;
+                    if (value == false) {
+                      updatedSubPerms = permission.subPermissions
+                          .map((s) => s.copyWith(canAccess: false))
+                          .toList();
+                    }
                     _permissions[index] = permission.copyWith(
                       canAccess: value ?? false,
                       canAddDelete: value == false
                           ? false
                           : permission.canAddDelete,
+                      subPermissions: updatedSubPerms,
                     );
                   });
                 },
@@ -586,7 +630,7 @@ class _AddEditUserDialogState extends State<_AddEditUserDialog> {
               ),
             ],
           ),
-          if (permission.canAccess)
+          if (permission.canAccess && !hasSubPermissions)
             Row(
               children: [
                 const Spacer(),
@@ -607,9 +651,64 @@ class _AddEditUserDialogState extends State<_AddEditUserDialog> {
                 ),
               ],
             ),
+          // Sub-permissions for reports and administrative
+          if (permission.canAccess && hasSubPermissions)
+            ..._buildSubPermissions(permission, index),
         ],
       ),
     );
+  }
+
+  List<Widget> _buildSubPermissions(PagePermission permission, int permIndex) {
+    return [
+      const Divider(),
+      const Padding(
+        padding: EdgeInsets.only(right: 16, top: 4),
+        child: Text(
+          'الصفحات الفرعية:',
+          style: TextStyle(
+            fontFamily: 'Cairo',
+            fontSize: 12,
+            color: Colors.grey,
+          ),
+        ),
+      ),
+      const SizedBox(height: 4),
+      ...permission.subPermissions.asMap().entries.map((entry) {
+        final subIndex = entry.key;
+        final subPerm = entry.value;
+        return Padding(
+          padding: const EdgeInsets.only(right: 24),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  subPerm.subPageName,
+                  style: const TextStyle(fontFamily: 'Cairo', fontSize: 13),
+                ),
+              ),
+              Checkbox(
+                value: subPerm.canAccess,
+                activeColor: AppTheme.primary,
+                onChanged: (value) {
+                  setState(() {
+                    final updatedSubPerms = List<SubPermission>.from(
+                      permission.subPermissions,
+                    );
+                    updatedSubPerms[subIndex] = subPerm.copyWith(
+                      canAccess: value ?? false,
+                    );
+                    _permissions[permIndex] = permission.copyWith(
+                      subPermissions: updatedSubPerms,
+                    );
+                  });
+                },
+              ),
+            ],
+          ),
+        );
+      }),
+    ];
   }
 
   Future<void> _handleSave() async {

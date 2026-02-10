@@ -113,6 +113,12 @@ class AuthService extends ChangeNotifier {
     return _currentUser?.canAddDeleteOnPage(pageId) ?? false;
   }
 
+  // Check if user can access a sub-page
+  bool canAccessSubPage(String pageId, String subPageId) {
+    if (isAdmin) return true;
+    return _currentUser?.canAccessSubPage(pageId, subPageId) ?? false;
+  }
+
   // Set current user (for testing or manual setting)
   void setCurrentUser(AppUserModel? user) {
     _currentUser = user;
