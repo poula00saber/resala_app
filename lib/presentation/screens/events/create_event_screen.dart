@@ -145,22 +145,36 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
     // Prepare committee data
     String? committeeId;
     String? committeeName;
+    String? administrativeType;
 
-    if (_isCommitteeMeeting() && _selectedMeetingTarget != null) {
-      try {
-        // Check if selected meeting target is a committee
-        final selectedCommittee = _committees.firstWhere(
-          (committee) => committee.id == _selectedMeetingTarget,
-          orElse: () => null,
+    // Handle meeting type for اجتماع
+    if (_selectedType == FirebaseConstants.typeMeeting &&
+        _selectedMeetingTarget != null) {
+      if (_selectedMeetingTarget == 'اجتماع ليدرات') {
+        // Leaders meeting
+        administrativeType = 'اجتماع ليدرات';
+      } else if (_selectedMeetingTarget != 'اجتماع للكل') {
+        // Committee meeting - get fresh committee list from provider
+        final committeeProvider = Provider.of<CommitteeProvider>(
+          context,
+          listen: false,
         );
+        final freshCommittees = committeeProvider.committees;
 
-        if (selectedCommittee != null) {
-          committeeId = selectedCommittee.id;
-          committeeName = selectedCommittee.name;
+        for (var committee in freshCommittees) {
+          if (committee.id == _selectedMeetingTarget) {
+            committeeId = committee.id;
+            committeeName = committee.name;
+            break;
+          }
         }
-      } catch (e) {
-        print('Error finding committee: $e');
       }
+      // For 'اجتماع للكل' (team meeting), leave both administrativeType and committee fields as null
+    }
+
+    // Administrative type from form (if it's an administrative event)
+    if (_needsAdministrativeType()) {
+      administrativeType = _selectedAdministrativeType;
     }
 
     final eventId = await eventProvider.createEvent(
@@ -170,9 +184,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       description: _descriptionController.text,
       location: _locationController.text,
       meetingPlace: _needsMeetingPlace() ? _selectedMeetingPlace : null,
-      administrativeType: _needsAdministrativeType()
-          ? _selectedAdministrativeType
-          : null,
+      administrativeType: administrativeType,
       committeeId: committeeId,
       committeeName: committeeName,
     );

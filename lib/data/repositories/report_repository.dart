@@ -168,9 +168,10 @@ class ReportRepository {
               data.familyDayCount++;
               break;
             case 'اجتماع':
-              if (event.administrativeType == 'اجتماع ليدرات') {
+              if (event.administrativeType == 'اجتماع ليدרات') {
                 data.leadersMeetingCount++;
-              } else if (event.committeeName != null) {
+              } else if (event.committeeName != null &&
+                  event.committeeName!.isNotEmpty) {
                 data.committeeMeetingCount++;
               } else {
                 data.teamMeetingCount++;

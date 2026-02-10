@@ -243,6 +243,8 @@ class _EditEventScreenState extends State<EditEventScreen> {
           : _locationController.text,
       meetingPlace: widget.event.meetingPlace,
       administrativeType: widget.event.administrativeType,
+      committeeId: widget.event.committeeId,
+      committeeName: widget.event.committeeName,
       volunteerIds: _volunteerIds,
       createdAt: widget.event.createdAt,
       updatedAt: DateTime.now(),
