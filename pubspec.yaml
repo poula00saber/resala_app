@@ -129,9 +129,22 @@ flutter_icons:
 flutter_native_splash:
   color: "#FFFFFF"
   image: assets/images/resala_logo.png
-  branding: assets/images/resala_logo.png
-  branding_mode: bottom
+  # Add explicit size to control scaling
+  image_width: 300  # Increase from default 100
+  image_height: 300
+  
   android_12:
     image: assets/images/resala_logo.png
-    branding: assets/images/resala_logo.png
-    icon_background_color: "#FFFFFF"
+    image_width: 300
+    image_height: 300
+    # Remove or comment this:
+    # branding: assets/images/resala_logo.png
+
+  # iOS specific
+  ios: true
+  # image: assets/images/resala_logo.png  # Same as above
+
+  # Optional: Add dark mode support
+  dark_mode:
+    color: "#1A237E" # Your primary color for dark mode
+    image: assets/images/resala_logo.png

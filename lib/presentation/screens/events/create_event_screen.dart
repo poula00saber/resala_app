@@ -97,7 +97,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       context: context,
       initialDate: DateTime.now(),
       firstDate: DateTime(2020),
-      lastDate: DateTime(2030),
+      lastDate: DateTime.now(),
     );
     if (picked != null) {
       setState(() {

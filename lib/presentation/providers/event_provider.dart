@@ -46,15 +46,15 @@ class EventProvider with ChangeNotifier {
         return _events.where((event) {
           final eventDate = DateTime.parse(event.date);
           final difference = eventDate.difference(now).inDays;
-          return difference <= 7 && difference >= 0;
+          return difference >= -7 && difference <= 0;
         }).toList();
 
       case EventFilter.lastMonth:
         return _events.where((event) {
           final eventDate = DateTime.parse(event.date);
-          //make it for the next 30 days
+          //show events from the last 30 days
           final difference = eventDate.difference(now).inDays;
-          return difference <= 30 && difference >= 0;
+          return difference >= -30 && difference <= 0;
         }).toList();
 
       case EventFilter.all:
@@ -94,7 +94,6 @@ class EventProvider with ChangeNotifier {
     String? administrativeType,
     String? committeeId, // ADD THIS
     String? committeeName, // ADD THIS
-
   }) async {
     _isLoading = true;
     _error = null;

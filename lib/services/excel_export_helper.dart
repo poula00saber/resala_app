@@ -486,16 +486,18 @@ class ExcelExportHelper {
     try {
       var excel = Excel.createExcel();
 
-      // Remove default Sheet1
-      excel.delete('Sheet1');
-
       for (var eventIndex = 0; eventIndex < events.length; eventIndex++) {
         final event = events[eventIndex];
 
-        // Create a sheet for this event (limit name to 31 chars for Excel)
-        String sheetName = '${eventIndex + 1}_${event.title}';
-        if (sheetName.length > 31) {
-          sheetName = sheetName.substring(0, 31);
+        // For the first event, use the default Sheet1; for others, create new sheets
+        String sheetName;
+        if (eventIndex == 0) {
+          sheetName = 'Sheet1';
+        } else {
+          sheetName = '${eventIndex + 1}_${event.title}';
+          if (sheetName.length > 31) {
+            sheetName = sheetName.substring(0, 31);
+          }
         }
 
         Sheet sheet = excel[sheetName];
