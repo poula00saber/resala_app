@@ -55,7 +55,6 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
-  flutter_native_splash: ^2.4.4
 
 dev_dependencies:
   flutter_test:
@@ -125,26 +124,3 @@ flutter_icons:
   android: true
   ios: true
   image_path: assets/images/resala_logo.png
-
-flutter_native_splash:
-  color: "#FFFFFF"
-  image: assets/images/resala_logo.png
-  # Add explicit size to control scaling
-  image_width: 300  # Increase from default 100
-  image_height: 300
-  
-  android_12:
-    image: assets/images/resala_logo.png
-    image_width: 300
-    image_height: 300
-    # Remove or comment this:
-    # branding: assets/images/resala_logo.png
-
-  # iOS specific
-  ios: true
-  # image: assets/images/resala_logo.png  # Same as above
-
-  # Optional: Add dark mode support
-  dark_mode:
-    color: "#1A237E" # Your primary color for dark mode
-    image: assets/images/resala_logo.png

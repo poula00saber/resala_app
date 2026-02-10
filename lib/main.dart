@@ -12,6 +12,7 @@ import 'package:resala/presentation/providers/evaluation_provider.dart';
 import 'package:resala/presentation/providers/interview_provider.dart';
 import 'package:resala/presentation/providers/promotion_provider.dart'; // ADD THIS
 import 'package:resala/presentation/screens/login/login_screen.dart';
+import 'package:resala/presentation/screens/splash_screen.dart';
 import 'package:resala/services/auth_service.dart';
 import 'firebase_options.dart';
 import 'presentation/providers/event_provider.dart';
@@ -70,7 +71,7 @@ class MyApp extends StatelessWidget {
           );
         },
 
-        home: const LoginScreen(),
+        home: const SplashScreen(),
       ),
     );
   }
