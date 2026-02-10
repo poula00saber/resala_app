@@ -47,6 +47,7 @@ dependencies:
   permission_handler: ^12.0.1
   share_plus: ^12.0.1
   shared_preferences: ^2.2.3
+  flutter_secure_storage: ^9.2.4
 
   flutter_localizations:
     sdk: flutter
@@ -128,8 +129,9 @@ flutter_icons:
 flutter_native_splash:
   color: "#FFFFFF"
   image: assets/images/resala_logo.png
-
+  branding: assets/images/resala_logo.png
+  branding_mode: bottom
   android_12:
     image: assets/images/resala_logo.png
-    color: "#FFFFFF"
+    branding: assets/images/resala_logo.png
     icon_background_color: "#FFFFFF"

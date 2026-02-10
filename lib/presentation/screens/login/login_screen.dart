@@ -2,12 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:resala/presentation/themes/app_theme.dart';
 import 'package:resala/services/auth_service.dart';
 import '../home/home_screen.dart';
 
 // Key for tracking if user just logged out
 const String _justLoggedOutKey = 'just_logged_out';
+
+// Secure storage instance
+final FlutterSecureStorage _secureStorage = FlutterSecureStorage();
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -35,6 +39,7 @@ class _LoginScreenState extends State<LoginScreen> {
   static const String _savedEmailKey = 'saved_email';
   static const String _savedPasswordKey = 'saved_password';
   static const String _accountsKey = 'saved_accounts';
+  static const String _accountPasswordKey = 'account_password';
 
   // Default admin credentials
   static const String _defaultAdminEmail = 'admin.resala@gmail.com';
@@ -76,16 +81,47 @@ class _LoginScreenState extends State<LoginScreen> {
     final justLoggedOut = prefs.getBool(_justLoggedOutKey) ?? false;
 
     if (justLoggedOut) {
-      // User explicitly logged out, don't auto-login
+      // User explicitly logged out, don't auto-login but clear password
       await prefs.setBool(_justLoggedOutKey, false);
-      debugPrint('User just logged out, skipping auto-login');
+
+      // Clear remember me flag
+      await prefs.setBool(_rememberMeKey, false);
+      final savedEmail = prefs.getString(_savedEmailKey) ?? '';
+
+      // Clear the password from secure storage
+      if (savedEmail.isNotEmpty) {
+        await _secureStorage.delete(key: '$_savedPasswordKey:$savedEmail');
+      }
+
+      // Clear the password field for security
+      setState(() {
+        _passwordController.text = '';
+        _rememberMe = false;
+      });
+
+      // Load saved accounts for switching
+      await _loadSavedAccounts();
+
+      debugPrint(
+        'User just logged out, password cleared from both UI and storage',
+      );
       return;
     }
 
-    // Check if user is already logged in with Firebase
+    // Check if user is already logged in with Firebase (stay logged in feature)
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser != null) {
-      debugPrint('User already logged in: ${currentUser.email}');
+      debugPrint(
+        'User already logged in: ${currentUser.email} - auto-navigating to home',
+      );
+      // Initialize AuthService before navigating
+      try {
+        final authService = AuthService();
+        await authService.initialize();
+      } catch (e) {
+        debugPrint('Error initializing AuthService: $e');
+      }
+
       // Navigate to home directly
       if (mounted) {
         Navigator.pushReplacement(
@@ -101,7 +137,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (rememberMe) {
       final savedEmail = prefs.getString(_savedEmailKey) ?? '';
-      final savedPassword = prefs.getString(_savedPasswordKey) ?? '';
+      final savedPassword =
+          await _secureStorage.read(key: '$_savedPasswordKey:$savedEmail') ??
+          '';
 
       if (savedEmail.isNotEmpty && savedPassword.isNotEmpty) {
         debugPrint('Auto-login with saved credentials for: $savedEmail');
@@ -125,13 +163,21 @@ class _LoginScreenState extends State<LoginScreen> {
 
     List<Map<String, String>> accounts = [];
     for (String accountJson in accountsJson) {
-      // Format: email|password|name
+      // Format: email|name (password stored securely in flutter_secure_storage)
       final parts = accountJson.split('|');
-      if (parts.length >= 2) {
+      if (parts.isNotEmpty) {
+        final email = parts[0];
+        final name = parts.length > 1 ? parts[1] : email.split('@')[0];
+
+        // Try to get password from secure storage
+        final password = await _secureStorage.read(
+          key: '$_accountPasswordKey:$email',
+        );
+
         accounts.add({
-          'email': parts[0],
-          'password': parts[1],
-          'name': parts.length > 2 ? parts[2] : parts[0].split('@')[0],
+          'email': email,
+          'name': name,
+          if (password != null) 'password': password,
         });
       }
     }
@@ -157,14 +203,21 @@ class _LoginScreenState extends State<LoginScreen> {
     );
 
     if (existingIndex == -1) {
-      // Add new account: email|password|name
-      accountsJson.add('$email|$password|$name');
+      // Add new account: email|name (password stored securely)
+      accountsJson.add('$email|$name');
     } else {
       // Update existing account
-      accountsJson[existingIndex] = '$email|$password|$name';
+      accountsJson[existingIndex] = '$email|$name';
     }
 
     await prefs.setStringList(_accountsKey, accountsJson);
+
+    // Store password securely
+    await _secureStorage.write(
+      key: '$_accountPasswordKey:$email',
+      value: password,
+    );
+
     await _loadSavedAccounts();
   }
 
@@ -174,6 +227,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
     accountsJson.removeWhere((acc) => acc.startsWith('$email|'));
     await prefs.setStringList(_accountsKey, accountsJson);
+
+    // Remove password from secure storage
+    await _secureStorage.delete(key: '$_accountPasswordKey:$email');
+
     await _loadSavedAccounts();
   }
 
@@ -201,7 +258,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (rememberMe) {
       final savedEmail = prefs.getString(_savedEmailKey) ?? '';
-      final savedPassword = prefs.getString(_savedPasswordKey) ?? '';
+      final savedPassword =
+          await _secureStorage.read(key: '$_savedPasswordKey:$savedEmail') ??
+          '';
 
       setState(() {
         _rememberMe = rememberMe;
@@ -218,7 +277,11 @@ class _LoginScreenState extends State<LoginScreen> {
     if (_rememberMe) {
       await prefs.setBool(_rememberMeKey, true);
       await prefs.setString(_savedEmailKey, email);
-      await prefs.setString(_savedPasswordKey, _passwordController.text);
+      // Store password securely using flutter_secure_storage
+      await _secureStorage.write(
+        key: '$_savedPasswordKey:$email',
+        value: _passwordController.text,
+      );
 
       // Also save to accounts list for account switching
       await _saveAccountToList(
@@ -229,7 +292,8 @@ class _LoginScreenState extends State<LoginScreen> {
     } else {
       await prefs.setBool(_rememberMeKey, false);
       await prefs.remove(_savedEmailKey);
-      await prefs.remove(_savedPasswordKey);
+      // Remove password from secure storage
+      await _secureStorage.delete(key: '$_savedPasswordKey:$email');
     }
   }
 
@@ -387,7 +451,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 children: [
                   SizedBox(height: size.height * 0.05),
 
-                  // Logo
+                  // Logo - with proper aspect ratio preservation
                   Hero(
                     tag: 'resala_logo',
                     child: Container(
@@ -403,10 +467,13 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ],
                       ),
-                      child: Image.asset(
-                        'assets/images/resala_logo.png',
-                        height: 120,
-                        width: 120,
+                      child: SizedBox(
+                        height: 140,
+                        width: 140,
+                        child: Image.asset(
+                          'assets/images/resala_logo.png',
+                          fit: BoxFit.contain,
+                        ),
                       ),
                     ),
                   ),

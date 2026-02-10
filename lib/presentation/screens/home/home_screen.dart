@@ -66,7 +66,15 @@ class _HomeScreenState extends State<HomeScreen> {
       return Scaffold(
         key: _scaffoldKey,
         appBar: AppBar(
-          title: const Text("الصفحة الرئيسية"),
+          title: const Text(
+            "الصفحة الرئيسية",
+            style: TextStyle(
+              fontFamily: 'Cairo',
+              fontWeight: FontWeight.bold,
+              fontSize: 24,
+              color: Colors.white,
+            ),
+          ),
           centerTitle: true,
           backgroundColor: AppTheme.primary,
           foregroundColor: Colors.white,
@@ -108,7 +116,15 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       key: _scaffoldKey,
       appBar: AppBar(
-        title: const Text("الصفحة الرئيسية"),
+        title: const Text(
+          "الصفحة الرئيسية",
+          style: TextStyle(
+            fontFamily: 'Cairo',
+            fontWeight: FontWeight.bold,
+            fontSize: 22,
+            color: Colors.white,
+          ),
+        ),
         centerTitle: true,
         backgroundColor: AppTheme.primary,
         foregroundColor: Colors.white,
