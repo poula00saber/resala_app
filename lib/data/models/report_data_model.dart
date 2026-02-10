@@ -88,22 +88,22 @@ class VolunteerReportData {
 
 class ReportFilter {
   String? volunteerName;
-  String? educationalLevel;
+  List<String>? educationalLevels; // Multi-select degrees
   String? committeeId;
-  int? month;
+  List<int>? months; // Multi-select months
   int? year;
 
   ReportFilter({
     this.volunteerName,
-    this.educationalLevel,
+    this.educationalLevels,
     this.committeeId,
-    this.month,
+    this.months,
     this.year,
   });
 
   bool get hasFilters =>
       volunteerName != null ||
-      educationalLevel != null ||
+      (educationalLevels != null && educationalLevels!.isNotEmpty) ||
       committeeId != null ||
-      month != null;
+      (months != null && months!.isNotEmpty);
 }

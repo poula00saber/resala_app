@@ -194,11 +194,15 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
       if (_selectedImage != null) {
         setState(() => _uploadingImage = true);
         final uploadedUrl = await _uploadImageToStorage();
+        setState(() => _uploadingImage = false);
         if (uploadedUrl != null) {
           newImageUrl = uploadedUrl;
           _imageUrl = uploadedUrl;
+        } else {
+          // Upload failed - stop save so user can retry
+          setState(() => _isLoading = false);
+          return;
         }
-        setState(() => _uploadingImage = false);
       }
 
       final updateData = {
@@ -216,10 +220,8 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
         'university': _universityController.text.trim(),
       };
 
-      // Only add profileImage if it exists
-      if (newImageUrl != null && newImageUrl.isNotEmpty) {
-        updateData['profileImage'] = newImageUrl;
-      }
+      // Always include profileImage in update data
+      updateData['profileImage'] = newImageUrl;
 
       await volunteerProvider.updateVolunteerData(
         widget.volunteer.id,

@@ -46,15 +46,15 @@ class _ComprehensiveReportScreenState extends State<ComprehensiveReportScreen> {
 
   void _onFilterChanged(
     String? name,
-    String? level,
+    List<String>? levels,
     String? committeeId,
-    int? month,
+    List<int>? months,
   ) {
     _filter = ReportFilter(
       volunteerName: name,
-      educationalLevel: level,
+      educationalLevels: levels,
       committeeId: committeeId,
-      month: month,
+      months: months,
     );
     _loadReportData();
   }
@@ -63,8 +63,10 @@ class _ComprehensiveReportScreenState extends State<ComprehensiveReportScreen> {
     try {
       await ExcelExportHelper.exportComprehensiveReport(
         reportData: _reportData,
-        filterMonth: _filter.month != null
-            ? ReportRepository.getArabicMonth(_filter.month!)
+        filterMonth: _filter.months != null && _filter.months!.isNotEmpty
+            ? _filter.months!
+                  .map((m) => ReportRepository.getArabicMonth(m))
+                  .join(', ')
             : null,
       );
 
@@ -93,10 +95,10 @@ class _ComprehensiveReportScreenState extends State<ComprehensiveReportScreen> {
     final headers = [
       'الاسم',
       'الدرجة التطوعية',
-      'الشهر',
-      'اجتماع اللجنة',
+      'الشهور',
+      'اجتماع لجنة',
       'يوم عائلي',
-      'اجتماع الفريق',
+      'اجتماع فريق',
       'احداث',
       'الإجمالي',
     ];
@@ -105,10 +107,10 @@ class _ComprehensiveReportScreenState extends State<ComprehensiveReportScreen> {
       return [
         data.volunteerName,
         data.educationalLevel ?? '-',
-        data.monthsCount.toString(),
+        data.monthsString,
         data.committeeMeetingCount.toString(),
         data.familyDayCount.toString(),
-        data.teamMeetingCount.toString(),
+        (data.leadersMeetingCount + data.teamMeetingCount).toString(),
         data.eventsCount.toString(),
         data.totalEvents.toString(),
       ];

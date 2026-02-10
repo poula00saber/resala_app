@@ -45,15 +45,15 @@ class _MarketingReportScreenState extends State<MarketingReportScreen> {
 
   void _onFilterChanged(
     String? name,
-    String? level,
+    List<String>? levels,
     String? committeeId,
-    int? month,
+    List<int>? months,
   ) {
     _filter = ReportFilter(
       volunteerName: name,
-      educationalLevel: level,
+      educationalLevels: levels,
       committeeId: committeeId,
-      month: month,
+      months: months,
     );
     _loadReportData();
   }
@@ -62,8 +62,10 @@ class _MarketingReportScreenState extends State<MarketingReportScreen> {
     try {
       await ExcelExportHelper.exportMarketingReport(
         reportData: _reportData,
-        filterMonth: _filter.month != null
-            ? ReportRepository.getArabicMonth(_filter.month!)
+        filterMonth: _filter.months != null && _filter.months!.isNotEmpty
+            ? _filter.months!
+                  .map((m) => ReportRepository.getArabicMonth(m))
+                  .join(', ')
             : null,
       );
 

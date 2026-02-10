@@ -339,20 +339,31 @@ class _PromotionsScreenState extends State<PromotionsScreen> {
 
               const SizedBox(width: 12),
 
-              // Right - Promotion Icon
+              // Right - Profile Image
               Container(
-                padding: const EdgeInsets.all(10),
+                width: 44,
+                height: 44,
                 decoration: BoxDecoration(
-                  color: canBePromoted
-                      ? AppTheme.primary.withOpacity(0.1)
-                      : Colors.grey.withOpacity(0.1),
+                  color: AppTheme.primary.withOpacity(0.1),
                   shape: BoxShape.circle,
+                  image:
+                      volunteer.profileImage != null &&
+                          volunteer.profileImage!.isNotEmpty
+                      ? DecorationImage(
+                          image: NetworkImage(volunteer.profileImage!),
+                          fit: BoxFit.cover,
+                        )
+                      : null,
                 ),
-                child: Icon(
-                  canBePromoted ? Icons.arrow_upward : Icons.check_circle,
-                  color: canBePromoted ? AppTheme.primary : Colors.grey,
-                  size: 20,
-                ),
+                child:
+                    volunteer.profileImage == null ||
+                        volunteer.profileImage!.isEmpty
+                    ? const Icon(
+                        Icons.person,
+                        color: AppTheme.primary,
+                        size: 24,
+                      )
+                    : null,
               ),
             ],
           ),

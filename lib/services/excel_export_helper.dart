@@ -807,9 +807,9 @@ class ExcelExportHelper {
         'الاسم',
         'الدرجة التطوعية',
         'الشهور',
-        'اجتماع اللجنة',
+        'اجتماع لجنة',
         'يوم عائلي',
-        'اجتماع الفريق',
+        'اجتماع فريق',
         'احداث',
         'الإجمالي',
       ];
@@ -840,7 +840,7 @@ class ExcelExportHelper {
           data.monthsString, // comma-separated month numbers
           data.committeeMeetingCount.toString(),
           data.familyDayCount.toString(),
-          data.teamMeetingCount.toString(),
+          (data.leadersMeetingCount + data.teamMeetingCount).toString(),
           data.eventsCount.toString(),
           data.totalEvents.toString(),
         ];

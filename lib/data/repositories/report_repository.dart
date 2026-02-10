@@ -63,12 +63,15 @@ class ReportRepository {
     }
   }
 
-  // Get events by date filter
-  Future<List<EventModel>> getEventsByFilter({int? month, int? year}) async {
+  // Get events by date filter (supports multiple months)
+  Future<List<EventModel>> getEventsByFilter({
+    List<int>? months,
+    int? year,
+  }) async {
     try {
       final events = await getAllEvents();
 
-      if (month == null && year == null) {
+      if ((months == null || months.isEmpty) && year == null) {
         return events;
       }
 
@@ -76,8 +79,8 @@ class ReportRepository {
         try {
           final eventDate = DateTime.parse(event.date);
           bool matches = true;
-          if (month != null) {
-            matches = matches && eventDate.month == month;
+          if (months != null && months.isNotEmpty) {
+            matches = matches && months.contains(eventDate.month);
           }
           if (year != null) {
             matches = matches && eventDate.year == year;
@@ -118,7 +121,7 @@ class ReportRepository {
     try {
       final volunteers = await getAllVolunteers();
       final events = await getEventsByFilter(
-        month: filter?.month,
+        months: filter?.months,
         year: filter?.year,
       );
 
@@ -131,8 +134,9 @@ class ReportRepository {
             !volunteer.name.contains(filter!.volunteerName!)) {
           continue;
         }
-        if (filter?.educationalLevel != null &&
-            volunteer.educationalLevel != filter!.educationalLevel) {
+        if (filter?.educationalLevels != null &&
+            filter!.educationalLevels!.isNotEmpty &&
+            !filter.educationalLevels!.contains(volunteer.educationalLevel)) {
           continue;
         }
 
@@ -196,7 +200,7 @@ class ReportRepository {
     try {
       final volunteers = await getAllVolunteers();
       final events = await getEventsByFilter(
-        month: filter?.month,
+        months: filter?.months,
         year: filter?.year,
       );
 
@@ -208,8 +212,9 @@ class ReportRepository {
             !volunteer.name.contains(filter!.volunteerName!)) {
           continue;
         }
-        if (filter?.educationalLevel != null &&
-            volunteer.educationalLevel != filter!.educationalLevel) {
+        if (filter?.educationalLevels != null &&
+            filter!.educationalLevels!.isNotEmpty &&
+            !filter.educationalLevels!.contains(volunteer.educationalLevel)) {
           continue;
         }
 
@@ -260,7 +265,7 @@ class ReportRepository {
     try {
       final volunteers = await getAllVolunteers();
       final events = await getEventsByFilter(
-        month: filter?.month,
+        months: filter?.months,
         year: filter?.year,
       );
 
@@ -277,8 +282,9 @@ class ReportRepository {
             !volunteer.name.contains(filter!.volunteerName!)) {
           continue;
         }
-        if (filter?.educationalLevel != null &&
-            volunteer.educationalLevel != filter!.educationalLevel) {
+        if (filter?.educationalLevels != null &&
+            filter!.educationalLevels!.isNotEmpty &&
+            !filter.educationalLevels!.contains(volunteer.educationalLevel)) {
           continue;
         }
 
@@ -326,7 +332,7 @@ class ReportRepository {
     try {
       final volunteers = await getAllVolunteers();
       final events = await getEventsByFilter(
-        month: filter?.month,
+        months: filter?.months,
         year: filter?.year,
       );
 
@@ -338,8 +344,9 @@ class ReportRepository {
             !volunteer.name.contains(filter!.volunteerName!)) {
           continue;
         }
-        if (filter?.educationalLevel != null &&
-            volunteer.educationalLevel != filter!.educationalLevel) {
+        if (filter?.educationalLevels != null &&
+            filter!.educationalLevels!.isNotEmpty &&
+            !filter.educationalLevels!.contains(volunteer.educationalLevel)) {
           continue;
         }
         if (filter?.committeeId != null &&
@@ -402,8 +409,9 @@ class ReportRepository {
             !volunteer.name.contains(filter!.volunteerName!)) {
           continue;
         }
-        if (filter?.educationalLevel != null &&
-            volunteer.educationalLevel != filter!.educationalLevel) {
+        if (filter?.educationalLevels != null &&
+            filter!.educationalLevels!.isNotEmpty &&
+            !filter.educationalLevels!.contains(volunteer.educationalLevel)) {
           continue;
         }
 
@@ -429,7 +437,10 @@ class ReportRepository {
 
           if (volunteerId != null && reportDataMap.containsKey(volunteerId)) {
             // Apply date filter
-            if (filter?.month != null && month != filter!.month) continue;
+            if (filter?.months != null &&
+                filter!.months!.isNotEmpty &&
+                (month == null || !filter.months!.contains(month)))
+              continue;
             if (filter?.year != null && year != filter!.year) continue;
 
             var reportData = reportDataMap[volunteerId]!;
@@ -475,8 +486,9 @@ class ReportRepository {
             !volunteer.name.contains(filter!.volunteerName!)) {
           continue;
         }
-        if (filter?.educationalLevel != null &&
-            volunteer.educationalLevel != filter!.educationalLevel) {
+        if (filter?.educationalLevels != null &&
+            filter!.educationalLevels!.isNotEmpty &&
+            !filter.educationalLevels!.contains(volunteer.educationalLevel)) {
           continue;
         }
 
@@ -502,7 +514,10 @@ class ReportRepository {
 
           if (volunteerId != null && reportDataMap.containsKey(volunteerId)) {
             // Apply date filter
-            if (filter?.month != null && month != filter!.month) continue;
+            if (filter?.months != null &&
+                filter!.months!.isNotEmpty &&
+                (month == null || !filter.months!.contains(month)))
+              continue;
             if (filter?.year != null && year != filter!.year) continue;
 
             var reportData = reportDataMap[volunteerId]!;
@@ -525,7 +540,7 @@ class ReportRepository {
   }
 
   // Get total fund amount
-  Future<double> getTotalFundAmount({int? month, int? year}) async {
+  Future<double> getTotalFundAmount({List<int>? months, int? year}) async {
     try {
       final fundsSnapshot = await _firestore.collection('funds').get();
       double total = 0;
@@ -537,7 +552,10 @@ class ReportRepository {
         final docYear = data['year'] as int?;
         final isWithdrawal = data['isWithdrawal'] ?? false;
 
-        if (month != null && docMonth != month) continue;
+        if (months != null &&
+            months.isNotEmpty &&
+            (docMonth == null || !months.contains(docMonth)))
+          continue;
         if (year != null && docYear != year) continue;
 
         if (isWithdrawal) {

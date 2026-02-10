@@ -22,14 +22,9 @@ class InterviewsScreen extends StatefulWidget {
 class _InterviewsScreenState extends State<InterviewsScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
-  String _selectedFilter = 'لم تتم مقابلتهم';
+  List<String> _selectedFilters = ['لم تتم مقابلتهم'];
 
-  final List<String> _filterOptions = [
-    'كل',
-    'مقبولين',
-    'مرفوضين',
-    'لم تتم مقابلتهم',
-  ];
+  final List<String> _filterOptions = ['لم تتم مقابلتهم', 'مقبولين', 'مرفوضين'];
 
   @override
   Widget build(BuildContext context) {
@@ -88,39 +83,103 @@ class _InterviewsScreenState extends State<InterviewsScreen> {
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AppTheme.primary, width: 1.5),
-              ),
-              child: DropdownButton<String>(
-                value: _selectedFilter,
-                isExpanded: true,
-                underline: const SizedBox(),
-                icon: const Icon(
-                  Icons.arrow_drop_down,
-                  color: AppTheme.primary,
-                  size: 24,
-                ),
-                style: const TextStyle(
-                  fontFamily: 'Cairo',
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.primary,
-                ),
-                items: _filterOptions.map((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(value),
-                  );
-                }).toList(),
-                onChanged: (String? newValue) {
-                  setState(() {
-                    _selectedFilter = newValue!;
-                  });
-                },
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // "الكل" button
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          if (_selectedFilters.length ==
+                              _filterOptions.length) {
+                            _selectedFilters = ['لم تتم مقابلتهم'];
+                          } else {
+                            _selectedFilters = List.from(_filterOptions);
+                          }
+                        });
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color:
+                              _selectedFilters.length == _filterOptions.length
+                              ? AppTheme.primary
+                              : Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: AppTheme.primary,
+                            width: 1.5,
+                          ),
+                        ),
+                        child: Text(
+                          'الكل',
+                          style: TextStyle(
+                            fontFamily: 'Cairo',
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color:
+                                _selectedFilters.length == _filterOptions.length
+                                ? Colors.white
+                                : AppTheme.primary,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Individual filter chips
+                  ..._filterOptions.map((option) {
+                    final isSelected = _selectedFilters.contains(option);
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            if (isSelected) {
+                              _selectedFilters.remove(option);
+                              if (_selectedFilters.isEmpty) {
+                                _selectedFilters.add(option);
+                              }
+                            } else {
+                              _selectedFilters.add(option);
+                            }
+                          });
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isSelected ? AppTheme.primary : Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: AppTheme.primary,
+                              width: 1.5,
+                            ),
+                          ),
+                          child: Text(
+                            option,
+                            style: TextStyle(
+                              fontFamily: 'Cairo',
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: isSelected
+                                  ? Colors.white
+                                  : AppTheme.primary,
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+                ],
               ),
             ),
           ),
@@ -132,18 +191,136 @@ class _InterviewsScreenState extends State<InterviewsScreen> {
   }
 
   Widget _buildListByFilter() {
-    switch (_selectedFilter) {
-      case 'كل':
-        return _buildAllVolunteers();
-      case 'مقبولين':
-        return _buildPassedInterviews();
-      case 'مرفوضين':
-        return _buildFailedInterviews();
-      case 'لم تتم مقابلتهم':
-        return _buildVolunteersWithoutInterviews();
-      default:
-        return _buildVolunteersWithoutInterviews();
+    // If all filters selected or "الكل" equivalent
+    if (_selectedFilters.length == _filterOptions.length) {
+      return _buildAllVolunteers();
     }
+
+    // Build a combined list based on selected filters
+    return _buildCombinedFilteredList();
+  }
+
+  Widget _buildCombinedFilteredList() {
+    final showNotInterviewed = _selectedFilters.contains('لم تتم مقابلتهم');
+    final showPassed = _selectedFilters.contains('مقبولين');
+    final showFailed = _selectedFilters.contains('مرفوضين');
+
+    // If only one filter, use the dedicated method
+    if (_selectedFilters.length == 1) {
+      if (showNotInterviewed) return _buildVolunteersWithoutInterviews();
+      if (showPassed) return _buildPassedInterviews();
+      if (showFailed) return _buildFailedInterviews();
+    }
+
+    // Multiple filters: combine results
+    return StreamBuilder(
+      stream: Provider.of<VolunteerProvider>(
+        context,
+        listen: false,
+      ).searchVolunteers(_searchQuery),
+      builder: (context, volunteerSnapshot) {
+        if (volunteerSnapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: CircularProgressIndicator(color: AppTheme.primary),
+          );
+        }
+
+        final volunteers = volunteerSnapshot.data ?? [];
+
+        return Consumer<InterviewProvider>(
+          builder: (context, interviewProvider, child) {
+            return FutureBuilder(
+              future: _buildCombinedList(
+                volunteers,
+                interviewProvider,
+                showNotInterviewed,
+                showPassed,
+                showFailed,
+              ),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(
+                    child: CircularProgressIndicator(color: AppTheme.primary),
+                  );
+                }
+
+                final items = snapshot.data ?? [];
+
+                if (items.isEmpty) {
+                  return const Center(
+                    child: Text(
+                      'لا يوجد نتائج',
+                      style: TextStyle(
+                        fontFamily: 'Cairo',
+                        color: Colors.grey,
+                        fontSize: 16,
+                      ),
+                    ),
+                  );
+                }
+
+                return ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: items.length,
+                  itemBuilder: (context, index) {
+                    final item = items[index];
+                    if (item is InterviewModel) {
+                      return _buildInterviewCard(item);
+                    } else {
+                      return _buildVolunteerCard(item);
+                    }
+                  },
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<List<dynamic>> _buildCombinedList(
+    List<dynamic> volunteers,
+    InterviewProvider interviewProvider,
+    bool showNotInterviewed,
+    bool showPassed,
+    bool showFailed,
+  ) async {
+    List<dynamic> results = [];
+
+    if (showPassed) {
+      final passedInterviews = interviewProvider.interviews
+          .where((interview) => interview.passed == true)
+          .where((interview) {
+            if (_searchQuery.isEmpty) return true;
+            return interview.volunteerName.toLowerCase().contains(
+              _searchQuery.toLowerCase(),
+            );
+          })
+          .toList();
+      results.addAll(passedInterviews);
+    }
+
+    if (showFailed) {
+      final failedInterviews = interviewProvider.interviews
+          .where((interview) => interview.passed == false)
+          .where((interview) {
+            if (_searchQuery.isEmpty) return true;
+            return interview.volunteerName.toLowerCase().contains(
+              _searchQuery.toLowerCase(),
+            );
+          })
+          .toList();
+      results.addAll(failedInterviews);
+    }
+
+    if (showNotInterviewed) {
+      final volunteersWithout = await interviewProvider
+          .getVolunteersWithoutInterviews(volunteers);
+      results.addAll(volunteersWithout);
+    }
+
+    return results;
   }
 
   Widget _buildAllVolunteers() {

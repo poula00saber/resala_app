@@ -63,8 +63,20 @@ class _VolunteerEvaluationDetailsScreenState
               decoration: BoxDecoration(
                 color: const Color(0xFFE6D5F5),
                 shape: BoxShape.circle,
+                image:
+                    widget.volunteer.profileImage != null &&
+                        widget.volunteer.profileImage!.isNotEmpty
+                    ? DecorationImage(
+                        image: NetworkImage(widget.volunteer.profileImage!),
+                        fit: BoxFit.cover,
+                      )
+                    : null,
               ),
-              child: Icon(Icons.person, size: 60, color: AppTheme.primary),
+              child:
+                  widget.volunteer.profileImage == null ||
+                      widget.volunteer.profileImage!.isEmpty
+                  ? Icon(Icons.person, size: 60, color: AppTheme.primary)
+                  : null,
             ),
 
             const SizedBox(height: 24),

@@ -43,15 +43,15 @@ class _MeetingsReportScreenState extends State<MeetingsReportScreen> {
 
   void _onFilterChanged(
     String? name,
-    String? level,
+    List<String>? levels,
     String? committeeId,
-    int? month,
+    List<int>? months,
   ) {
     _filter = ReportFilter(
       volunteerName: name,
-      educationalLevel: level,
+      educationalLevels: levels,
       committeeId: committeeId,
-      month: month,
+      months: months,
     );
     _loadReportData();
   }
@@ -60,8 +60,10 @@ class _MeetingsReportScreenState extends State<MeetingsReportScreen> {
     try {
       await ExcelExportHelper.exportMeetingsReport(
         reportData: _reportData,
-        filterMonth: _filter.month != null
-            ? ReportRepository.getArabicMonth(_filter.month!)
+        filterMonth: _filter.months != null && _filter.months!.isNotEmpty
+            ? _filter.months!
+                  .map((m) => ReportRepository.getArabicMonth(m))
+                  .join(', ')
             : null,
       );
 
@@ -103,7 +105,7 @@ class _MeetingsReportScreenState extends State<MeetingsReportScreen> {
         data.committeeMeetingCount.toString(),
         data.teamMeetingCount.toString(),
         data.leadersMeetingCount.toString(),
-        data.monthsCount.toString(),
+        data.monthsString,
       ];
     }).toList();
 

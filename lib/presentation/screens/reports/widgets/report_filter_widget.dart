@@ -11,7 +11,12 @@ import '../../../../data/models/committee_model.dart';
 import '../../../../data/repositories/report_repository.dart';
 
 class ReportFilterWidget extends StatefulWidget {
-  final Function(String? name, String? level, String? committeeId, int? month)
+  final Function(
+    String? name,
+    List<String>? levels,
+    String? committeeId,
+    List<int>? months,
+  )
   onFilterChanged;
   final bool showCommitteeFilter;
   final bool showLevelFilter;
@@ -29,9 +34,9 @@ class ReportFilterWidget extends StatefulWidget {
 
 class _ReportFilterWidgetState extends State<ReportFilterWidget> {
   final TextEditingController _nameController = TextEditingController();
-  String? _selectedLevel;
+  List<String> _selectedLevels = [];
   String? _selectedCommitteeId;
-  int? _selectedMonth;
+  List<int> _selectedMonths = [];
   List<CommitteeModel> _committees = [];
 
   @override
@@ -56,9 +61,256 @@ class _ReportFilterWidgetState extends State<ReportFilterWidget> {
   void _applyFilters() {
     widget.onFilterChanged(
       _nameController.text.isEmpty ? null : _nameController.text,
-      _selectedLevel,
+      _selectedLevels.isEmpty ? null : _selectedLevels,
       _selectedCommitteeId,
-      _selectedMonth,
+      _selectedMonths.isEmpty ? null : _selectedMonths,
+    );
+  }
+
+  void _showMonthSelectionDialog() {
+    // Create a temporary copy of selected months for the dialog
+    List<int> tempSelectedMonths = List.from(_selectedMonths);
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text(
+                'اختر الشهور',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontFamily: 'Cairo',
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.primary,
+                ),
+              ),
+              content: SizedBox(
+                width: double.maxFinite,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Select All / Deselect All
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        TextButton(
+                          onPressed: () {
+                            setDialogState(() {
+                              tempSelectedMonths = List.generate(
+                                12,
+                                (i) => i + 1,
+                              );
+                            });
+                          },
+                          child: const Text(
+                            'تحديد الكل',
+                            style: TextStyle(
+                              fontFamily: 'Cairo',
+                              color: AppTheme.primary,
+                            ),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            setDialogState(() {
+                              tempSelectedMonths.clear();
+                            });
+                          },
+                          child: const Text(
+                            'إلغاء الكل',
+                            style: TextStyle(
+                              fontFamily: 'Cairo',
+                              color: Colors.red,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const Divider(),
+                    // Month checkboxes
+                    Flexible(
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: 12,
+                        itemBuilder: (context, index) {
+                          final monthNum = index + 1;
+                          final isSelected = tempSelectedMonths.contains(
+                            monthNum,
+                          );
+                          return CheckboxListTile(
+                            title: Text(
+                              ReportRepository.arabicMonths[index],
+                              style: const TextStyle(fontFamily: 'Cairo'),
+                            ),
+                            value: isSelected,
+                            activeColor: AppTheme.primary,
+                            onChanged: (bool? value) {
+                              setDialogState(() {
+                                if (value == true) {
+                                  tempSelectedMonths.add(monthNum);
+                                } else {
+                                  tempSelectedMonths.remove(monthNum);
+                                }
+                              });
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text(
+                    'إلغاء',
+                    style: TextStyle(fontFamily: 'Cairo', color: Colors.grey),
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    setState(() {
+                      _selectedMonths = tempSelectedMonths;
+                    });
+                    _applyFilters();
+                    Navigator.pop(context);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primary,
+                  ),
+                  child: const Text(
+                    'تطبيق',
+                    style: TextStyle(fontFamily: 'Cairo', color: Colors.white),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showLevelSelectionDialog() {
+    List<String> tempSelectedLevels = List.from(_selectedLevels);
+    final allLevels = FirebaseConstants.educationalLevels;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text(
+                'اختر التصنيفات',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontFamily: 'Cairo',
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.primary,
+                ),
+              ),
+              content: SizedBox(
+                width: double.maxFinite,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        TextButton(
+                          onPressed: () {
+                            setDialogState(() {
+                              tempSelectedLevels = List.from(allLevels);
+                            });
+                          },
+                          child: const Text(
+                            'تحديد الكل',
+                            style: TextStyle(
+                              fontFamily: 'Cairo',
+                              color: AppTheme.primary,
+                            ),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            setDialogState(() {
+                              tempSelectedLevels.clear();
+                            });
+                          },
+                          child: const Text(
+                            'إلغاء الكل',
+                            style: TextStyle(
+                              fontFamily: 'Cairo',
+                              color: Colors.red,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const Divider(),
+                    Flexible(
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: allLevels.length,
+                        itemBuilder: (context, index) {
+                          final level = allLevels[index];
+                          final isSelected = tempSelectedLevels.contains(level);
+                          return CheckboxListTile(
+                            title: Text(
+                              level,
+                              style: const TextStyle(fontFamily: 'Cairo'),
+                            ),
+                            value: isSelected,
+                            activeColor: AppTheme.primary,
+                            onChanged: (bool? value) {
+                              setDialogState(() {
+                                if (value == true) {
+                                  tempSelectedLevels.add(level);
+                                } else {
+                                  tempSelectedLevels.remove(level);
+                                }
+                              });
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text(
+                    'إلغاء',
+                    style: TextStyle(fontFamily: 'Cairo', color: Colors.grey),
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    setState(() {
+                      _selectedLevels = tempSelectedLevels;
+                    });
+                    _applyFilters();
+                    Navigator.pop(context);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primary,
+                  ),
+                  child: const Text(
+                    'تطبيق',
+                    style: TextStyle(fontFamily: 'Cairo', color: Colors.white),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 
@@ -97,87 +349,105 @@ class _ReportFilterWidgetState extends State<ReportFilterWidget> {
         // Level and Month dropdowns
         Row(
           children: [
-            // Month dropdown
+            // Month multi-select button
             Expanded(
-              child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(25),
-                  border: Border.all(color: AppTheme.primary),
-                ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<int>(
-                    isExpanded: true,
-                    hint: const Text(
-                      'الشهور',
-                      style: TextStyle(color: Colors.grey),
-                    ),
-                    value: _selectedMonth,
-                    items: [
-                      const DropdownMenuItem<int>(
-                        value: null,
-                        child: Text('كل الشهور'),
-                      ),
-                      ...List.generate(12, (index) {
-                        return DropdownMenuItem<int>(
-                          value: index + 1,
-                          child: Text(ReportRepository.arabicMonths[index]),
-                        );
-                      }),
-                    ],
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedMonth = value;
-                      });
-                      _applyFilters();
-                    },
-                  ),
-                ),
-              ),
-            ),
-
-            // Level dropdown
-            if (widget.showLevelFilter)
-              Expanded(
+              child: GestureDetector(
+                onTap: _showMonthSelectionDialog,
                 child: Container(
                   margin: const EdgeInsets.symmetric(
                     horizontal: 8,
                     vertical: 8,
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 14,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(25),
                     border: Border.all(color: AppTheme.primary),
                   ),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      isExpanded: true,
-                      hint: const Text(
-                        'التصنيف',
-                        style: TextStyle(color: Colors.grey),
-                      ),
-                      value: _selectedLevel,
-                      items: [
-                        const DropdownMenuItem<String>(
-                          value: null,
-                          child: Text('الكل'),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          _selectedMonths.isEmpty
+                              ? 'كل الشهور'
+                              : _selectedMonths.length == 12
+                              ? 'كل الشهور'
+                              : '${_selectedMonths.length} شهور',
+                          style: TextStyle(
+                            fontFamily: 'Cairo',
+                            color: _selectedMonths.isEmpty
+                                ? Colors.grey
+                                : Colors.black,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        ...FirebaseConstants.educationalLevels.map((level) {
-                          return DropdownMenuItem<String>(
-                            value: level,
-                            child: Text(level),
-                          );
-                        }),
+                      ),
+                      Icon(
+                        _selectedMonths.isEmpty
+                            ? Icons.arrow_drop_down
+                            : Icons.check_circle,
+                        color: _selectedMonths.isEmpty
+                            ? Colors.grey
+                            : AppTheme.primary,
+                        size: 20,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            // Level multi-select button
+            if (widget.showLevelFilter)
+              Expanded(
+                child: GestureDetector(
+                  onTap: _showLevelSelectionDialog,
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 8,
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 14,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(25),
+                      border: Border.all(color: AppTheme.primary),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            _selectedLevels.isEmpty
+                                ? 'كل التصنيفات'
+                                : _selectedLevels.length ==
+                                      FirebaseConstants.educationalLevels.length
+                                ? 'كل التصنيفات'
+                                : '${_selectedLevels.length} تصنيفات',
+                            style: TextStyle(
+                              fontFamily: 'Cairo',
+                              color: _selectedLevels.isEmpty
+                                  ? Colors.grey
+                                  : Colors.black,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        Icon(
+                          _selectedLevels.isEmpty
+                              ? Icons.arrow_drop_down
+                              : Icons.check_circle,
+                          color: _selectedLevels.isEmpty
+                              ? Colors.grey
+                              : AppTheme.primary,
+                          size: 20,
+                        ),
                       ],
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedLevel = value;
-                        });
-                        _applyFilters();
-                      },
                     ),
                   ),
                 ),

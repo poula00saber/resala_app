@@ -178,13 +178,26 @@ class _AddExistingVolunteerScreenState
         if (_selectedImage != null) {
           setState(() => _uploadingImage = true);
           final imageUrl = await _uploadImageToStorage(volunteerId);
+          setState(() => _uploadingImage = false);
           if (imageUrl != null) {
             // Update volunteer with image URL
             await volunteerProvider.updateVolunteerData(volunteerId, {
               'profileImage': imageUrl,
             });
+          } else {
+            // Image upload failed but volunteer was created
+            // Show warning but continue
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text(
+                    'تم إضافة المتطوع لكن فشل رفع الصورة - يمكنك إضافتها لاحقاً',
+                  ),
+                  backgroundColor: Colors.orange,
+                ),
+              );
+            }
           }
-          setState(() => _uploadingImage = false);
         }
 
         setState(() => _isLoading = false);

@@ -88,14 +88,14 @@ class _EvaluationsScreenState extends State<EvaluationsScreen> {
           // Volunteers List
           Expanded(
             child: StreamBuilder(
-              stream: Provider.of<VolunteerProvider>(context, listen: false)
-                  .searchVolunteers(_searchQuery),
+              stream: Provider.of<VolunteerProvider>(
+                context,
+                listen: false,
+              ).searchVolunteers(_searchQuery),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(
-                    child: CircularProgressIndicator(
-                      color: AppTheme.primary,
-                    ),
+                    child: CircularProgressIndicator(color: AppTheme.primary),
                   );
                 }
 
@@ -161,9 +161,8 @@ class _EvaluationsScreenState extends State<EvaluationsScreen> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => VolunteerEvaluationDetailsScreen(
-                volunteer: volunteer,
-              ),
+              builder: (context) =>
+                  VolunteerEvaluationDetailsScreen(volunteer: volunteer),
             ),
           );
         },
@@ -209,16 +208,29 @@ class _EvaluationsScreenState extends State<EvaluationsScreen> {
 
               // Profile Circle
               Container(
-                padding: const EdgeInsets.all(10),
-                decoration: const BoxDecoration(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
                   color: Colors.white,
                   shape: BoxShape.circle,
+                  image:
+                      volunteer.profileImage != null &&
+                          volunteer.profileImage!.isNotEmpty
+                      ? DecorationImage(
+                          image: NetworkImage(volunteer.profileImage!),
+                          fit: BoxFit.cover,
+                        )
+                      : null,
                 ),
-                child: const Icon(
-                  Icons.person,
-                  color: AppTheme.primary,
-                  size: 20,
-                ),
+                child:
+                    volunteer.profileImage == null ||
+                        volunteer.profileImage!.isEmpty
+                    ? const Icon(
+                        Icons.person,
+                        color: AppTheme.primary,
+                        size: 24,
+                      )
+                    : null,
               ),
             ],
           ),

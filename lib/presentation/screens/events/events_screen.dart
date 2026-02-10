@@ -199,7 +199,7 @@ class _EventsScreenState extends State<EventsScreen> {
                 const SizedBox(height: 24),
                 _buildFilterOption(
                   context,
-                  'في خلال ٧ أيام',
+                  'منذ ٧ أيام',
                   Icons.calendar_today,
                   () {
                     provider.setFilter(EventFilter.last7Days);
@@ -209,7 +209,7 @@ class _EventsScreenState extends State<EventsScreen> {
                 _buildDivider(),
                 _buildFilterOption(
                   context,
-                  'في خلال شهر',
+                  'منذ شهر',
                   Icons.calendar_month,
                   () {
                     provider.setFilter(EventFilter.lastMonth);
