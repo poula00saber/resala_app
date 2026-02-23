@@ -16,9 +16,11 @@ class VolunteerRepository {
         .collection(FirebaseConstants.volunteersCollection)
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => VolunteerModel.fromFirestore(doc))
-            .toList());
+        .map(
+          (snapshot) => snapshot.docs
+              .map((doc) => VolunteerModel.fromFirestore(doc))
+              .toList(),
+        );
   }
 
   // Get volunteer by ID
@@ -40,18 +42,27 @@ class VolunteerRepository {
   }
 
   // Get volunteers by IDs
+  // Firestore whereIn supports max 30 items per query, so we batch
   Future<List<VolunteerModel>> getVolunteersByIds(List<String> ids) async {
     if (ids.isEmpty) return [];
 
     try {
-      final docs = await _firestore
-          .collection(FirebaseConstants.volunteersCollection)
-          .where(FieldPath.documentId, whereIn: ids)
-          .get();
+      final List<VolunteerModel> allVolunteers = [];
 
-      return docs.docs
-          .map((doc) => VolunteerModel.fromFirestore(doc))
-          .toList();
+      // Split into chunks of 30 to avoid Firestore whereIn limit
+      for (var i = 0; i < ids.length; i += 30) {
+        final chunk = ids.sublist(i, i + 30 > ids.length ? ids.length : i + 30);
+        final docs = await _firestore
+            .collection(FirebaseConstants.volunteersCollection)
+            .where(FieldPath.documentId, whereIn: chunk)
+            .get();
+
+        allVolunteers.addAll(
+          docs.docs.map((doc) => VolunteerModel.fromFirestore(doc)),
+        );
+      }
+
+      return allVolunteers;
     } catch (e) {
       print('Error getting volunteers by IDs: $e');
       return [];
@@ -99,7 +110,7 @@ class VolunteerRepository {
     }
   }
 
-// Add this method to your VolunteerRepository class
+  // Add this method to your VolunteerRepository class
   Future<bool> updateVolunteerLevel(String volunteerId, String newLevel) async {
     try {
       await _firestore
@@ -123,16 +134,16 @@ class VolunteerRepository {
         .orderBy('name')
         .snapshots()
         .map((snapshot) {
-      final volunteers = snapshot.docs
-          .map((doc) => VolunteerModel.fromFirestore(doc))
-          .toList();
+          final volunteers = snapshot.docs
+              .map((doc) => VolunteerModel.fromFirestore(doc))
+              .toList();
 
-      if (query.isEmpty) return volunteers;
+          if (query.isEmpty) return volunteers;
 
-      return volunteers.where((volunteer) {
-        return volunteer.name.toLowerCase().contains(query.toLowerCase()) ||
-            volunteer.phone.contains(query);
-      }).toList();
-    });
+          return volunteers.where((volunteer) {
+            return volunteer.name.toLowerCase().contains(query.toLowerCase()) ||
+                volunteer.phone.contains(query);
+          }).toList();
+        });
   }
 }

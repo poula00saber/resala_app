@@ -29,6 +29,7 @@ class _EditEventScreenState extends State<EditEventScreen> {
   late TextEditingController _titleController;
   late TextEditingController _dateController;
   late TextEditingController _locationController;
+  late TextEditingController _descriptionController;
   late List<String> _volunteerIds;
   late Map<String, bool> _volunteerTshirtStatus;
   bool _isLoading = false;
@@ -41,6 +42,9 @@ class _EditEventScreenState extends State<EditEventScreen> {
     _dateController = TextEditingController(text: widget.event.date);
     _locationController = TextEditingController(
       text: widget.event.location ?? '',
+    );
+    _descriptionController = TextEditingController(
+      text: widget.event.description,
     );
     _volunteerIds = List<String>.from(widget.event.volunteerIds);
     _volunteerTshirtStatus = {};
@@ -64,6 +68,7 @@ class _EditEventScreenState extends State<EditEventScreen> {
         eventType: widget.event.type,
         eventDate: widget.event.date,
         eventLocation: widget.event.location,
+        eventDescription: _descriptionController.text,
         volunteers: volunteers,
       );
 
@@ -237,7 +242,7 @@ class _EditEventScreenState extends State<EditEventScreen> {
       title: _titleController.text,
       type: widget.event.type,
       date: _dateController.text,
-      description: widget.event.description,
+      description: _descriptionController.text,
       location: _locationController.text.isEmpty
           ? null
           : _locationController.text,
@@ -365,6 +370,17 @@ class _EditEventScreenState extends State<EditEventScreen> {
                 ],
               ),
             ),
+
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 40),
+              child: _buildTextField(
+                controller: _descriptionController,
+                label: 'وصف الحدث',
+                readOnly: false,
+              ),
+            ),
+
+            const SizedBox(height: 8),
 
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 40),
@@ -729,6 +745,7 @@ class _EditEventScreenState extends State<EditEventScreen> {
     _titleController.dispose();
     _dateController.dispose();
     _locationController.dispose();
+    _descriptionController.dispose();
     super.dispose();
   }
 }

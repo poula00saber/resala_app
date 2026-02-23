@@ -271,6 +271,7 @@ class ExcelExportHelper {
     required String eventType,
     required String eventDate,
     required String? eventLocation,
+    required String eventDescription,
     required List<VolunteerModel> volunteers,
   }) async {
     try {
@@ -353,9 +354,24 @@ class ExcelExportHelper {
         verticalAlign: VerticalAlign.Center,
       );
 
+      sheet.cell(CellIndex.indexByString('A6')).value = TextCellValue(
+        'وصف الحدث:',
+      );
+      sheet.cell(CellIndex.indexByString('A6')).cellStyle = CellStyle(
+        horizontalAlign: HorizontalAlign.Right,
+        verticalAlign: VerticalAlign.Center,
+      );
+      sheet.cell(CellIndex.indexByString('B6')).value = TextCellValue(
+        eventDescription.isNotEmpty ? eventDescription : 'غير محدد',
+      );
+      sheet.cell(CellIndex.indexByString('B6')).cellStyle = CellStyle(
+        horizontalAlign: HorizontalAlign.Right,
+        verticalAlign: VerticalAlign.Center,
+      );
+
       // Volunteers table header - only 4 columns
-      sheet.merge(CellIndex.indexByString('A7'), CellIndex.indexByString('D7'));
-      var volunteersHeaderCell = sheet.cell(CellIndex.indexByString('A7'));
+      sheet.merge(CellIndex.indexByString('A8'), CellIndex.indexByString('D8'));
+      var volunteersHeaderCell = sheet.cell(CellIndex.indexByString('A8'));
       volunteersHeaderCell.value = TextCellValue('المتطوعون');
       volunteersHeaderCell.cellStyle = CellStyle(
         bold: true,
@@ -374,7 +390,7 @@ class ExcelExportHelper {
 
       for (var i = 0; i < headers.length; i++) {
         var cell = sheet.cell(
-          CellIndex.indexByColumnRow(columnIndex: i, rowIndex: 8),
+          CellIndex.indexByColumnRow(columnIndex: i, rowIndex: 9),
         );
         cell.value = TextCellValue(headers[i]);
         cell.cellStyle = CellStyle(
@@ -389,7 +405,7 @@ class ExcelExportHelper {
       // Add volunteers data - simplified to only 4 columns
       for (var i = 0; i < volunteers.length; i++) {
         var volunteer = volunteers[i];
-        var rowIndex = i + 9;
+        var rowIndex = i + 10;
 
         // Column 0: T-shirt - centered
         sheet
@@ -526,6 +542,12 @@ class ExcelExportHelper {
         _setCellWithStyle(sheet, 'B4', event.date);
         _setCellWithStyle(sheet, 'A5', 'المكان:');
         _setCellWithStyle(sheet, 'B5', event.location ?? 'غير محدد');
+        _setCellWithStyle(sheet, 'A6', 'وصف الحدث:');
+        _setCellWithStyle(
+          sheet,
+          'B6',
+          event.description.isNotEmpty ? event.description : 'غير محدد',
+        );
 
         // Get volunteers for this event
         List<VolunteerModel> volunteers = [];
@@ -535,10 +557,10 @@ class ExcelExportHelper {
 
         // Volunteers table header - only 4 columns
         sheet.merge(
-          CellIndex.indexByString('A7'),
-          CellIndex.indexByString('D7'),
+          CellIndex.indexByString('A8'),
+          CellIndex.indexByString('D8'),
         );
-        var volunteersHeaderCell = sheet.cell(CellIndex.indexByString('A7'));
+        var volunteersHeaderCell = sheet.cell(CellIndex.indexByString('A8'));
         volunteersHeaderCell.value = TextCellValue(
           'المتطوعون (${volunteers.length})',
         );
@@ -553,7 +575,7 @@ class ExcelExportHelper {
         var headers = ['تيشيرت', 'الهاتف', 'الاسم', '#'];
         for (var i = 0; i < headers.length; i++) {
           var cell = sheet.cell(
-            CellIndex.indexByColumnRow(columnIndex: i, rowIndex: 8),
+            CellIndex.indexByColumnRow(columnIndex: i, rowIndex: 9),
           );
           cell.value = TextCellValue(headers[i]);
           cell.cellStyle = CellStyle(
@@ -568,7 +590,7 @@ class ExcelExportHelper {
         // Add volunteers data
         for (var i = 0; i < volunteers.length; i++) {
           var volunteer = volunteers[i];
-          var rowIndex = i + 9;
+          var rowIndex = i + 10;
 
           sheet
               .cell(
