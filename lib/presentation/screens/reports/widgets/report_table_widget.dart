@@ -63,7 +63,10 @@ class ReportTableWidget extends StatelessWidget {
                       fontSize: 12,
                       color: AppTheme.primary,
                     ),
-                    textAlign: TextAlign.center,
+                    textAlign: TextAlign.right,
+                    softWrap: true,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 );
               }).toList(),

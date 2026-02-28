@@ -1,6 +1,6 @@
 // ============================================
 // FILE: lib/data/models/event_model.dart
-// UPDATED: Added committeeId and committeeName fields
+// UPDATED: Added committeeId, committeeName, and qafla role fields
 // ============================================
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -16,9 +16,12 @@ class EventModel extends Event {
     super.location,
     super.meetingPlace,
     super.administrativeType,
-    super.committeeId, // NEW
-    super.committeeName, // NEW
+    super.committeeId,
+    super.committeeName,
     required super.volunteerIds,
+    super.qaflaPreparation,
+    super.qaflaFilling,
+    super.qaflaDistribution,
     required super.createdAt,
     required super.updatedAt,
   });
@@ -35,9 +38,14 @@ class EventModel extends Event {
       location: data['location'],
       meetingPlace: data['meetingPlace'],
       administrativeType: data['administrativeType'],
-      committeeId: data['committeeId'], // NEW
-      committeeName: data['committeeName'], // NEW
+      committeeId: data['committeeId'],
+      committeeName: data['committeeName'],
       volunteerIds: List<String>.from(data['volunteerIds'] ?? []),
+      qaflaPreparation: Map<String, bool>.from(data['qaflaPreparation'] ?? {}),
+      qaflaFilling: Map<String, bool>.from(data['qaflaFilling'] ?? {}),
+      qaflaDistribution: Map<String, bool>.from(
+        data['qaflaDistribution'] ?? {},
+      ),
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       updatedAt: (data['updatedAt'] as Timestamp).toDate(),
     );
@@ -53,9 +61,12 @@ class EventModel extends Event {
       'location': location,
       'meetingPlace': meetingPlace,
       'administrativeType': administrativeType,
-      'committeeId': committeeId, // NEW
-      'committeeName': committeeName, // NEW
+      'committeeId': committeeId,
+      'committeeName': committeeName,
       'volunteerIds': volunteerIds,
+      'qaflaPreparation': qaflaPreparation,
+      'qaflaFilling': qaflaFilling,
+      'qaflaDistribution': qaflaDistribution,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.now(),
     };

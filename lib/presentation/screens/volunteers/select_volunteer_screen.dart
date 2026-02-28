@@ -1,12 +1,14 @@
 // ============================================
 // FILE: lib/presentation/screens/volunteers/select_volunteer_screen.dart
-// REDESIGNED to match your UI (Image 3)
+// UPDATED: Supports multi-select via long press + tap to toggle
+// Single tap selects one (returns String), long press enables multi-select (returns List<String>)
 // ============================================
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/volunteer_provider.dart';
 import '../../themes/app_theme.dart';
+import '../../../core/constants/firebase_constants.dart';
 
 class SelectVolunteerScreen extends StatefulWidget {
   const SelectVolunteerScreen({super.key});
@@ -18,6 +20,27 @@ class SelectVolunteerScreen extends StatefulWidget {
 class _SelectVolunteerScreenState extends State<SelectVolunteerScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+  bool _isMultiSelectMode = false;
+  final Set<String> _selectedIds = {};
+
+  void _toggleMultiSelect(String volunteerId) {
+    setState(() {
+      if (_selectedIds.contains(volunteerId)) {
+        _selectedIds.remove(volunteerId);
+        if (_selectedIds.isEmpty) {
+          _isMultiSelectMode = false;
+        }
+      } else {
+        _selectedIds.add(volunteerId);
+      }
+    });
+  }
+
+  void _confirmMultiSelect() {
+    if (_selectedIds.isNotEmpty) {
+      Navigator.pop(context, _selectedIds.toList());
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,22 +53,61 @@ class _SelectVolunteerScreenState extends State<SelectVolunteerScreen> {
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          'اختيار متطوع حالي',
-          style: TextStyle(
+        title: Text(
+          _isMultiSelectMode
+              ? 'تم اختيار ${_selectedIds.length}'
+              : 'اختيار متطوع حالي',
+          style: const TextStyle(
             color: Colors.black,
             fontSize: 20,
             fontWeight: FontWeight.w500,
           ),
         ),
         centerTitle: true,
+        actions: [
+          if (_isMultiSelectMode) ...[
+            IconButton(
+              icon: const Icon(Icons.close, color: Colors.black),
+              onPressed: () {
+                setState(() {
+                  _isMultiSelectMode = false;
+                  _selectedIds.clear();
+                });
+              },
+            ),
+          ],
+        ],
       ),
+      floatingActionButton: _isMultiSelectMode && _selectedIds.isNotEmpty
+          ? FloatingActionButton.extended(
+              onPressed: _confirmMultiSelect,
+              backgroundColor: AppTheme.primary,
+              icon: const Icon(Icons.check, color: Colors.white),
+              label: Text(
+                'تأكيد (${_selectedIds.length})',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontFamily: 'Cairo',
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            )
+          : null,
       body: Column(
         children: [
-          // Date and Location Fields (Empty for selection screen)
           const SizedBox(height: 8),
-
-          // Main Content Card
+          if (_isMultiSelectMode)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 4),
+              child: Text(
+                'اضغط لتحديد أو إلغاء تحديد المتطوعين',
+                style: TextStyle(
+                  fontFamily: 'Cairo',
+                  fontSize: 12,
+                  color: Colors.grey[600],
+                ),
+              ),
+            ),
           Expanded(
             child: Container(
               margin: const EdgeInsets.symmetric(horizontal: 30),
@@ -66,8 +128,6 @@ class _SelectVolunteerScreenState extends State<SelectVolunteerScreen> {
               child: Column(
                 children: [
                   const SizedBox(height: 24),
-
-                  // Search Bar
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 24),
                     child: TextField(
@@ -106,10 +166,7 @@ class _SelectVolunteerScreenState extends State<SelectVolunteerScreen> {
                       },
                     ),
                   ),
-
                   const SizedBox(height: 16),
-
-                  // Volunteers List
                   Expanded(
                     child: StreamBuilder(
                       stream: Provider.of<VolunteerProvider>(
@@ -135,7 +192,17 @@ class _SelectVolunteerScreenState extends State<SelectVolunteerScreen> {
                           );
                         }
 
-                        final volunteers = snapshot.data ?? [];
+                        var volunteers = snapshot.data ?? [];
+
+                        // Sort by degree then name
+                        volunteers.sort(
+                          (a, b) => FirebaseConstants.compareByDegreeAndName(
+                            a.educationalLevel ?? '',
+                            a.name,
+                            b.educationalLevel ?? '',
+                            b.name,
+                          ),
+                        );
 
                         if (volunteers.isEmpty) {
                           return const Center(
@@ -154,14 +221,33 @@ class _SelectVolunteerScreenState extends State<SelectVolunteerScreen> {
                           itemCount: volunteers.length,
                           itemBuilder: (context, index) {
                             final volunteer = volunteers[index];
+                            final isSelected = _selectedIds.contains(
+                              volunteer.id,
+                            );
+
                             return Container(
                               margin: const EdgeInsets.only(bottom: 12),
                               child: ElevatedButton(
                                 onPressed: () {
-                                  Navigator.pop(context, volunteer.id);
+                                  if (_isMultiSelectMode) {
+                                    _toggleMultiSelect(volunteer.id);
+                                  } else {
+                                    // Single select - return single ID
+                                    Navigator.pop(context, volunteer.id);
+                                  }
+                                },
+                                onLongPress: () {
+                                  if (!_isMultiSelectMode) {
+                                    setState(() {
+                                      _isMultiSelectMode = true;
+                                      _selectedIds.add(volunteer.id);
+                                    });
+                                  }
                                 },
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppTheme.primary,
+                                  backgroundColor: isSelected
+                                      ? AppTheme.primary.withOpacity(0.8)
+                                      : AppTheme.primary,
                                   foregroundColor: Colors.white,
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 20,
@@ -169,20 +255,52 @@ class _SelectVolunteerScreenState extends State<SelectVolunteerScreen> {
                                   ),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(25),
+                                    side: isSelected
+                                        ? const BorderSide(
+                                            color: Colors.white,
+                                            width: 2,
+                                          )
+                                        : BorderSide.none,
                                   ),
-                                  elevation: 2,
+                                  elevation: isSelected ? 4 : 2,
                                 ),
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.end,
                                   children: [
+                                    if (_isMultiSelectMode)
+                                      Icon(
+                                        isSelected
+                                            ? Icons.check_circle
+                                            : Icons.radio_button_unchecked,
+                                        color: Colors.white,
+                                        size: 22,
+                                      ),
+                                    if (_isMultiSelectMode)
+                                      const SizedBox(width: 12),
                                     Expanded(
-                                      child: Text(
-                                        volunteer.name,
-                                        style: const TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                        textAlign: TextAlign.right,
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.end,
+                                        children: [
+                                          Text(
+                                            volunteer.name,
+                                            style: const TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                            textAlign: TextAlign.right,
+                                          ),
+                                          Text(
+                                            volunteer.educationalLevel ?? '-',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.white.withOpacity(
+                                                0.7,
+                                              ),
+                                            ),
+                                            textAlign: TextAlign.right,
+                                          ),
+                                        ],
                                       ),
                                     ),
                                     const SizedBox(width: 12),
@@ -207,42 +325,12 @@ class _SelectVolunteerScreenState extends State<SelectVolunteerScreen> {
                       },
                     ),
                   ),
-
                   const SizedBox(height: 16),
                 ],
               ),
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildTextField(String label) {
-    return TextField(
-      enabled: false,
-      textAlign: TextAlign.center,
-      decoration: InputDecoration(
-        hintText: label,
-        hintStyle: TextStyle(color: Colors.grey[400], fontSize: 12),
-        filled: true,
-        fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 12,
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(20),
-          borderSide: const BorderSide(color: AppTheme.primary),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(20),
-          borderSide: const BorderSide(color: AppTheme.primary),
-        ),
-        disabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(20),
-          borderSide: BorderSide(color: Colors.grey[300]!),
-        ),
       ),
     );
   }

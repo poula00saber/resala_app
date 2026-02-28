@@ -7,6 +7,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../themes/app_theme.dart';
+import '../../../core/constants/firebase_constants.dart';
 import '../../../data/models/marketing_model.dart';
 import '../../../data/repositories/marketing_repository.dart';
 import '../../../services/auth_service.dart';
@@ -58,9 +59,27 @@ class _MarketingEntryScreenState extends State<MarketingEntryScreen> {
           .orderBy('name')
           .get();
 
-      _volunteers = volunteersSnapshot.docs.map((doc) {
-        return {'id': doc.id, 'name': doc.data()['name'] ?? ''};
-      }).toList();
+      _volunteers = volunteersSnapshot.docs
+          .where((doc) {
+            final level = doc.data()['educationalLevel'] ?? '';
+            return level != 'جدد' && level != 'شبل';
+          })
+          .map((doc) {
+            return {
+              'id': doc.id,
+              'name': doc.data()['name'] ?? '',
+              'educationalLevel': doc.data()['educationalLevel'] ?? '',
+            };
+          })
+          .toList();
+      _volunteers.sort(
+        (a, b) => FirebaseConstants.compareByDegreeAndName(
+          a['educationalLevel'] as String,
+          a['name'] as String,
+          b['educationalLevel'] as String,
+          b['name'] as String,
+        ),
+      );
 
       // Load total marketing count for current year
       _totalMarketingCount = await _marketingRepository.getMarketingCount(

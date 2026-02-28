@@ -1,6 +1,6 @@
 // ============================================
 // FILE: lib/domain/entities/event.dart
-// FIXED: Added committeeId and committeeName fields
+// FIXED: Added committeeId, committeeName, and qafla role fields
 // ============================================
 
 class Event {
@@ -15,6 +15,9 @@ class Event {
   final String? committeeId; // NEW
   final String? committeeName; // NEW
   final List<String> volunteerIds;
+  final Map<String, bool> qaflaPreparation; // تجهيز per volunteer
+  final Map<String, bool> qaflaFilling; // تعبئة per volunteer
+  final Map<String, bool> qaflaDistribution; // توزيع per volunteer
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -30,6 +33,9 @@ class Event {
     this.committeeId, // NEW
     this.committeeName, // NEW
     required this.volunteerIds,
+    this.qaflaPreparation = const {},
+    this.qaflaFilling = const {},
+    this.qaflaDistribution = const {},
     required this.createdAt,
     required this.updatedAt,
   });

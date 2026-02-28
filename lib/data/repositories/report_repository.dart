@@ -143,6 +143,7 @@ class ReportRepository {
         reportDataMap[volunteer.id] = VolunteerReportData(
           volunteerId: volunteer.id,
           volunteerName: volunteer.name,
+          phone: volunteer.phone,
           educationalLevel: volunteer.educationalLevel,
           committeeName: volunteer.committeeName,
           committeeId: volunteer.committeeId,
@@ -161,6 +162,14 @@ class ReportRepository {
           if (eventMonth != null) {
             data.monthsParticipated.add(eventMonth);
           }
+
+          // Track unique participation dates (date part only)
+          try {
+            final eventDate = DateTime.parse(event.date);
+            final dateOnly =
+                '${eventDate.year}-${eventDate.month.toString().padLeft(2, '0')}-${eventDate.day.toString().padLeft(2, '0')}';
+            data.uniqueDates.add(dateOnly);
+          } catch (_) {}
 
           // Categorize event
           switch (event.type) {
@@ -225,10 +234,13 @@ class ReportRepository {
             volunteer.educationalLevel == 'شبل مميز';
         if (cubsOnly && !isCub) continue;
         if (!cubsOnly && isCub) continue;
+        // When showing الفريق (non-cubs), also exclude جدد
+        if (!cubsOnly && volunteer.educationalLevel == 'جدد') continue;
 
         reportDataMap[volunteer.id] = VolunteerReportData(
           volunteerId: volunteer.id,
           volunteerName: volunteer.name,
+          phone: volunteer.phone,
           educationalLevel: volunteer.educationalLevel,
           committeeName: volunteer.committeeName,
         );
@@ -292,6 +304,7 @@ class ReportRepository {
         reportDataMap[volunteer.id] = VolunteerReportData(
           volunteerId: volunteer.id,
           volunteerName: volunteer.name,
+          phone: volunteer.phone,
           educationalLevel: volunteer.educationalLevel,
           committeeName: volunteer.committeeName,
         );
@@ -358,6 +371,7 @@ class ReportRepository {
         reportDataMap[volunteer.id] = VolunteerReportData(
           volunteerId: volunteer.id,
           volunteerName: volunteer.name,
+          phone: volunteer.phone,
           educationalLevel: volunteer.educationalLevel,
           committeeName: volunteer.committeeName,
           committeeId: volunteer.committeeId,
@@ -415,10 +429,16 @@ class ReportRepository {
             !filter.educationalLevels!.contains(volunteer.educationalLevel)) {
           continue;
         }
+        // Exclude جدد and شبل from fund report
+        if (volunteer.educationalLevel == 'جدد' ||
+            volunteer.educationalLevel == 'شبل') {
+          continue;
+        }
 
         reportDataMap[volunteer.id] = VolunteerReportData(
           volunteerId: volunteer.id,
           volunteerName: volunteer.name,
+          phone: volunteer.phone,
           educationalLevel: volunteer.educationalLevel,
           committeeName: volunteer.committeeName,
         );
@@ -492,10 +512,16 @@ class ReportRepository {
             !filter.educationalLevels!.contains(volunteer.educationalLevel)) {
           continue;
         }
+        // Exclude جدد and شبل from marketing report
+        if (volunteer.educationalLevel == 'جدد' ||
+            volunteer.educationalLevel == 'شبل') {
+          continue;
+        }
 
         reportDataMap[volunteer.id] = VolunteerReportData(
           volunteerId: volunteer.id,
           volunteerName: volunteer.name,
+          phone: volunteer.phone,
           educationalLevel: volunteer.educationalLevel,
           committeeName: volunteer.committeeName,
         );

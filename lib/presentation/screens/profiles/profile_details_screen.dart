@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:resala/core/constants/firebase_constants.dart';
 import 'package:resala/services/image_upload_service.dart';
+import '../../../core/utils/validators.dart';
 import '../../providers/volunteer_provider.dart';
 import '../../providers/committee_provider.dart';
 import '../../themes/app_theme.dart';
@@ -170,16 +171,6 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
   // Update the save method to include profileImage
   Future<void> _saveProfile() async {
     if (!_formKey.currentState!.validate()) return;
-
-    if (_selectedCommitteeId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('يرجى اختيار اللجنة التطوعية'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
 
     setState(() => _isLoading = true);
 
@@ -424,6 +415,7 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
                         label: 'السن',
                         keyboardType: TextInputType.number,
                         isRequired: true,
+                        readOnly: true,
                         validator: (v) {
                           if (v?.isEmpty ?? true) return 'مطلوب';
                           final age = int.tryParse(v!);
@@ -461,6 +453,19 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
                   controller: _nationalIdController,
                   label: 'الرقم القومي',
                   keyboardType: TextInputType.number,
+                  validator: Validators.validateNationalId,
+                  onChanged: (value) {
+                    if (value.length == 14) {
+                      final data = Validators.parseNationalId(value);
+                      if (data != null) {
+                        setState(() {
+                          _birthDateController.text = data.birthDate;
+                          _ageController.text = data.age.toString();
+                          _selectedGender = data.gender;
+                        });
+                      }
+                    }
+                  },
                 ),
 
                 const SizedBox(height: 16),
@@ -599,7 +604,7 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
                       child: _buildDateFieldWithLabel(
                         controller: _birthDateController,
                         label: 'تاريخ الميلاد',
-                        onTap: () => _selectDate(_birthDateController),
+                        enabled: false,
                       ),
                     ),
                   ],
@@ -892,6 +897,8 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
     String? Function(String?)? validator,
     TextInputType? keyboardType,
     bool isRequired = false,
+    bool readOnly = false,
+    ValueChanged<String>? onChanged,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -921,10 +928,11 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
           controller: controller,
           textAlign: TextAlign.right,
           keyboardType: keyboardType,
-          style: const TextStyle(
+          readOnly: readOnly,
+          style: TextStyle(
             fontFamily: 'Cairo',
             fontSize: 14,
-            color: Colors.black,
+            color: readOnly ? Colors.grey[700] : Colors.black,
           ),
           decoration: InputDecoration(
             contentPadding: const EdgeInsets.symmetric(
@@ -944,7 +952,7 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
               borderSide: const BorderSide(color: AppTheme.primary, width: 2),
             ),
             filled: true,
-            fillColor: Colors.white,
+            fillColor: readOnly ? Colors.grey[100] : Colors.white,
             hintText: 'أدخل $label',
             hintStyle: const TextStyle(
               fontFamily: 'Cairo',
@@ -953,6 +961,7 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
             ),
           ),
           validator: validator,
+          onChanged: onChanged,
         ),
       ],
     );

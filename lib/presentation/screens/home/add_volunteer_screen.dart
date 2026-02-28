@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:resala/presentation/themes/app_theme.dart';
+import '../../../core/utils/validators.dart';
 
 class AddVolunteerScreen extends StatefulWidget {
   final Function(Map<String, dynamic>) onVolunteerAdded;
@@ -150,11 +151,16 @@ class _AddVolunteerScreenState extends State<AddVolunteerScreen> {
                           border: OutlineInputBorder(),
                           prefixIcon: Icon(Icons.credit_card),
                         ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'يرجى إدخال الرقم القومي';
+                        validator: Validators.validateNationalId,
+                        onChanged: (value) {
+                          if (value.length == 14) {
+                            final data = Validators.parseNationalId(value);
+                            if (data != null) {
+                              setState(() {
+                                _birthDateController.text = data.birthDate;
+                              });
+                            }
                           }
-                          return null;
                         },
                       ),
                       const SizedBox(height: 16),

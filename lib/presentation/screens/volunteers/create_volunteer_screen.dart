@@ -1,6 +1,7 @@
 // ============================================
 // FILE: lib/presentation/screens/volunteers/create_volunteer_screen.dart
-// UPDATED: Age is required, shows educational level based on age
+// UPDATED: Only needs name, phone, address, national ID
+// Birth date, age, gender, educational level auto-derived from NID
 // ============================================
 
 import 'package:flutter/material.dart';
@@ -8,7 +9,7 @@ import 'package:provider/provider.dart';
 import '../../providers/volunteer_provider.dart';
 import '../../themes/app_theme.dart';
 import '../../../core/utils/validators.dart';
-import '../../../core/constants/firebase_constants.dart'; // ADD THIS IMPORT
+import '../../../core/constants/firebase_constants.dart';
 
 class CreateVolunteerScreen extends StatefulWidget {
   const CreateVolunteerScreen({super.key});
@@ -21,91 +22,50 @@ class _CreateVolunteerScreenState extends State<CreateVolunteerScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
-  final TextEditingController _ageController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
   final TextEditingController _nationalIdController = TextEditingController();
-  final TextEditingController _birthDateController = TextEditingController();
-  final TextEditingController _educationalLevelController =
-      TextEditingController(); // NEW
+
+  // Auto-derived fields (read-only display)
+  String? _birthDate;
+  int? _age;
+  String? _gender;
+  String? _educationalLevel;
 
   bool _isLoading = false;
-  int? _calculatedAge; // NEW: Store calculated age
 
-  Future<void> _selectBirthDate() async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now().subtract(const Duration(days: 365 * 20)),
-      firstDate: DateTime(1900),
-      lastDate: DateTime.now(),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(primary: AppTheme.primary),
-          ),
-          child: child!,
-        );
-      },
-    );
-
-    if (picked != null) {
+  void _onNationalIdChanged(String value) {
+    if (value.length == 14) {
+      final data = Validators.parseNationalId(value);
+      if (data != null) {
+        setState(() {
+          _birthDate = data.birthDate;
+          _age = data.age;
+          _gender = data.gender;
+          _educationalLevel = FirebaseConstants.getInitialEducationalLevel(
+            data.age,
+          );
+        });
+        return;
+      }
+    }
+    // Clear derived fields if NID is incomplete/invalid
+    if (_birthDate != null || _age != null) {
       setState(() {
-        _birthDateController.text =
-            "${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
-
-        // Calculate age from birth date
-        final now = DateTime.now();
-        int age = now.year - picked.year;
-        if (now.month < picked.month ||
-            (now.month == picked.month && now.day < picked.day)) {
-          age--;
-        }
-
-        if (age > 0) {
-          _ageController.text = age.toString();
-          _updateEducationalLevel(age);
-        }
+        _birthDate = null;
+        _age = null;
+        _gender = null;
+        _educationalLevel = null;
       });
     }
-  }
-
-  void _updateEducationalLevel(int age) {
-    setState(() {
-      _calculatedAge = age;
-      final level = FirebaseConstants.getInitialEducationalLevel(age);
-      _educationalLevelController.text = level;
-    });
   }
 
   Future<void> _createVolunteer() async {
     if (!_formKey.currentState!.validate()) return;
 
-    // Validate age is provided
-    if (_calculatedAge == null && _ageController.text.isEmpty) {
+    if (_age == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('يرجى إدخال العمر'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-    // Parse age
-    final age = _calculatedAge ?? int.tryParse(_ageController.text);
-    if (age == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('عمر غير صحيح'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-    if (age < 1 || age > 100) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('يرجى إدخال عمر صحيح (1-100)'),
+          content: Text('يرجى إدخال رقم قومي صحيح لحساب العمر'),
           backgroundColor: Colors.red,
         ),
       );
@@ -122,14 +82,14 @@ class _CreateVolunteerScreenState extends State<CreateVolunteerScreen> {
     final volunteerId = await volunteerProvider.createVolunteer(
       name: _nameController.text,
       phone: _phoneController.text,
-      email: '${_phoneController.text}@resala.com', // Default email
+      email: '${_phoneController.text}@resala.com',
       address: _addressController.text,
-      nationalId: _nationalIdController.text.isEmpty
-          ? null
-          : _nationalIdController.text,
-      age: age, // PASS THE AGE
+      nationalId: _nationalIdController.text,
+      age: _age!,
+      birthDate: _birthDate,
+      gender: _gender,
       hasInterview: false,
-      committeeId: null, // You can add committee selection if needed
+      committeeId: null,
       committeeName: null,
     );
 
@@ -141,7 +101,7 @@ class _CreateVolunteerScreenState extends State<CreateVolunteerScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'تم إضافة المتطوع بنجاح (المستوى: ${_educationalLevelController.text})',
+              'تم إضافة المتطوع بنجاح (المستوى: $_educationalLevel)',
             ),
             backgroundColor: AppTheme.primary,
           ),
@@ -180,10 +140,7 @@ class _CreateVolunteerScreenState extends State<CreateVolunteerScreen> {
       ),
       body: Column(
         children: [
-          // Date and Location Fields (Empty for create screen)
           const SizedBox(height: 18),
-
-          // Main Form Card
           Expanded(
             child: Container(
               margin: const EdgeInsets.symmetric(horizontal: 30),
@@ -207,7 +164,6 @@ class _CreateVolunteerScreenState extends State<CreateVolunteerScreen> {
                   padding: const EdgeInsets.all(24),
                   child: Column(
                     children: [
-                      // Title
                       const Text(
                         'متطوع جديد',
                         style: TextStyle(
@@ -226,84 +182,12 @@ class _CreateVolunteerScreenState extends State<CreateVolunteerScreen> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Age and Phone Row
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildFormField(
-                              controller: _ageController,
-                              label: 'السن',
-                              keyboardType: TextInputType.number,
-                              onChanged: (value) {
-                                if (value.isNotEmpty) {
-                                  final age = int.tryParse(value);
-                                  if (age != null && age > 0 && age <= 100) {
-                                    _updateEducationalLevel(age);
-                                  }
-                                }
-                              },
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'مطلوب';
-                                }
-                                final age = int.tryParse(value);
-                                if (age == null) {
-                                  return 'عمر غير صحيح';
-                                }
-                                if (age < 1 || age > 100) {
-                                  return 'العمر 1-100';
-                                }
-                                return null;
-                              },
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: _buildFormField(
-                              controller: _phoneController,
-                              label: 'رقم التليفون',
-                              keyboardType: TextInputType.phone,
-                              validator: Validators.validatePhone,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Educational Level Display (Read-only)
+                      // Phone Field
                       _buildFormField(
-                        controller: _educationalLevelController,
-                        label: 'المستوى التعليمي',
-                        readOnly: true,
-                        enabled: true,
-                        suffixIcon: Icons.school,
-                        onTap: _calculatedAge != null
-                            ? () {
-                                showDialog(
-                                  context: context,
-                                  builder: (context) => AlertDialog(
-                                    title: const Text('المستوى التعليمي'),
-                                    content: Text(
-                                      'العمر: $_calculatedAge سنة\n'
-                                      'المستوى: ${_educationalLevelController.text}\n\n'
-                                      'قاعدة المستويات:\n'
-                                      '• شبل: أقل من 17 سنة\n'
-                                      '• جدد: 17 سنة أو أكثر',
-                                      style: const TextStyle(
-                                        fontSize: 14,
-                                        height: 1.5,
-                                      ),
-                                    ),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () => Navigator.pop(context),
-                                        child: const Text('حسناً'),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              }
-                            : null,
+                        controller: _phoneController,
+                        label: 'رقم التليفون',
+                        keyboardType: TextInputType.phone,
+                        validator: Validators.validatePhone,
                       ),
                       const SizedBox(height: 16),
 
@@ -316,29 +200,58 @@ class _CreateVolunteerScreenState extends State<CreateVolunteerScreen> {
                       ),
                       const SizedBox(height: 16),
 
-                      // National ID Field
+                      // National ID Field (required, auto-fills other fields)
                       _buildFormField(
                         controller: _nationalIdController,
                         label: 'الرقم القومي',
                         keyboardType: TextInputType.number,
+                        onChanged: _onNationalIdChanged,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'يرجى إدخال الرقم القومي';
+                          }
+                          return Validators.validateNationalId(value);
+                        },
                       ),
                       const SizedBox(height: 16),
 
-                      // Birth Date Row
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildFormField(
-                              controller: _birthDateController,
-                              label: 'تاريخ الميلاد',
-                              readOnly: true,
-                              onTap: _selectBirthDate,
-                              suffixIcon: Icons.calendar_today,
+                      // Auto-derived fields display
+                      if (_age != null) ...[
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: AppTheme.primary.withOpacity(0.05),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: AppTheme.primary.withOpacity(0.2),
                             ),
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: 32),
+                          child: Column(
+                            children: [
+                              const Text(
+                                'بيانات مستخرجة من الرقم القومي',
+                                style: TextStyle(
+                                  fontFamily: 'Cairo',
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppTheme.primary,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              _buildInfoRow('تاريخ الميلاد', _birthDate ?? '-'),
+                              _buildInfoRow('السن', '$_age سنة'),
+                              _buildInfoRow('النوع', _gender ?? '-'),
+                              _buildInfoRow(
+                                'المستوى',
+                                _educationalLevel ?? '-',
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                      ],
+
+                      const SizedBox(height: 16),
 
                       // Submit Button
                       ElevatedButton(
@@ -380,27 +293,29 @@ class _CreateVolunteerScreenState extends State<CreateVolunteerScreen> {
     );
   }
 
-  Widget _buildDisabledTextField(String label) {
-    return TextField(
-      enabled: false,
-      textAlign: TextAlign.center,
-      decoration: InputDecoration(
-        hintText: label,
-        hintStyle: TextStyle(color: Colors.grey[400], fontSize: 12),
-        filled: true,
-        fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 12,
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(20),
-          borderSide: const BorderSide(color: AppTheme.primary),
-        ),
-        disabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(20),
-          borderSide: BorderSide(color: Colors.grey[300]!),
-        ),
+  Widget _buildInfoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            value,
+            style: const TextStyle(
+              fontFamily: 'Cairo',
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          Text(
+            label,
+            style: TextStyle(
+              fontFamily: 'Cairo',
+              fontSize: 13,
+              color: Colors.grey[600],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -470,11 +385,8 @@ class _CreateVolunteerScreenState extends State<CreateVolunteerScreen> {
   void dispose() {
     _nameController.dispose();
     _phoneController.dispose();
-    _ageController.dispose();
     _addressController.dispose();
     _nationalIdController.dispose();
-    _birthDateController.dispose();
-    _educationalLevelController.dispose();
     super.dispose();
   }
 }

@@ -5,6 +5,7 @@
 
 import 'package:flutter/material.dart';
 import '../../themes/app_theme.dart';
+import '../../../core/constants/firebase_constants.dart';
 import '../../../data/repositories/report_repository.dart';
 import '../../../data/models/report_data_model.dart';
 import '../../../services/excel_export_helper.dart';
@@ -37,6 +38,16 @@ class _ComprehensiveReportScreenState extends State<ComprehensiveReportScreen> {
     final data = await _reportRepository.getComprehensiveReportData(
       filter: _filter,
     );
+
+    data.sort((a, b) {
+      final deg = FirebaseConstants.educationalLevelsOrder;
+      final oa = deg[a.educationalLevel] ?? 0;
+      final ob = deg[b.educationalLevel] ?? 0;
+      if (oa != ob) return ob.compareTo(oa);
+      if (a.totalEvents != b.totalEvents)
+        return b.totalEvents.compareTo(a.totalEvents);
+      return a.volunteerName.compareTo(b.volunteerName);
+    });
 
     setState(() {
       _reportData = data;
@@ -94,18 +105,23 @@ class _ComprehensiveReportScreenState extends State<ComprehensiveReportScreen> {
   Widget build(BuildContext context) {
     final headers = [
       'الاسم',
+      'الهاتف',
+      'اللجنة',
       'الدرجة التطوعية',
       'الشهور',
       'اجتماع لجنة',
       'يوم عائلي',
       'اجتماع فريق',
       'احداث',
-      'الإجمالي',
+      'اكشنز',
+      'مشاركات',
     ];
 
     final rows = _reportData.map((data) {
       return [
         data.volunteerName,
+        data.phone ?? '-',
+        data.committeeName ?? '-',
         data.educationalLevel ?? '-',
         data.monthsString,
         data.committeeMeetingCount.toString(),
@@ -113,6 +129,7 @@ class _ComprehensiveReportScreenState extends State<ComprehensiveReportScreen> {
         (data.leadersMeetingCount + data.teamMeetingCount).toString(),
         data.eventsCount.toString(),
         data.totalEvents.toString(),
+        data.participationDays.toString(),
       ];
     }).toList();
 

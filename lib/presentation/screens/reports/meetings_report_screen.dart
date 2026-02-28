@@ -5,6 +5,7 @@
 
 import 'package:flutter/material.dart';
 import '../../themes/app_theme.dart';
+import '../../../core/constants/firebase_constants.dart';
 import '../../../data/repositories/report_repository.dart';
 import '../../../data/models/report_data_model.dart';
 import '../../../services/excel_export_helper.dart';
@@ -34,6 +35,19 @@ class _MeetingsReportScreenState extends State<MeetingsReportScreen> {
     setState(() => _isLoading = true);
 
     final data = await _reportRepository.getMeetingsReportData(filter: _filter);
+
+    data.sort((a, b) {
+      final deg = FirebaseConstants.educationalLevelsOrder;
+      final oa = deg[a.educationalLevel] ?? 0;
+      final ob = deg[b.educationalLevel] ?? 0;
+      if (oa != ob) return ob.compareTo(oa);
+      final ma =
+          a.committeeMeetingCount + a.teamMeetingCount + a.leadersMeetingCount;
+      final mb =
+          b.committeeMeetingCount + b.teamMeetingCount + b.leadersMeetingCount;
+      if (ma != mb) return mb.compareTo(ma);
+      return a.volunteerName.compareTo(b.volunteerName);
+    });
 
     setState(() {
       _reportData = data;
@@ -91,6 +105,7 @@ class _MeetingsReportScreenState extends State<MeetingsReportScreen> {
   Widget build(BuildContext context) {
     final headers = [
       'الاسم',
+      'الهاتف',
       'اللجنة',
       'اجتماع اللجنة',
       'اجتماع الفريق',
@@ -101,6 +116,7 @@ class _MeetingsReportScreenState extends State<MeetingsReportScreen> {
     final rows = _reportData.map((data) {
       return [
         data.volunteerName,
+        data.phone ?? '-',
         data.committeeName ?? '-',
         data.committeeMeetingCount.toString(),
         data.teamMeetingCount.toString(),

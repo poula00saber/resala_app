@@ -5,6 +5,7 @@
 
 import 'package:flutter/material.dart';
 import '../../themes/app_theme.dart';
+import '../../../core/constants/firebase_constants.dart';
 import '../../../data/repositories/report_repository.dart';
 import '../../../data/models/report_data_model.dart';
 import '../../../services/excel_export_helper.dart';
@@ -40,6 +41,16 @@ class _CubsReportScreenState extends State<CubsReportScreen> {
       filter: _filter,
       eventCategory: _selectedCategory,
     );
+
+    data.sort((a, b) {
+      final deg = FirebaseConstants.educationalLevelsOrder;
+      final oa = deg[a.educationalLevel] ?? 0;
+      final ob = deg[b.educationalLevel] ?? 0;
+      if (oa != ob) return ob.compareTo(oa);
+      if (a.cubsEventCount != b.cubsEventCount)
+        return b.cubsEventCount.compareTo(a.cubsEventCount);
+      return a.volunteerName.compareTo(b.volunteerName);
+    });
 
     setState(() {
       _reportData = data;
@@ -98,6 +109,8 @@ class _CubsReportScreenState extends State<CubsReportScreen> {
   Widget build(BuildContext context) {
     final headers = [
       'الاسم',
+      'الهاتف',
+      'اللجنة',
       'الدرجة التطوعية',
       'يوم عائلي',
       'ايفنت الأشبال',
@@ -108,6 +121,8 @@ class _CubsReportScreenState extends State<CubsReportScreen> {
     final rows = _reportData.map((data) {
       return [
         data.volunteerName,
+        data.phone ?? '-',
+        data.committeeName ?? '-',
         data.educationalLevel ?? '-',
         data.familyDayCount.toString(),
         data.cubsEventCount.toString(),

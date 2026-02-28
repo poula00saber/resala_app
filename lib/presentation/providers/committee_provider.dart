@@ -56,10 +56,7 @@ class CommitteeProvider with ChangeNotifier {
   }
 
   // Create committee
-  Future<String?> createCommittee({
-    required String name,
-    String? description,
-  }) async {
+  Future<String?> createCommittee({required String name}) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
@@ -70,7 +67,6 @@ class CommitteeProvider with ChangeNotifier {
       final committee = CommitteeModel(
         id: '',
         name: name,
-        description: description,
         isActive: true,
         createdAt: DateTime.now(),
       );

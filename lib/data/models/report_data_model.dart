@@ -6,6 +6,7 @@
 class VolunteerReportData {
   final String volunteerId;
   final String volunteerName;
+  final String? phone;
   final String? educationalLevel;
   final String? committeeName;
   final String? committeeId;
@@ -29,9 +30,13 @@ class VolunteerReportData {
   // Months participated - store as month numbers (1-12)
   Set<int> monthsParticipated;
 
+  // Unique participation dates (for مشاركات count)
+  Set<String> uniqueDates;
+
   VolunteerReportData({
     required this.volunteerId,
     required this.volunteerName,
+    this.phone,
     this.educationalLevel,
     this.committeeName,
     this.committeeId,
@@ -46,9 +51,14 @@ class VolunteerReportData {
     this.fundCount = 0,
     this.storyCount = 0,
     Set<int>? monthsParticipated,
-  }) : monthsParticipated = monthsParticipated ?? {};
+    Set<String>? uniqueDates,
+  }) : monthsParticipated = monthsParticipated ?? {},
+       uniqueDates = uniqueDates ?? {};
 
   int get totalEvents => familyDayCount + cubsEventCount + eventsCount;
+
+  // Unique participation days count (مشاركات)
+  int get participationDays => uniqueDates.length;
 
   int get totalMeetings =>
       committeeMeetingCount + teamMeetingCount + leadersMeetingCount;

@@ -5,6 +5,7 @@
 
 import 'package:flutter/material.dart';
 import '../../themes/app_theme.dart';
+import '../../../core/constants/firebase_constants.dart';
 import '../../../data/repositories/report_repository.dart';
 import '../../../data/models/report_data_model.dart';
 import '../../../services/excel_export_helper.dart';
@@ -40,6 +41,16 @@ class _FundReportScreenState extends State<FundReportScreen> {
       months: _filter.months,
       year: _filter.year,
     );
+
+    data.sort((a, b) {
+      final deg = FirebaseConstants.educationalLevelsOrder;
+      final oa = deg[a.educationalLevel] ?? 0;
+      final ob = deg[b.educationalLevel] ?? 0;
+      if (oa != ob) return ob.compareTo(oa);
+      if (a.totalFundAmount != b.totalFundAmount)
+        return b.totalFundAmount.compareTo(a.totalFundAmount);
+      return a.volunteerName.compareTo(b.volunteerName);
+    });
 
     setState(() {
       _reportData = data;
@@ -99,6 +110,8 @@ class _FundReportScreenState extends State<FundReportScreen> {
   Widget build(BuildContext context) {
     final headers = [
       'الاسم',
+      'الهاتف',
+      'اللجنة',
       'الدرجة التطوعية',
       'الصندوق',
       'الإجمالي',
@@ -108,6 +121,8 @@ class _FundReportScreenState extends State<FundReportScreen> {
     final rows = _reportData.map((data) {
       return [
         data.volunteerName,
+        data.phone ?? '-',
+        data.committeeName ?? '-',
         data.educationalLevel ?? '-',
         data.fundCount.toString(), // Number of contributions
         data.totalFundAmount.toStringAsFixed(0),

@@ -57,40 +57,27 @@ class ExcelExportHelper {
         verticalAlign: VerticalAlign.Center,
       );
 
-      sheet.cell(CellIndex.indexByString('A3')).value = TextCellValue('الوصف:');
+      sheet.cell(CellIndex.indexByString('A3')).value = TextCellValue(
+        'الحالة:',
+      );
       sheet.cell(CellIndex.indexByString('A3')).cellStyle = CellStyle(
         horizontalAlign: HorizontalAlign.Right,
         verticalAlign: VerticalAlign.Center,
       );
       sheet.cell(CellIndex.indexByString('B3')).value = TextCellValue(
-        committee.description ?? 'لا يوجد',
+        committee.isActive ? 'نشط' : 'غير نشط',
       );
       sheet.cell(CellIndex.indexByString('B3')).cellStyle = CellStyle(
         horizontalAlign: HorizontalAlign.Right,
         verticalAlign: VerticalAlign.Center,
       );
 
-      sheet.cell(CellIndex.indexByString('A4')).value = TextCellValue(
-        'الحالة:',
-      );
-      sheet.cell(CellIndex.indexByString('A4')).cellStyle = CellStyle(
-        horizontalAlign: HorizontalAlign.Right,
-        verticalAlign: VerticalAlign.Center,
-      );
-      sheet.cell(CellIndex.indexByString('B4')).value = TextCellValue(
-        committee.isActive ? 'نشط' : 'غير نشط',
-      );
-      sheet.cell(CellIndex.indexByString('B4')).cellStyle = CellStyle(
-        horizontalAlign: HorizontalAlign.Right,
-        verticalAlign: VerticalAlign.Center,
-      );
-
       // Volunteers table header
       sheet.merge(
-        CellIndex.indexByString('A6'),
-        CellIndex.indexByString('G6'),
+        CellIndex.indexByString('A5'),
+        CellIndex.indexByString('G5'),
       ); // Changed to G for 7 columns
-      var volunteersHeaderCell = sheet.cell(CellIndex.indexByString('A6'));
+      var volunteersHeaderCell = sheet.cell(CellIndex.indexByString('A5'));
       volunteersHeaderCell.value = TextCellValue('المتطوعون');
       volunteersHeaderCell.cellStyle = CellStyle(
         bold: true,
@@ -112,7 +99,7 @@ class ExcelExportHelper {
 
       for (var i = 0; i < headers.length; i++) {
         var cell = sheet.cell(
-          CellIndex.indexByColumnRow(columnIndex: i, rowIndex: 7),
+          CellIndex.indexByColumnRow(columnIndex: i, rowIndex: 6),
         );
         cell.value = TextCellValue(headers[i]);
         cell.cellStyle = CellStyle(
@@ -127,7 +114,7 @@ class ExcelExportHelper {
       // Add volunteers data - updated to match new column order
       for (var i = 0; i < volunteers.length; i++) {
         var volunteer = volunteers[i];
-        var rowIndex = i + 8;
+        var rowIndex = i + 7;
 
         // Column 0: Educational level (from volunteer.educationalLevel)
         sheet
@@ -273,6 +260,11 @@ class ExcelExportHelper {
     required String? eventLocation,
     required String eventDescription,
     required List<VolunteerModel> volunteers,
+    bool isOnline = false,
+    bool isQafla = false,
+    Map<String, bool>? qaflaPreparation,
+    Map<String, bool>? qaflaFilling,
+    Map<String, bool>? qaflaDistribution,
   }) async {
     try {
       var excel = Excel.createExcel();
@@ -281,8 +273,24 @@ class ExcelExportHelper {
       // Set sheet to RTL mode
       _setSheetToRTL(sheet);
 
-      // Event info header - only 4 columns needed
-      sheet.merge(CellIndex.indexByString('A1'), CellIndex.indexByString('D1'));
+      // Build dynamic column list based on event type
+      var headers = <String>[];
+      if (isQafla) {
+        headers.addAll(['توزيع', 'تعبئة', 'تجهيز']);
+      }
+      if (!isOnline) {
+        headers.add('تيشيرت');
+      }
+      headers.addAll(['الهاتف', 'الاسم', '#']);
+
+      final totalCols = headers.length;
+      final lastColLetter = String.fromCharCode(64 + totalCols);
+
+      // Event info header
+      sheet.merge(
+        CellIndex.indexByString('A1'),
+        CellIndex.indexByString('${lastColLetter}1'),
+      );
       var eventHeaderCell = sheet.cell(CellIndex.indexByString('A1'));
       eventHeaderCell.value = TextCellValue('معلومات الحدث');
       eventHeaderCell.cellStyle = CellStyle(
@@ -369,8 +377,11 @@ class ExcelExportHelper {
         verticalAlign: VerticalAlign.Center,
       );
 
-      // Volunteers table header - only 4 columns
-      sheet.merge(CellIndex.indexByString('A8'), CellIndex.indexByString('D8'));
+      // Volunteers table header
+      sheet.merge(
+        CellIndex.indexByString('A8'),
+        CellIndex.indexByString('${lastColLetter}8'),
+      );
       var volunteersHeaderCell = sheet.cell(CellIndex.indexByString('A8'));
       volunteersHeaderCell.value = TextCellValue('المتطوعون');
       volunteersHeaderCell.cellStyle = CellStyle(
@@ -379,14 +390,6 @@ class ExcelExportHelper {
         horizontalAlign: HorizontalAlign.Center,
         verticalAlign: VerticalAlign.Center,
       );
-
-      // Column headers - ONLY 4 COLUMNS as requested
-      var headers = [
-        'تيشيرت', // T-shirt
-        'الهاتف', // Phone
-        'الاسم', // Name
-        '#', // Number
-      ];
 
       for (var i = 0; i < headers.length; i++) {
         var cell = sheet.cell(
@@ -402,73 +405,178 @@ class ExcelExportHelper {
         );
       }
 
-      // Add volunteers data - simplified to only 4 columns
+      // Add volunteers data
       for (var i = 0; i < volunteers.length; i++) {
         var volunteer = volunteers[i];
         var rowIndex = i + 10;
+        var colIndex = 0;
 
-        // Column 0: T-shirt - centered
-        sheet
-            .cell(
-              CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: rowIndex),
-            )
-            .value = TextCellValue(
-          volunteer.hasTshirt ? 'نعم' : 'لا',
-        );
-        sheet
-            .cell(
-              CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: rowIndex),
-            )
-            .cellStyle = CellStyle(
-          horizontalAlign: HorizontalAlign.Center,
-          verticalAlign: VerticalAlign.Center,
-        );
+        // Qafla columns (if applicable)
+        if (isQafla) {
+          // توزيع
+          sheet
+              .cell(
+                CellIndex.indexByColumnRow(
+                  columnIndex: colIndex,
+                  rowIndex: rowIndex,
+                ),
+              )
+              .value = TextCellValue(
+            (qaflaDistribution?[volunteer.id] ?? false) ? 'نعم' : 'لا',
+          );
+          sheet
+              .cell(
+                CellIndex.indexByColumnRow(
+                  columnIndex: colIndex,
+                  rowIndex: rowIndex,
+                ),
+              )
+              .cellStyle = CellStyle(
+            horizontalAlign: HorizontalAlign.Center,
+            verticalAlign: VerticalAlign.Center,
+          );
+          colIndex++;
 
-        // Column 1: Phone - right aligned
+          // تعبئة
+          sheet
+              .cell(
+                CellIndex.indexByColumnRow(
+                  columnIndex: colIndex,
+                  rowIndex: rowIndex,
+                ),
+              )
+              .value = TextCellValue(
+            (qaflaFilling?[volunteer.id] ?? false) ? 'نعم' : 'لا',
+          );
+          sheet
+              .cell(
+                CellIndex.indexByColumnRow(
+                  columnIndex: colIndex,
+                  rowIndex: rowIndex,
+                ),
+              )
+              .cellStyle = CellStyle(
+            horizontalAlign: HorizontalAlign.Center,
+            verticalAlign: VerticalAlign.Center,
+          );
+          colIndex++;
+
+          // تجهيز
+          sheet
+              .cell(
+                CellIndex.indexByColumnRow(
+                  columnIndex: colIndex,
+                  rowIndex: rowIndex,
+                ),
+              )
+              .value = TextCellValue(
+            (qaflaPreparation?[volunteer.id] ?? false) ? 'نعم' : 'لا',
+          );
+          sheet
+              .cell(
+                CellIndex.indexByColumnRow(
+                  columnIndex: colIndex,
+                  rowIndex: rowIndex,
+                ),
+              )
+              .cellStyle = CellStyle(
+            horizontalAlign: HorizontalAlign.Center,
+            verticalAlign: VerticalAlign.Center,
+          );
+          colIndex++;
+        }
+
+        // T-shirt column (if not online)
+        if (!isOnline) {
+          sheet
+              .cell(
+                CellIndex.indexByColumnRow(
+                  columnIndex: colIndex,
+                  rowIndex: rowIndex,
+                ),
+              )
+              .value = TextCellValue(
+            volunteer.hasTshirt ? 'نعم' : 'لا',
+          );
+          sheet
+              .cell(
+                CellIndex.indexByColumnRow(
+                  columnIndex: colIndex,
+                  rowIndex: rowIndex,
+                ),
+              )
+              .cellStyle = CellStyle(
+            horizontalAlign: HorizontalAlign.Center,
+            verticalAlign: VerticalAlign.Center,
+          );
+          colIndex++;
+        }
+
+        // Phone
         sheet
             .cell(
-              CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: rowIndex),
+              CellIndex.indexByColumnRow(
+                columnIndex: colIndex,
+                rowIndex: rowIndex,
+              ),
             )
             .value = TextCellValue(
           volunteer.phone,
         );
         sheet
             .cell(
-              CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: rowIndex),
+              CellIndex.indexByColumnRow(
+                columnIndex: colIndex,
+                rowIndex: rowIndex,
+              ),
             )
             .cellStyle = CellStyle(
           horizontalAlign: HorizontalAlign.Right,
           verticalAlign: VerticalAlign.Center,
         );
+        colIndex++;
 
-        // Column 2: Name - right aligned for Arabic
+        // Name
         sheet
             .cell(
-              CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: rowIndex),
+              CellIndex.indexByColumnRow(
+                columnIndex: colIndex,
+                rowIndex: rowIndex,
+              ),
             )
             .value = TextCellValue(
           volunteer.name,
         );
         sheet
             .cell(
-              CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: rowIndex),
+              CellIndex.indexByColumnRow(
+                columnIndex: colIndex,
+                rowIndex: rowIndex,
+              ),
             )
             .cellStyle = CellStyle(
           horizontalAlign: HorizontalAlign.Right,
           verticalAlign: VerticalAlign.Center,
         );
+        colIndex++;
 
-        // Column 3: Row number - centered
+        // Row number
         sheet
             .cell(
-              CellIndex.indexByColumnRow(columnIndex: 3, rowIndex: rowIndex),
+              CellIndex.indexByColumnRow(
+                columnIndex: colIndex,
+                rowIndex: rowIndex,
+              ),
             )
             .value = TextCellValue(
           (i + 1).toString(),
         );
         sheet
             .cell(
-              CellIndex.indexByColumnRow(columnIndex: 3, rowIndex: rowIndex),
+              CellIndex.indexByColumnRow(
+                columnIndex: colIndex,
+                rowIndex: rowIndex,
+              ),
             )
             .cellStyle = CellStyle(
           horizontalAlign: HorizontalAlign.Center,
@@ -476,11 +584,19 @@ class ExcelExportHelper {
         );
       }
 
-      // Auto-fit columns with appropriate widths
-      sheet.setColumnWidth(0, 12); // تيشيرت - smaller
-      sheet.setColumnWidth(1, 18); // الهاتف - medium
-      sheet.setColumnWidth(2, 25); // الاسم - wider for names
-      sheet.setColumnWidth(3, 8); // # - smallest
+      // Auto-fit columns
+      var colIdx = 0;
+      if (isQafla) {
+        sheet.setColumnWidth(colIdx++, 10); // توزيع
+        sheet.setColumnWidth(colIdx++, 10); // تعبئة
+        sheet.setColumnWidth(colIdx++, 10); // تجهيز
+      }
+      if (!isOnline) {
+        sheet.setColumnWidth(colIdx++, 12); // تيشيرت
+      }
+      sheet.setColumnWidth(colIdx++, 18); // الهاتف
+      sheet.setColumnWidth(colIdx++, 25); // الاسم
+      sheet.setColumnWidth(colIdx++, 8); // #
 
       // Save and share file
       await _saveAndShareExcel(
@@ -519,10 +635,27 @@ class ExcelExportHelper {
         Sheet sheet = excel[sheetName];
         _setSheetToRTL(sheet);
 
-        // Event info header - only 4 columns needed
+        // Determine event flags
+        final bool eventIsOnline = event.meetingPlace == 'أونلاين';
+        final bool eventIsQafla = event.type == 'قافلة';
+
+        // Dynamic column headers
+        var headers = <String>[];
+        if (eventIsQafla) {
+          headers.addAll(['توزيع', 'تعبئة', 'تجهيز']);
+        }
+        if (!eventIsOnline) {
+          headers.add('تيشيرت');
+        }
+        headers.addAll(['الهاتف', 'الاسم', '#']);
+
+        final totalCols = headers.length;
+        final lastColLetter = String.fromCharCode(64 + totalCols);
+
+        // Event info header
         sheet.merge(
           CellIndex.indexByString('A1'),
-          CellIndex.indexByString('D1'),
+          CellIndex.indexByString('${lastColLetter}1'),
         );
         var eventHeaderCell = sheet.cell(CellIndex.indexByString('A1'));
         eventHeaderCell.value = TextCellValue('معلومات الحدث');
@@ -555,10 +688,10 @@ class ExcelExportHelper {
           volunteers = await getVolunteersByIds(event.volunteerIds);
         }
 
-        // Volunteers table header - only 4 columns
+        // Volunteers table header
         sheet.merge(
           CellIndex.indexByString('A8'),
-          CellIndex.indexByString('D8'),
+          CellIndex.indexByString('${lastColLetter}8'),
         );
         var volunteersHeaderCell = sheet.cell(CellIndex.indexByString('A8'));
         volunteersHeaderCell.value = TextCellValue(
@@ -572,7 +705,6 @@ class ExcelExportHelper {
         );
 
         // Column headers
-        var headers = ['تيشيرت', 'الهاتف', 'الاسم', '#'];
         for (var i = 0; i < headers.length; i++) {
           var cell = sheet.cell(
             CellIndex.indexByColumnRow(columnIndex: i, rowIndex: 9),
@@ -591,62 +723,160 @@ class ExcelExportHelper {
         for (var i = 0; i < volunteers.length; i++) {
           var volunteer = volunteers[i];
           var rowIndex = i + 10;
+          var colIndex = 0;
+
+          if (eventIsQafla) {
+            sheet
+                .cell(
+                  CellIndex.indexByColumnRow(
+                    columnIndex: colIndex,
+                    rowIndex: rowIndex,
+                  ),
+                )
+                .value = TextCellValue(
+              (event.qaflaDistribution[volunteer.id] ?? false) ? 'نعم' : 'لا',
+            );
+            sheet
+                .cell(
+                  CellIndex.indexByColumnRow(
+                    columnIndex: colIndex,
+                    rowIndex: rowIndex,
+                  ),
+                )
+                .cellStyle = CellStyle(
+              horizontalAlign: HorizontalAlign.Center,
+            );
+            colIndex++;
+
+            sheet
+                .cell(
+                  CellIndex.indexByColumnRow(
+                    columnIndex: colIndex,
+                    rowIndex: rowIndex,
+                  ),
+                )
+                .value = TextCellValue(
+              (event.qaflaFilling[volunteer.id] ?? false) ? 'نعم' : 'لا',
+            );
+            sheet
+                .cell(
+                  CellIndex.indexByColumnRow(
+                    columnIndex: colIndex,
+                    rowIndex: rowIndex,
+                  ),
+                )
+                .cellStyle = CellStyle(
+              horizontalAlign: HorizontalAlign.Center,
+            );
+            colIndex++;
+
+            sheet
+                .cell(
+                  CellIndex.indexByColumnRow(
+                    columnIndex: colIndex,
+                    rowIndex: rowIndex,
+                  ),
+                )
+                .value = TextCellValue(
+              (event.qaflaPreparation[volunteer.id] ?? false) ? 'نعم' : 'لا',
+            );
+            sheet
+                .cell(
+                  CellIndex.indexByColumnRow(
+                    columnIndex: colIndex,
+                    rowIndex: rowIndex,
+                  ),
+                )
+                .cellStyle = CellStyle(
+              horizontalAlign: HorizontalAlign.Center,
+            );
+            colIndex++;
+          }
+
+          if (!eventIsOnline) {
+            sheet
+                .cell(
+                  CellIndex.indexByColumnRow(
+                    columnIndex: colIndex,
+                    rowIndex: rowIndex,
+                  ),
+                )
+                .value = TextCellValue(
+              volunteer.hasTshirt ? 'نعم' : 'لا',
+            );
+            sheet
+                .cell(
+                  CellIndex.indexByColumnRow(
+                    columnIndex: colIndex,
+                    rowIndex: rowIndex,
+                  ),
+                )
+                .cellStyle = CellStyle(
+              horizontalAlign: HorizontalAlign.Center,
+            );
+            colIndex++;
+          }
 
           sheet
               .cell(
-                CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: rowIndex),
-              )
-              .value = TextCellValue(
-            volunteer.hasTshirt ? 'نعم' : 'لا',
-          );
-          sheet
-              .cell(
-                CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: rowIndex),
-              )
-              .cellStyle = CellStyle(
-            horizontalAlign: HorizontalAlign.Center,
-          );
-
-          sheet
-              .cell(
-                CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: rowIndex),
+                CellIndex.indexByColumnRow(
+                  columnIndex: colIndex,
+                  rowIndex: rowIndex,
+                ),
               )
               .value = TextCellValue(
             volunteer.phone,
           );
           sheet
               .cell(
-                CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: rowIndex),
+                CellIndex.indexByColumnRow(
+                  columnIndex: colIndex,
+                  rowIndex: rowIndex,
+                ),
               )
               .cellStyle = CellStyle(
             horizontalAlign: HorizontalAlign.Right,
           );
+          colIndex++;
 
           sheet
               .cell(
-                CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: rowIndex),
+                CellIndex.indexByColumnRow(
+                  columnIndex: colIndex,
+                  rowIndex: rowIndex,
+                ),
               )
               .value = TextCellValue(
             volunteer.name,
           );
           sheet
               .cell(
-                CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: rowIndex),
+                CellIndex.indexByColumnRow(
+                  columnIndex: colIndex,
+                  rowIndex: rowIndex,
+                ),
               )
               .cellStyle = CellStyle(
             horizontalAlign: HorizontalAlign.Right,
           );
+          colIndex++;
 
           sheet
               .cell(
-                CellIndex.indexByColumnRow(columnIndex: 3, rowIndex: rowIndex),
+                CellIndex.indexByColumnRow(
+                  columnIndex: colIndex,
+                  rowIndex: rowIndex,
+                ),
               )
               .value = TextCellValue(
             (i + 1).toString(),
           );
           sheet
               .cell(
-                CellIndex.indexByColumnRow(columnIndex: 3, rowIndex: rowIndex),
+                CellIndex.indexByColumnRow(
+                  columnIndex: colIndex,
+                  rowIndex: rowIndex,
+                ),
               )
               .cellStyle = CellStyle(
             horizontalAlign: HorizontalAlign.Center,
@@ -654,10 +884,18 @@ class ExcelExportHelper {
         }
 
         // Set column widths
-        sheet.setColumnWidth(0, 12);
-        sheet.setColumnWidth(1, 18);
-        sheet.setColumnWidth(2, 25);
-        sheet.setColumnWidth(3, 8);
+        var colIdx = 0;
+        if (eventIsQafla) {
+          sheet.setColumnWidth(colIdx++, 10);
+          sheet.setColumnWidth(colIdx++, 10);
+          sheet.setColumnWidth(colIdx++, 10);
+        }
+        if (!eventIsOnline) {
+          sheet.setColumnWidth(colIdx++, 12);
+        }
+        sheet.setColumnWidth(colIdx++, 18);
+        sheet.setColumnWidth(colIdx++, 25);
+        sheet.setColumnWidth(colIdx++, 8);
       }
 
       // Save and share file
@@ -811,7 +1049,7 @@ class ExcelExportHelper {
       _setSheetToRTL(sheet);
 
       // Title
-      sheet.merge(CellIndex.indexByString('A1'), CellIndex.indexByString('H1'));
+      sheet.merge(CellIndex.indexByString('A1'), CellIndex.indexByString('K1'));
       var titleCell = sheet.cell(CellIndex.indexByString('A1'));
       titleCell.value = TextCellValue(
         filterMonth != null ? 'تقرير الكلي - $filterMonth' : 'تقرير الكلي',
@@ -823,17 +1061,20 @@ class ExcelExportHelper {
         verticalAlign: VerticalAlign.Center,
       );
 
-      // Headers
+      // Headers - Comprehensive
       var headers = [
         '#',
         'الاسم',
+        'الهاتف',
+        'اللجنة',
         'الدرجة التطوعية',
         'الشهور',
         'اجتماع لجنة',
         'يوم عائلي',
         'اجتماع فريق',
         'احداث',
-        'الإجمالي',
+        'اكشنز',
+        'مشاركات',
       ];
 
       for (var i = 0; i < headers.length; i++) {
@@ -858,13 +1099,16 @@ class ExcelExportHelper {
         var rowData = [
           (i + 1).toString(),
           data.volunteerName,
+          data.phone ?? '-',
+          data.committeeName ?? '-',
           data.educationalLevel ?? '-',
-          data.monthsString, // comma-separated month numbers
+          data.monthsString,
           data.committeeMeetingCount.toString(),
           data.familyDayCount.toString(),
           (data.leadersMeetingCount + data.teamMeetingCount).toString(),
           data.eventsCount.toString(),
           data.totalEvents.toString(),
+          data.participationDays.toString(),
         ];
 
         for (var j = 0; j < rowData.length; j++) {
@@ -873,7 +1117,7 @@ class ExcelExportHelper {
           );
           cell.value = TextCellValue(rowData[j]);
           cell.cellStyle = CellStyle(
-            horizontalAlign: j == 1
+            horizontalAlign: (j == 1 || j == 2)
                 ? HorizontalAlign.Right
                 : HorizontalAlign.Center,
             verticalAlign: VerticalAlign.Center,
@@ -884,7 +1128,8 @@ class ExcelExportHelper {
       // Set column widths
       sheet.setColumnWidth(0, 8);
       sheet.setColumnWidth(1, 25);
-      for (var i = 2; i < headers.length; i++) {
+      sheet.setColumnWidth(2, 18); // الهاتف
+      for (var i = 3; i < headers.length; i++) {
         sheet.setColumnWidth(i, 15);
       }
 
@@ -925,8 +1170,16 @@ class ExcelExportHelper {
         verticalAlign: VerticalAlign.Center,
       );
 
-      // Headers
-      var headers = ['#', 'الاسم', 'الدرجة التطوعية', 'يوم عائلي', 'الشهور'];
+      // Headers - Family Day
+      var headers = [
+        '#',
+        'الاسم',
+        'الهاتف',
+        'اللجنة',
+        'الدرجة التطوعية',
+        'يوم عائلي',
+        'الشهور',
+      ];
 
       for (var i = 0; i < headers.length; i++) {
         var cell = sheet.cell(
@@ -950,9 +1203,11 @@ class ExcelExportHelper {
         var rowData = [
           (i + 1).toString(),
           data.volunteerName,
+          data.phone ?? '-',
+          data.committeeName ?? '-',
           data.educationalLevel ?? '-',
           data.familyDayCount.toString(),
-          data.monthsString, // comma-separated month numbers
+          data.monthsString,
         ];
 
         for (var j = 0; j < rowData.length; j++) {
@@ -961,7 +1216,7 @@ class ExcelExportHelper {
           );
           cell.value = TextCellValue(rowData[j]);
           cell.cellStyle = CellStyle(
-            horizontalAlign: j == 1
+            horizontalAlign: (j == 1 || j == 2)
                 ? HorizontalAlign.Right
                 : HorizontalAlign.Center,
             verticalAlign: VerticalAlign.Center,
@@ -973,8 +1228,9 @@ class ExcelExportHelper {
       sheet.setColumnWidth(0, 8);
       sheet.setColumnWidth(1, 25);
       sheet.setColumnWidth(2, 18);
-      sheet.setColumnWidth(3, 12);
-      sheet.setColumnWidth(4, 10);
+      sheet.setColumnWidth(3, 18);
+      sheet.setColumnWidth(4, 12);
+      sheet.setColumnWidth(5, 10);
 
       await _saveAndShareExcel(
         excel,
@@ -1012,10 +1268,12 @@ class ExcelExportHelper {
         verticalAlign: VerticalAlign.Center,
       );
 
-      // Headers
+      // Headers - Cubs
       var headers = [
         '#',
         'الاسم',
+        'الهاتف',
+        'اللجنة',
         'الدرجة التطوعية',
         'يوم عائلي',
         'ايفنت الأشبال',
@@ -1045,11 +1303,13 @@ class ExcelExportHelper {
         var rowData = [
           (i + 1).toString(),
           data.volunteerName,
+          data.phone ?? '-',
+          data.committeeName ?? '-',
           data.educationalLevel ?? '-',
           data.familyDayCount.toString(),
           data.cubsEventCount.toString(),
           data.eventsCount.toString(),
-          data.monthsString, // comma-separated month numbers
+          data.monthsString,
         ];
 
         for (var j = 0; j < rowData.length; j++) {
@@ -1058,7 +1318,7 @@ class ExcelExportHelper {
           );
           cell.value = TextCellValue(rowData[j]);
           cell.cellStyle = CellStyle(
-            horizontalAlign: j == 1
+            horizontalAlign: (j == 1 || j == 2)
                 ? HorizontalAlign.Right
                 : HorizontalAlign.Center,
             verticalAlign: VerticalAlign.Center,
@@ -1069,7 +1329,10 @@ class ExcelExportHelper {
       // Set column widths
       sheet.setColumnWidth(0, 8);
       sheet.setColumnWidth(1, 25);
-      for (var i = 2; i < headers.length; i++) {
+      sheet.setColumnWidth(0, 8);
+      sheet.setColumnWidth(1, 25);
+      sheet.setColumnWidth(2, 18);
+      for (var i = 3; i < headers.length; i++) {
         sheet.setColumnWidth(i, 15);
       }
 
@@ -1112,6 +1375,7 @@ class ExcelExportHelper {
       var headers = [
         '#',
         'الاسم',
+        'الهاتف',
         'اللجنة',
         'اجتماع اللجنة',
         'اجتماع الفريق',
@@ -1141,11 +1405,12 @@ class ExcelExportHelper {
         var rowData = [
           (i + 1).toString(),
           data.volunteerName,
+          data.phone ?? '-',
           data.committeeName ?? '-',
           data.committeeMeetingCount.toString(),
           data.teamMeetingCount.toString(),
           data.leadersMeetingCount.toString(),
-          data.monthsString, // comma-separated month numbers
+          data.monthsString,
         ];
 
         for (var j = 0; j < rowData.length; j++) {
@@ -1154,7 +1419,7 @@ class ExcelExportHelper {
           );
           cell.value = TextCellValue(rowData[j]);
           cell.cellStyle = CellStyle(
-            horizontalAlign: (j == 1 || j == 2)
+            horizontalAlign: (j == 1 || j == 2 || j == 3)
                 ? HorizontalAlign.Right
                 : HorizontalAlign.Center,
             verticalAlign: VerticalAlign.Center,
@@ -1166,7 +1431,8 @@ class ExcelExportHelper {
       sheet.setColumnWidth(0, 8);
       sheet.setColumnWidth(1, 25);
       sheet.setColumnWidth(2, 18);
-      for (var i = 3; i < headers.length; i++) {
+      sheet.setColumnWidth(3, 18);
+      for (var i = 4; i < headers.length; i++) {
         sheet.setColumnWidth(i, 15);
       }
 
@@ -1226,10 +1492,12 @@ class ExcelExportHelper {
         verticalAlign: VerticalAlign.Center,
       );
 
-      // Headers
+      // Headers - Fund
       var headers = [
         '#',
         'الاسم',
+        'الهاتف',
+        'اللجنة',
         'الدرجة التطوعية',
         'الصندوق',
         'الإجمالي',
@@ -1258,10 +1526,12 @@ class ExcelExportHelper {
         var rowData = [
           (i + 1).toString(),
           data.volunteerName,
+          data.phone ?? '-',
+          data.committeeName ?? '-',
           data.educationalLevel ?? '-',
-          data.fundCount.toString(), // Number of contributions
+          data.fundCount.toString(),
           data.totalFundAmount.toStringAsFixed(0),
-          data.monthsString, // comma-separated month numbers
+          data.monthsString,
         ];
 
         for (var j = 0; j < rowData.length; j++) {
@@ -1270,7 +1540,7 @@ class ExcelExportHelper {
           );
           cell.value = TextCellValue(rowData[j]);
           cell.cellStyle = CellStyle(
-            horizontalAlign: j == 1
+            horizontalAlign: (j == 1 || j == 2)
                 ? HorizontalAlign.Right
                 : HorizontalAlign.Center,
             verticalAlign: VerticalAlign.Center,
@@ -1282,9 +1552,10 @@ class ExcelExportHelper {
       sheet.setColumnWidth(0, 8);
       sheet.setColumnWidth(1, 25);
       sheet.setColumnWidth(2, 18);
-      sheet.setColumnWidth(3, 12);
+      sheet.setColumnWidth(3, 18);
       sheet.setColumnWidth(4, 12);
-      sheet.setColumnWidth(5, 10);
+      sheet.setColumnWidth(5, 12);
+      sheet.setColumnWidth(6, 10);
 
       await _saveAndShareExcel(
         excel,
@@ -1319,8 +1590,16 @@ class ExcelExportHelper {
         verticalAlign: VerticalAlign.Center,
       );
 
-      // Headers
-      var headers = ['#', 'الاسم', 'الدرجة التطوعية', 'الستوري', 'الشهور'];
+      // Headers - Marketing
+      var headers = [
+        '#',
+        'الاسم',
+        'الهاتف',
+        'اللجنة',
+        'الدرجة التطوعية',
+        'الستوري',
+        'الشهور',
+      ];
 
       for (var i = 0; i < headers.length; i++) {
         var cell = sheet.cell(
@@ -1344,9 +1623,11 @@ class ExcelExportHelper {
         var rowData = [
           (i + 1).toString(),
           data.volunteerName,
+          data.phone ?? '-',
+          data.committeeName ?? '-',
           data.educationalLevel ?? '-',
           data.storyCount.toString(),
-          data.monthsString, // comma-separated month numbers
+          data.monthsString,
         ];
 
         for (var j = 0; j < rowData.length; j++) {
@@ -1355,7 +1636,7 @@ class ExcelExportHelper {
           );
           cell.value = TextCellValue(rowData[j]);
           cell.cellStyle = CellStyle(
-            horizontalAlign: j == 1
+            horizontalAlign: (j == 1 || j == 2)
                 ? HorizontalAlign.Right
                 : HorizontalAlign.Center,
             verticalAlign: VerticalAlign.Center,
@@ -1367,8 +1648,9 @@ class ExcelExportHelper {
       sheet.setColumnWidth(0, 8);
       sheet.setColumnWidth(1, 25);
       sheet.setColumnWidth(2, 18);
-      sheet.setColumnWidth(3, 12);
-      sheet.setColumnWidth(4, 10);
+      sheet.setColumnWidth(3, 18);
+      sheet.setColumnWidth(4, 12);
+      sheet.setColumnWidth(5, 10);
 
       await _saveAndShareExcel(
         excel,

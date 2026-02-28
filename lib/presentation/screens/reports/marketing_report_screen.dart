@@ -5,6 +5,7 @@
 
 import 'package:flutter/material.dart';
 import '../../themes/app_theme.dart';
+import '../../../core/constants/firebase_constants.dart';
 import '../../../data/repositories/report_repository.dart';
 import '../../../data/models/report_data_model.dart';
 import '../../../services/excel_export_helper.dart';
@@ -36,6 +37,16 @@ class _MarketingReportScreenState extends State<MarketingReportScreen> {
     final data = await _reportRepository.getMarketingReportData(
       filter: _filter,
     );
+
+    data.sort((a, b) {
+      final deg = FirebaseConstants.educationalLevelsOrder;
+      final oa = deg[a.educationalLevel] ?? 0;
+      final ob = deg[b.educationalLevel] ?? 0;
+      if (oa != ob) return ob.compareTo(oa);
+      if (a.storyCount != b.storyCount)
+        return b.storyCount.compareTo(a.storyCount);
+      return a.volunteerName.compareTo(b.volunteerName);
+    });
 
     setState(() {
       _reportData = data;
@@ -91,11 +102,20 @@ class _MarketingReportScreenState extends State<MarketingReportScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final headers = ['الاسم', 'الدرجة التطوعية', 'الستوري', 'الشهور'];
+    final headers = [
+      'الاسم',
+      'الهاتف',
+      'اللجنة',
+      'الدرجة التطوعية',
+      'الستوري',
+      'الشهور',
+    ];
 
     final rows = _reportData.map((data) {
       return [
         data.volunteerName,
+        data.phone ?? '-',
+        data.committeeName ?? '-',
         data.educationalLevel ?? '-',
         data.storyCount.toString(),
         data.monthsString, // comma-separated month numbers

@@ -86,16 +86,30 @@ class FirebaseConstants {
     'مسئول', // Final level
   ];
 
-  // NEW: Educational Levels with Order (for sorting)
+  // NEW: Educational Levels with Order (for sorting - higher value = higher rank)
   static const Map<String, int> educationalLevelsOrder = {
     'مسئول': 6,
     'مشروع مسئول': 5,
     'تدريب': 4,
     'شبل مميز': 3,
-    'جدد': 2,
-    'شبل': 1,
+    'شبل': 2,
+    'جدد': 1,
     '': 0,
   };
+
+  /// Sort volunteers by degree (descending) then alphabetically by name.
+  /// Works with any object that has educationalLevel and name fields.
+  static int compareByDegreeAndName(
+    String level1,
+    String name1,
+    String level2,
+    String name2,
+  ) {
+    final order1 = educationalLevelsOrder[level1] ?? 0;
+    final order2 = educationalLevelsOrder[level2] ?? 0;
+    if (order1 != order2) return order2.compareTo(order1); // Higher rank first
+    return name1.compareTo(name2); // Then alphabetical
+  }
 
   // NEW: Promotion Requirements for each level
   static const Map<String, List<String>> promotionRequirements = {

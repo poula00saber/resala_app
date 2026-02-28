@@ -10,7 +10,6 @@ class CommitteeModel extends Committee {
   CommitteeModel({
     required super.id,
     required super.name,
-    super.description,
     required super.isActive,
     required super.createdAt,
   });
@@ -20,7 +19,6 @@ class CommitteeModel extends Committee {
     return CommitteeModel(
       id: doc.id,
       name: data['name'] ?? '',
-      description: data['description'],
       isActive: data['isActive'] ?? true,
       createdAt: (data['createdAt'] as Timestamp).toDate(),
     );
@@ -29,7 +27,6 @@ class CommitteeModel extends Committee {
   Map<String, dynamic> toFirestore() {
     return {
       'name': name,
-      'description': description,
       'isActive': isActive,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.now(),
@@ -40,14 +37,12 @@ class CommitteeModel extends Committee {
   CommitteeModel copyWith({
     String? id,
     String? name,
-    String? description,
     bool? isActive,
     DateTime? createdAt,
   }) {
     return CommitteeModel(
       id: id ?? this.id,
       name: name ?? this.name,
-      description: description ?? this.description,
       isActive: isActive ?? this.isActive,
       createdAt: createdAt ?? this.createdAt,
     );

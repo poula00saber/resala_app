@@ -5,6 +5,7 @@
 
 import 'package:flutter/material.dart';
 import '../../themes/app_theme.dart';
+import '../../../core/constants/firebase_constants.dart';
 import '../../../data/repositories/report_repository.dart';
 import '../../../data/models/report_data_model.dart';
 import '../../../services/excel_export_helper.dart';
@@ -38,6 +39,16 @@ class _FamilyDayReportScreenState extends State<FamilyDayReportScreen> {
       filter: _filter,
       cubsOnly: _showCubsOnly,
     );
+
+    data.sort((a, b) {
+      final deg = FirebaseConstants.educationalLevelsOrder;
+      final oa = deg[a.educationalLevel] ?? 0;
+      final ob = deg[b.educationalLevel] ?? 0;
+      if (oa != ob) return ob.compareTo(oa);
+      if (a.familyDayCount != b.familyDayCount)
+        return b.familyDayCount.compareTo(a.familyDayCount);
+      return a.volunteerName.compareTo(b.volunteerName);
+    });
 
     setState(() {
       _reportData = data;
@@ -94,11 +105,20 @@ class _FamilyDayReportScreenState extends State<FamilyDayReportScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final headers = ['الاسم', 'الدرجة التطوعية', 'يوم عائلي', 'الشهور'];
+    final headers = [
+      'الاسم',
+      'الهاتف',
+      'اللجنة',
+      'الدرجة التطوعية',
+      'يوم عائلي',
+      'الشهور',
+    ];
 
     final rows = _reportData.map((data) {
       return [
         data.volunteerName,
+        data.phone ?? '-',
+        data.committeeName ?? '-',
         data.educationalLevel ?? '-',
         data.familyDayCount.toString(),
         data.monthsString, // comma-separated month numbers

@@ -25,6 +25,14 @@ class VolunteerProvider with ChangeNotifier {
     _repository.getAllVolunteers().listen(
       (volunteers) {
         _volunteers = volunteers;
+        _volunteers.sort(
+          (a, b) => FirebaseConstants.compareByDegreeAndName(
+            a.educationalLevel ?? '',
+            a.name,
+            b.educationalLevel ?? '',
+            b.name,
+          ),
+        );
         notifyListeners();
       },
       onError: (error) {
@@ -36,7 +44,17 @@ class VolunteerProvider with ChangeNotifier {
 
   // Get all volunteers stream
   Stream<List<VolunteerModel>> getVolunteers() {
-    return _repository.getAllVolunteers();
+    return _repository.getAllVolunteers().map((volunteers) {
+      volunteers.sort(
+        (a, b) => FirebaseConstants.compareByDegreeAndName(
+          a.educationalLevel ?? '',
+          a.name,
+          b.educationalLevel ?? '',
+          b.name,
+        ),
+      );
+      return volunteers;
+    });
   }
 
   // Create volunteer - UPDATED: age is now required
@@ -47,6 +65,8 @@ class VolunteerProvider with ChangeNotifier {
     required String address,
     String? nationalId,
     required int age, // CHANGED: Now required
+    String? birthDate,
+    String? gender,
     String? committeeId,
     String? committeeName,
     bool hasInterview = false,
@@ -69,6 +89,8 @@ class VolunteerProvider with ChangeNotifier {
         address: address,
         nationalId: nationalId,
         age: age,
+        birthDate: birthDate,
+        gender: gender,
         committeeId: committeeId,
         committeeName: committeeName,
         hasInterview: false,
@@ -233,10 +255,7 @@ class VolunteerProvider with ChangeNotifier {
         birthDate: updates['birthDate'],
         gender: updates['gender'],
         educationalLevel:
-            updates['educationalLevel'] ??
-            (updates['age'] != null
-                ? FirebaseConstants.getInitialEducationalLevel(updates['age'])
-                : volunteer.educationalLevel),
+            updates['educationalLevel'] ?? volunteer.educationalLevel,
         university: updates['university'],
         profileImage: updates['profileImage'],
       );
@@ -279,12 +298,31 @@ class VolunteerProvider with ChangeNotifier {
 
   // Get volunteers by IDs
   Future<List<VolunteerModel>> getVolunteersByIds(List<String> ids) async {
-    return await _repository.getVolunteersByIds(ids);
+    final volunteers = await _repository.getVolunteersByIds(ids);
+    volunteers.sort(
+      (a, b) => FirebaseConstants.compareByDegreeAndName(
+        a.educationalLevel ?? '',
+        a.name,
+        b.educationalLevel ?? '',
+        b.name,
+      ),
+    );
+    return volunteers;
   }
 
-  // Search volunteers
+  // Search volunteers (sorted by degree then name)
   Stream<List<VolunteerModel>> searchVolunteers(String query) {
-    return _repository.searchVolunteers(query);
+    return _repository.searchVolunteers(query).map((volunteers) {
+      volunteers.sort(
+        (a, b) => FirebaseConstants.compareByDegreeAndName(
+          a.educationalLevel ?? '',
+          a.name,
+          b.educationalLevel ?? '',
+          b.name,
+        ),
+      );
+      return volunteers;
+    });
   }
 
   // Get volunteers by committee
@@ -292,13 +330,28 @@ class VolunteerProvider with ChangeNotifier {
     String committeeId,
   ) async {
     final allVolunteers = await _repository.getAllVolunteers().first;
-    return allVolunteers.where((v) => v.committeeId == committeeId).toList();
+    final filtered = allVolunteers
+        .where((v) => v.committeeId == committeeId)
+        .toList();
+    filtered.sort(
+      (a, b) => FirebaseConstants.compareByDegreeAndName(
+        a.educationalLevel ?? '',
+        a.name,
+        b.educationalLevel ?? '',
+        b.name,
+      ),
+    );
+    return filtered;
   }
 
   // Get volunteers by educational level
   Future<List<VolunteerModel>> getVolunteersByLevel(String level) async {
     final allVolunteers = await _repository.getAllVolunteers().first;
-    return allVolunteers.where((v) => v.educationalLevel == level).toList();
+    final filtered = allVolunteers
+        .where((v) => v.educationalLevel == level)
+        .toList();
+    filtered.sort((a, b) => a.name.compareTo(b.name));
+    return filtered;
   }
 
   // Get volunteers under 17 years old (شبل)
