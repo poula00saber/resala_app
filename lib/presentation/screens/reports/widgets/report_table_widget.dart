@@ -1,4 +1,4 @@
-// ============================================
+﻿// ============================================
 // FILE: lib/presentation/screens/reports/widgets/report_table_widget.dart
 // Reusable table widget for reports
 // ============================================
@@ -32,11 +32,11 @@ class ReportTableWidget extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.cardBackground,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: AppTheme.primary.withOpacity(0.1),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -85,7 +85,7 @@ class ReportTableWidget extends StatelessWidget {
                                       'لا توجد بيانات',
                                       style: TextStyle(
                                         fontFamily: 'Cairo',
-                                        color: Colors.grey,
+                                        color: AppTheme.secondary,
                                       ),
                                     )
                                   : const Text(''),

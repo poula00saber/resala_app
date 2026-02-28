@@ -1,4 +1,4 @@
-// ============================================
+﻿// ============================================
 // FILE: lib/presentation/screens/interviews/interviews_screen.dart
 // FIXED: Prevents duplicate interviews - always checks existing first
 // ============================================
@@ -34,14 +34,14 @@ class _InterviewsScreenState extends State<InterviewsScreen> {
         backgroundColor: AppTheme.background,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.arrow_back, color: AppTheme.textDark),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
           'المقابلات الشخصية',
           style: TextStyle(
             fontFamily: 'Cairo',
-            color: Colors.black,
+            color: AppTheme.textDark,
             fontSize: 20,
             fontWeight: FontWeight.w600,
           ),
@@ -60,11 +60,11 @@ class _InterviewsScreenState extends State<InterviewsScreen> {
                 hintText: 'بحث باسم المتطوع',
                 hintStyle: const TextStyle(
                   fontFamily: 'Cairo',
-                  color: Colors.grey,
+                  color: AppTheme.secondary,
                 ),
-                prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                prefixIcon: const Icon(Icons.search, color: AppTheme.secondary),
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: AppTheme.cardBackground,
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 20,
                   vertical: 16,
@@ -252,7 +252,7 @@ class _InterviewsScreenState extends State<InterviewsScreen> {
                       'لا يوجد نتائج',
                       style: TextStyle(
                         fontFamily: 'Cairo',
-                        color: Colors.grey,
+                        color: AppTheme.secondary,
                         fontSize: 16,
                       ),
                     ),
@@ -344,7 +344,7 @@ class _InterviewsScreenState extends State<InterviewsScreen> {
               'لا يوجد متطوعين',
               style: TextStyle(
                 fontFamily: 'Cairo',
-                color: Colors.grey,
+                color: AppTheme.secondary,
                 fontSize: 16,
               ),
             ),
@@ -382,7 +382,7 @@ class _InterviewsScreenState extends State<InterviewsScreen> {
               'لا يوجد متطوعين مقبولين',
               style: TextStyle(
                 fontFamily: 'Cairo',
-                color: Colors.grey,
+                color: AppTheme.secondary,
                 fontSize: 16,
               ),
             ),
@@ -420,7 +420,7 @@ class _InterviewsScreenState extends State<InterviewsScreen> {
               'لا يوجد متطوعين مرفوضين',
               style: TextStyle(
                 fontFamily: 'Cairo',
-                color: Colors.grey,
+                color: AppTheme.secondary,
                 fontSize: 16,
               ),
             ),
@@ -460,7 +460,7 @@ class _InterviewsScreenState extends State<InterviewsScreen> {
               'لا يوجد متطوعين',
               style: TextStyle(
                 fontFamily: 'Cairo',
-                color: Colors.grey,
+                color: AppTheme.secondary,
                 fontSize: 16,
               ),
             ),
@@ -492,7 +492,7 @@ class _InterviewsScreenState extends State<InterviewsScreen> {
                       'تمت مقابلة جميع المتطوعين',
                       style: TextStyle(
                         fontFamily: 'Cairo',
-                        color: Colors.grey,
+                        color: AppTheme.secondary,
                         fontSize: 16,
                       ),
                     ),
@@ -519,11 +519,11 @@ class _InterviewsScreenState extends State<InterviewsScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.cardBackground,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: AppTheme.primary.withOpacity(0.1),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -580,7 +580,7 @@ class _InterviewsScreenState extends State<InterviewsScreen> {
                             volunteer.name,
                             style: const TextStyle(
                               fontFamily: 'Cairo',
-                              color: Colors.black,
+                              color: AppTheme.textDark,
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
                             ),
@@ -652,7 +652,7 @@ class _InterviewsScreenState extends State<InterviewsScreen> {
                         volunteer.committeeName!,
                         style: const TextStyle(
                           fontFamily: 'Cairo',
-                          color: Colors.grey,
+                          color: AppTheme.secondary,
                           fontSize: 12,
                         ),
                         textAlign: TextAlign.right,
@@ -662,7 +662,7 @@ class _InterviewsScreenState extends State<InterviewsScreen> {
                         'العمر: ${volunteer.age}',
                         style: const TextStyle(
                           fontFamily: 'Cairo',
-                          color: Colors.grey,
+                          color: AppTheme.secondary,
                           fontSize: 12,
                         ),
                         textAlign: TextAlign.right,
@@ -682,7 +682,7 @@ class _InterviewsScreenState extends State<InterviewsScreen> {
                 ),
                 child: const Icon(
                   Icons.arrow_forward_ios,
-                  color: Colors.white,
+                  color: AppTheme.cardBackground,
                   size: 16,
                 ),
               ),
@@ -715,11 +715,11 @@ class _InterviewsScreenState extends State<InterviewsScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.cardBackground,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: AppTheme.primary.withOpacity(0.1),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -757,7 +757,7 @@ class _InterviewsScreenState extends State<InterviewsScreen> {
                       interview.volunteerName,
                       style: const TextStyle(
                         fontFamily: 'Cairo',
-                        color: Colors.black,
+                        color: AppTheme.textDark,
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                       ),
@@ -767,7 +767,7 @@ class _InterviewsScreenState extends State<InterviewsScreen> {
                       'تاريخ المقابلة: ${_formatDate(interview.interviewDate)}',
                       style: const TextStyle(
                         fontFamily: 'Cairo',
-                        color: Colors.grey,
+                        color: AppTheme.secondary,
                         fontSize: 12,
                       ),
                       textAlign: TextAlign.right,

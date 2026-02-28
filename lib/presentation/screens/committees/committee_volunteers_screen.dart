@@ -1,4 +1,4 @@
-// ============================================
+﻿// ============================================
 // FILE: lib/presentation/screens/settings/committee_volunteers_screen.dart
 // UPDATED: Added Excel export functionality
 // UPDATED: Added permission checks for profile access
@@ -97,14 +97,14 @@ class _CommitteeVolunteersScreenState extends State<CommitteeVolunteersScreen> {
         backgroundColor: AppTheme.background,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_forward, color: Colors.black),
+          icon: const Icon(Icons.arrow_forward, color: AppTheme.textDark),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           widget.committeeName,
           style: const TextStyle(
             fontFamily: 'Cairo',
-            color: Colors.black,
+            color: AppTheme.textDark,
             fontSize: 20,
             fontWeight: FontWeight.w600,
           ),
@@ -158,11 +158,11 @@ class _CommitteeVolunteersScreenState extends State<CommitteeVolunteersScreen> {
                 hintText: 'بحث',
                 hintStyle: const TextStyle(
                   fontFamily: 'Cairo',
-                  color: Colors.grey,
+                  color: AppTheme.secondary,
                 ),
-                prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                prefixIcon: const Icon(Icons.search, color: AppTheme.secondary),
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: AppTheme.cardBackground,
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 20,
                   vertical: 16,
@@ -255,7 +255,7 @@ class _CommitteeVolunteersScreenState extends State<CommitteeVolunteersScreen> {
                               : 'لا توجد نتائج',
                           style: TextStyle(
                             fontFamily: 'Cairo',
-                            color: Colors.grey[600],
+                            color: AppTheme.secondary,
                             fontSize: 16,
                           ),
                         ),
@@ -288,7 +288,7 @@ class _CommitteeVolunteersScreenState extends State<CommitteeVolunteersScreen> {
         borderRadius: BorderRadius.circular(30),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: AppTheme.primary.withOpacity(0.1),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -325,7 +325,7 @@ class _CommitteeVolunteersScreenState extends State<CommitteeVolunteersScreen> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: const BoxDecoration(
-                  color: Colors.white,
+                  color: AppTheme.cardBackground,
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
@@ -343,7 +343,7 @@ class _CommitteeVolunteersScreenState extends State<CommitteeVolunteersScreen> {
                   volunteer.name,
                   style: const TextStyle(
                     fontFamily: 'Cairo',
-                    color: Colors.white,
+                    color: AppTheme.cardBackground,
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                   ),
@@ -359,7 +359,7 @@ class _CommitteeVolunteersScreenState extends State<CommitteeVolunteersScreen> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: const BoxDecoration(
-                  color: Colors.white,
+                  color: AppTheme.cardBackground,
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(

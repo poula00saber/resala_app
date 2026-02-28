@@ -1,4 +1,4 @@
-// ============================================
+﻿// ============================================
 // FILE: lib/presentation/screens/profiles/add_existing_volunteer_screen.dart
 // Add existing volunteer with full data from volunteer model
 // ============================================
@@ -311,7 +311,7 @@ class _AddExistingVolunteerScreenState
                       decoration: BoxDecoration(
                         border: Border.all(color: AppTheme.primary, width: 3),
                         borderRadius: BorderRadius.circular(60),
-                        color: Colors.white,
+                        color: AppTheme.cardBackground,
                         boxShadow: [
                           BoxShadow(
                             color: Colors.grey.withOpacity(0.3),
@@ -350,12 +350,12 @@ class _AddExistingVolunteerScreenState
                           decoration: BoxDecoration(
                             color: AppTheme.primary,
                             shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 2),
+                            border: Border.all(color: AppTheme.cardBackground, width: 2),
                           ),
                           child: const Icon(
                             Icons.camera_alt,
                             size: 20,
-                            color: Colors.white,
+                            color: AppTheme.cardBackground,
                           ),
                         ),
                       ),
@@ -534,7 +534,7 @@ class _AddExistingVolunteerScreenState
 
                               return Container(
                                 decoration: BoxDecoration(
-                                  color: Colors.white,
+                                  color: AppTheme.cardBackground,
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
                                     color: AppTheme.primary,
@@ -551,7 +551,7 @@ class _AddExistingVolunteerScreenState
                                     style: const TextStyle(
                                       fontFamily: 'Cairo',
                                       fontSize: 14,
-                                      color: Colors.black,
+                                      color: AppTheme.textDark,
                                     ),
                                     items: [
                                       const DropdownMenuItem(
@@ -560,7 +560,7 @@ class _AddExistingVolunteerScreenState
                                           'اختر اللجنة',
                                           style: TextStyle(
                                             fontFamily: 'Cairo',
-                                            color: Colors.grey,
+                                            color: AppTheme.secondary,
                                           ),
                                         ),
                                       ),
@@ -631,7 +631,7 @@ class _AddExistingVolunteerScreenState
                           ),
                           Container(
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: AppTheme.cardBackground,
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
                                 color: AppTheme.primary,
@@ -648,7 +648,7 @@ class _AddExistingVolunteerScreenState
                                 style: const TextStyle(
                                   fontFamily: 'Cairo',
                                   fontSize: 14,
-                                  color: Colors.black,
+                                  color: AppTheme.textDark,
                                 ),
                                 items: [
                                   const DropdownMenuItem(
@@ -657,7 +657,7 @@ class _AddExistingVolunteerScreenState
                                       'اختر الدرجة',
                                       style: TextStyle(
                                         fontFamily: 'Cairo',
-                                        color: Colors.grey,
+                                        color: AppTheme.secondary,
                                       ),
                                     ),
                                   ),
@@ -703,7 +703,7 @@ class _AddExistingVolunteerScreenState
                           ),
                           Container(
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: AppTheme.cardBackground,
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
                                 color: AppTheme.primary,
@@ -720,7 +720,7 @@ class _AddExistingVolunteerScreenState
                                 style: const TextStyle(
                                   fontFamily: 'Cairo',
                                   fontSize: 14,
-                                  color: Colors.black,
+                                  color: AppTheme.textDark,
                                 ),
                                 items: [
                                   const DropdownMenuItem(
@@ -729,7 +729,7 @@ class _AddExistingVolunteerScreenState
                                       'اختر النوع',
                                       style: TextStyle(
                                         fontFamily: 'Cairo',
-                                        color: Colors.grey,
+                                        color: AppTheme.secondary,
                                       ),
                                     ),
                                   ),
@@ -845,7 +845,7 @@ class _AddExistingVolunteerScreenState
                     onPressed: _isLoading ? null : _saveVolunteer,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.primary,
-                      foregroundColor: Colors.white,
+                      foregroundColor: AppTheme.textLight,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),
@@ -857,7 +857,7 @@ class _AddExistingVolunteerScreenState
                             height: 24,
                             width: 24,
                             child: CircularProgressIndicator(
-                              color: Colors.white,
+                              color: AppTheme.cardBackground,
                               strokeWidth: 2.5,
                             ),
                           )
@@ -946,7 +946,7 @@ class _AddExistingVolunteerScreenState
             hintText: 'أدخل $label',
             hintStyle: const TextStyle(
               fontFamily: 'Cairo',
-              color: Colors.grey,
+              color: AppTheme.secondary,
               fontSize: 13,
             ),
           ),
@@ -1019,7 +1019,7 @@ class _AddExistingVolunteerScreenState
     return Container(
       height: 56,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.cardBackground,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppTheme.primary, width: 1.5),
       ),

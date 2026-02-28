@@ -1,4 +1,4 @@
-// ============================================
+﻿// ============================================
 // FILE: lib/presentation/screens/volunteers/create_volunteer_screen.dart
 // UPDATED: Only needs name, phone, address, national ID
 // Birth date, age, gender, educational level auto-derived from NID
@@ -125,13 +125,13 @@ class _CreateVolunteerScreenState extends State<CreateVolunteerScreen> {
         backgroundColor: const Color(0xFFE8DDD3),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.arrow_back, color: AppTheme.textDark),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
           'اضافة متطوع',
           style: TextStyle(
-            color: Colors.black,
+            color: AppTheme.textDark,
             fontSize: 20,
             fontWeight: FontWeight.w500,
           ),
@@ -145,14 +145,14 @@ class _CreateVolunteerScreenState extends State<CreateVolunteerScreen> {
             child: Container(
               margin: const EdgeInsets.symmetric(horizontal: 30),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppTheme.cardBackground,
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(30),
                   topRight: Radius.circular(30),
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: AppTheme.primary.withOpacity(0.1),
                     blurRadius: 10,
                     offset: const Offset(0, -2),
                   ),
@@ -258,7 +258,7 @@ class _CreateVolunteerScreenState extends State<CreateVolunteerScreen> {
                         onPressed: _isLoading ? null : _createVolunteer,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.primary,
-                          foregroundColor: Colors.white,
+                          foregroundColor: AppTheme.textLight,
                           minimumSize: const Size(double.infinity, 50),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(25),
@@ -270,7 +270,7 @@ class _CreateVolunteerScreenState extends State<CreateVolunteerScreen> {
                                 height: 20,
                                 width: 20,
                                 child: CircularProgressIndicator(
-                                  color: Colors.white,
+                                  color: AppTheme.cardBackground,
                                   strokeWidth: 2,
                                 ),
                               )
@@ -312,7 +312,7 @@ class _CreateVolunteerScreenState extends State<CreateVolunteerScreen> {
             style: TextStyle(
               fontFamily: 'Cairo',
               fontSize: 13,
-              color: Colors.grey[600],
+              color: AppTheme.secondary,
             ),
           ),
         ],

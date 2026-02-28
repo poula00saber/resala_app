@@ -1,4 +1,4 @@
-// ============================================
+﻿// ============================================
 // FILE: lib/presentation/screens/reports/comprehensive_report_screen.dart
 // الكلي - Comprehensive Report Screen
 // ============================================
@@ -150,7 +150,7 @@ class _ComprehensiveReportScreenState extends State<ComprehensiveReportScreen> {
           backgroundColor: AppTheme.background,
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
+            icon: const Icon(Icons.arrow_back_ios, color: AppTheme.textDark),
             onPressed: () => Navigator.pop(context),
           ),
           actions: [

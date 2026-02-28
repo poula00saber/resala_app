@@ -1,5 +1,6 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
+import '../themes/app_theme.dart';
 import 'home/home_screen.dart';
 import 'login/login_screen.dart';
 
@@ -44,7 +45,7 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppTheme.cardBackground,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

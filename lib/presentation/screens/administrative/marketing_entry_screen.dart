@@ -1,4 +1,4 @@
-// ============================================
+﻿// ============================================
 // FILE: lib/presentation/screens/administrative/marketing_entry_screen.dart
 // الدعايا - Marketing Entry Screen (Data Entry)
 // UPDATED: Added permission checks for add/delete
@@ -205,7 +205,7 @@ class _MarketingEntryScreenState extends State<MarketingEntryScreen> {
           backgroundColor: AppTheme.background,
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
+            icon: const Icon(Icons.arrow_back_ios, color: AppTheme.textDark),
             onPressed: () => Navigator.pop(context),
           ),
         ),
@@ -241,7 +241,7 @@ class _MarketingEntryScreenState extends State<MarketingEntryScreen> {
                             '$_totalMarketingCount ستوري',
                             style: const TextStyle(
                               fontFamily: 'Cairo',
-                              color: Colors.white,
+                              color: AppTheme.cardBackground,
                               fontSize: 32,
                               fontWeight: FontWeight.bold,
                             ),
@@ -265,7 +265,7 @@ class _MarketingEntryScreenState extends State<MarketingEntryScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppTheme.cardBackground,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           color: AppTheme.primary.withOpacity(0.3),
@@ -343,7 +343,7 @@ class _MarketingEntryScreenState extends State<MarketingEntryScreen> {
                                   horizontal: 12,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: Colors.white,
+                                  color: AppTheme.cardBackground,
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
                                     color: AppTheme.primary.withOpacity(0.3),
@@ -393,7 +393,7 @@ class _MarketingEntryScreenState extends State<MarketingEntryScreen> {
                                   horizontal: 12,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: Colors.white,
+                                  color: AppTheme.cardBackground,
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
                                     color: AppTheme.primary.withOpacity(0.3),
@@ -451,7 +451,7 @@ class _MarketingEntryScreenState extends State<MarketingEntryScreen> {
                                   height: 20,
                                   width: 20,
                                   child: CircularProgressIndicator(
-                                    color: Colors.white,
+                                    color: AppTheme.cardBackground,
                                     strokeWidth: 2,
                                   ),
                                 )
@@ -461,7 +461,7 @@ class _MarketingEntryScreenState extends State<MarketingEntryScreen> {
                                     fontFamily: 'Cairo',
                                     fontWeight: FontWeight.bold,
                                     fontSize: 18,
-                                    color: Colors.white,
+                                    color: AppTheme.cardBackground,
                                   ),
                                 ),
                         ),
@@ -526,13 +526,13 @@ class _MarketingEntryScreenState extends State<MarketingEntryScreen> {
       return Container(
         padding: const EdgeInsets.all(32),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppTheme.cardBackground,
           borderRadius: BorderRadius.circular(12),
         ),
         child: const Center(
           child: Text(
             'لا توجد سجلات',
-            style: TextStyle(fontFamily: 'Cairo', color: Colors.grey),
+            style: TextStyle(fontFamily: 'Cairo', color: AppTheme.secondary),
           ),
         ),
       );
@@ -544,7 +544,7 @@ class _MarketingEntryScreenState extends State<MarketingEntryScreen> {
           margin: const EdgeInsets.only(bottom: 8),
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppTheme.cardBackground,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: AppTheme.primary.withOpacity(0.3)),
           ),
@@ -575,7 +575,7 @@ class _MarketingEntryScreenState extends State<MarketingEntryScreen> {
                       style: const TextStyle(
                         fontFamily: 'Cairo',
                         fontSize: 12,
-                        color: Colors.grey,
+                        color: AppTheme.secondary,
                       ),
                     ),
                   ],

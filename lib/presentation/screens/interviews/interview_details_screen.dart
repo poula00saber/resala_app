@@ -1,4 +1,4 @@
-// ============================================
+﻿// ============================================
 // FILE: lib/presentation/screens/interviews/interview_details_screen.dart
 // ENHANCED UI - SAME LOGIC (No changes to functionality)
 // ============================================
@@ -139,7 +139,7 @@ class _InterviewDetailsScreenState extends State<InterviewDetailsScreen> {
             children: [
               Icon(
                 _passed! ? Icons.check_circle : Icons.info,
-                color: Colors.white,
+                color: AppTheme.cardBackground,
               ),
               const SizedBox(width: 8),
               Text(
@@ -161,7 +161,7 @@ class _InterviewDetailsScreenState extends State<InterviewDetailsScreen> {
         const SnackBar(
           content: Row(
             children: [
-              Icon(Icons.error, color: Colors.white),
+              Icon(Icons.error, color: AppTheme.textLight),
               SizedBox(width: 8),
               Text(
                 'حدث خطأ أثناء حفظ المقابلة',
@@ -286,7 +286,7 @@ class _InterviewDetailsScreenState extends State<InterviewDetailsScreen> {
                 fontFamily: 'Cairo',
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: Colors.grey[700],
+                color: AppTheme.secondary,
               ),
             ),
             const SizedBox(height: 12),
@@ -328,7 +328,7 @@ class _InterviewDetailsScreenState extends State<InterviewDetailsScreen> {
                 fontFamily: 'Cairo',
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: Colors.grey[700],
+                color: AppTheme.secondary,
               ),
             ),
             const SizedBox(height: 8),
@@ -343,7 +343,7 @@ class _InterviewDetailsScreenState extends State<InterviewDetailsScreen> {
               ),
               decoration: InputDecoration(
                 hintText: 'أدخل الدرجة',
-                hintStyle: const TextStyle(color: Colors.grey),
+                hintStyle: const TextStyle(color: AppTheme.secondary),
                 filled: true,
                 fillColor: Colors.grey[50],
                 border: OutlineInputBorder(
@@ -480,11 +480,11 @@ class _InterviewDetailsScreenState extends State<InterviewDetailsScreen> {
   ) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.cardBackground,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: AppTheme.primary.withOpacity(0.05),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -518,7 +518,7 @@ class _InterviewDetailsScreenState extends State<InterviewDetailsScreen> {
                     child: Text(
                       number.toString(),
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: AppTheme.cardBackground,
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
                       ),
@@ -536,7 +536,7 @@ class _InterviewDetailsScreenState extends State<InterviewDetailsScreen> {
                       fontFamily: 'Cairo',
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: Colors.black87,
+                      color: AppTheme.textDark,
                       height: 1.4,
                     ),
                   ),
@@ -557,7 +557,7 @@ class _InterviewDetailsScreenState extends State<InterviewDetailsScreen> {
                 hintText: 'أدخل إجابتك هنا...',
                 hintStyle: const TextStyle(
                   fontFamily: 'Cairo',
-                  color: Colors.grey,
+                  color: AppTheme.secondary,
                   fontSize: 13,
                 ),
                 filled: true,
@@ -608,11 +608,11 @@ class _InterviewDetailsScreenState extends State<InterviewDetailsScreen> {
         // Notes Input
         Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppTheme.cardBackground,
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
+                color: AppTheme.primary.withOpacity(0.05),
                 blurRadius: 6,
                 offset: const Offset(0, 2),
               ),
@@ -628,7 +628,7 @@ class _InterviewDetailsScreenState extends State<InterviewDetailsScreen> {
                   style: TextStyle(
                     fontFamily: 'Cairo',
                     fontSize: 13,
-                    color: Colors.grey[600],
+                    color: AppTheme.secondary,
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -641,7 +641,7 @@ class _InterviewDetailsScreenState extends State<InterviewDetailsScreen> {
                     hintText: 'اكتب ملاحظاتك هنا...',
                     hintStyle: const TextStyle(
                       fontFamily: 'Cairo',
-                      color: Colors.grey,
+                      color: AppTheme.secondary,
                       fontSize: 13,
                     ),
                     filled: true,
@@ -677,7 +677,7 @@ class _InterviewDetailsScreenState extends State<InterviewDetailsScreen> {
     return FloatingActionButton.extended(
       onPressed: _isSaving ? null : _saveInterview,
       backgroundColor: AppTheme.primary,
-      foregroundColor: Colors.white,
+      foregroundColor: AppTheme.textLight,
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       icon: _isSaving
@@ -686,7 +686,7 @@ class _InterviewDetailsScreenState extends State<InterviewDetailsScreen> {
               height: 20,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                color: Colors.white,
+                color: AppTheme.cardBackground,
               ),
             )
           : const Icon(Icons.save, size: 20),

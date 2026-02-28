@@ -1,4 +1,4 @@
-// ============================================
+﻿// ============================================
 // FILE: lib/presentation/screens/events/edit_event_screen.dart
 // UPDATED: Added Excel export functionality
 // ============================================
@@ -145,7 +145,7 @@ class _EditEventScreenState extends State<EditEventScreen> {
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
         decoration: const BoxDecoration(
-          color: Colors.white,
+          color: AppTheme.cardBackground,
           borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
         ),
         padding: const EdgeInsets.all(24),
@@ -175,7 +175,7 @@ class _EditEventScreenState extends State<EditEventScreen> {
       onPressed: onPressed,
       style: ElevatedButton.styleFrom(
         backgroundColor: AppTheme.primary,
-        foregroundColor: Colors.white,
+        foregroundColor: AppTheme.textLight,
         minimumSize: const Size(double.infinity, 50),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
         elevation: 2,
@@ -321,14 +321,14 @@ class _EditEventScreenState extends State<EditEventScreen> {
         backgroundColor: AppTheme.background,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_forward, color: Colors.black),
+          icon: const Icon(Icons.arrow_forward, color: AppTheme.textDark),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
           'تفاصيل الحدث',
           style: TextStyle(
             fontFamily: 'Cairo',
-            color: Colors.black,
+            color: AppTheme.textDark,
             fontSize: 20,
             fontWeight: FontWeight.w600,
           ),
@@ -436,11 +436,11 @@ class _EditEventScreenState extends State<EditEventScreen> {
               child: Container(
                 margin: const EdgeInsets.symmetric(horizontal: 40),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppTheme.cardBackground,
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: AppTheme.primary.withOpacity(0.05),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -543,7 +543,7 @@ class _EditEventScreenState extends State<EditEventScreen> {
                                   'لا يوجد متطوعون',
                                   style: TextStyle(
                                     fontFamily: 'Cairo',
-                                    color: Colors.grey,
+                                    color: AppTheme.secondary,
                                   ),
                                 ),
                               );
@@ -562,7 +562,7 @@ class _EditEventScreenState extends State<EditEventScreen> {
                                     color: Colors.red,
                                     child: const Icon(
                                       Icons.delete,
-                                      color: Colors.white,
+                                      color: AppTheme.cardBackground,
                                     ),
                                   ),
                                   confirmDismiss: (direction) async {
@@ -628,7 +628,7 @@ class _EditEventScreenState extends State<EditEventScreen> {
                                         backgroundColor: Colors.orange,
                                         action: SnackBarAction(
                                           label: 'تراجع',
-                                          textColor: Colors.white,
+                                          textColor: AppTheme.textLight,
                                           onPressed: () {
                                             setState(() {
                                               _volunteerIds.add(volunteer.id);
@@ -773,7 +773,7 @@ class _EditEventScreenState extends State<EditEventScreen> {
                 onPressed: _isLoading ? null : _saveEvent,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primary,
-                  foregroundColor: Colors.white,
+                  foregroundColor: AppTheme.textLight,
                   minimumSize: const Size(double.infinity, 50),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(25),
@@ -784,7 +784,7 @@ class _EditEventScreenState extends State<EditEventScreen> {
                         height: 20,
                         width: 20,
                         child: CircularProgressIndicator(
-                          color: Colors.white,
+                          color: AppTheme.cardBackground,
                           strokeWidth: 2,
                         ),
                       )
@@ -828,7 +828,7 @@ class _EditEventScreenState extends State<EditEventScreen> {
             ? Icon(suffixIcon, size: 18, color: AppTheme.primary)
             : null,
         filled: true,
-        fillColor: Colors.white,
+        fillColor: AppTheme.cardBackground,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
           vertical: 12,
@@ -859,7 +859,7 @@ class _EditEventScreenState extends State<EditEventScreen> {
             fontFamily: 'Cairo',
             fontSize: 13,
             fontWeight: FontWeight.bold,
-            color: Colors.black87,
+            color: AppTheme.textDark,
           ),
         ),
       ),
@@ -875,7 +875,7 @@ class _EditEventScreenState extends State<EditEventScreen> {
           style: const TextStyle(
             fontFamily: 'Cairo',
             fontSize: 12,
-            color: Colors.black87,
+            color: AppTheme.textDark,
           ),
           textAlign: TextAlign.center,
           maxLines: 1,

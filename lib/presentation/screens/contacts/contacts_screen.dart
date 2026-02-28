@@ -1,4 +1,4 @@
-// ============================================
+﻿// ============================================
 // FILE: lib/presentation/screens/contacts/contacts_screen.dart
 // UPDATED VERSION: With long press options and WhatsApp working for all volunteers
 // ============================================
@@ -33,7 +33,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
           backgroundColor: AppTheme.background,
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.black),
+            icon: const Icon(Icons.arrow_back, color: AppTheme.textDark),
             onPressed: () => Navigator.pop(context),
           ),
           title: _selectedVolunteers.isNotEmpty
@@ -41,7 +41,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
                   '${_selectedVolunteers.length} مختار',
                   style: const TextStyle(
                     fontFamily: 'Cairo',
-                    color: Colors.black,
+                    color: AppTheme.textDark,
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
                   ),
@@ -50,7 +50,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
                   'جهات الاتصال',
                   style: TextStyle(
                     fontFamily: 'Cairo',
-                    color: Colors.black,
+                    color: AppTheme.textDark,
                     fontSize: 20,
                     fontWeight: FontWeight.w600,
                   ),
@@ -76,11 +76,11 @@ class _ContactsScreenState extends State<ContactsScreen> {
                   hintText: 'بحث باسم المتطوع أو رقم الهاتف',
                   hintStyle: const TextStyle(
                     fontFamily: 'Cairo',
-                    color: Colors.grey,
+                    color: AppTheme.secondary,
                   ),
-                  prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                  prefixIcon: const Icon(Icons.search, color: AppTheme.secondary),
                   filled: true,
-                  fillColor: Colors.white,
+                  fillColor: AppTheme.cardBackground,
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: 20,
                     vertical: 16,
@@ -138,7 +138,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
                         'لا توجد جهات اتصال',
                         style: TextStyle(
                           fontFamily: 'Cairo',
-                          color: Colors.grey,
+                          color: AppTheme.secondary,
                           fontSize: 16,
                         ),
                       ),
@@ -180,7 +180,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: AppTheme.primary.withOpacity(0.05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -221,7 +221,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
                       volunteer.name,
                       style: const TextStyle(
                         fontFamily: 'Cairo',
-                        color: Colors.black,
+                        color: AppTheme.textDark,
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                       ),
@@ -234,7 +234,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
                         _formatPhoneNumber(volunteer.phone!),
                         style: const TextStyle(
                           fontFamily: 'Cairo',
-                          color: Colors.grey,
+                          color: AppTheme.secondary,
                           fontSize: 14,
                         ),
                         textAlign: TextAlign.start,
@@ -245,7 +245,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
                         volunteer.committeeName!,
                         style: const TextStyle(
                           fontFamily: 'Cairo',
-                          color: Colors.grey,
+                          color: AppTheme.secondary,
                           fontSize: 12,
                         ),
                         textAlign: TextAlign.start,
@@ -331,7 +331,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
               ),
 
               ListTile(
-                leading: const Icon(Icons.copy, color: Colors.grey),
+                leading: const Icon(Icons.copy, color: AppTheme.secondary),
                 title: const Text(
                   'نسخ الرقم',
                   style: TextStyle(fontFamily: 'Cairo', fontSize: 16),
@@ -713,7 +713,7 @@ class _MessageComposerScreenState extends State<MessageComposerScreen> {
                           style: const TextStyle(
                             fontFamily: 'Cairo',
                             fontSize: 12,
-                            color: Colors.grey,
+                            color: AppTheme.secondary,
                           ),
                         ),
                         Text(
@@ -734,7 +734,7 @@ class _MessageComposerScreenState extends State<MessageComposerScreen> {
                     style: const TextStyle(
                       fontFamily: 'Cairo',
                       fontSize: 12,
-                      color: Colors.grey,
+                      color: AppTheme.secondary,
                     ),
                   ),
                 ],
@@ -755,7 +755,7 @@ class _MessageComposerScreenState extends State<MessageComposerScreen> {
                   onPressed: () => Navigator.pop(context, true),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primary,
-                    foregroundColor: Colors.white,
+                    foregroundColor: AppTheme.textLight,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -820,14 +820,14 @@ class _MessageComposerScreenState extends State<MessageComposerScreen> {
           backgroundColor: AppTheme.background,
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.black),
+            icon: const Icon(Icons.arrow_back, color: AppTheme.textDark),
             onPressed: _isSending ? null : () => Navigator.pop(context),
           ),
           title: Text(
             'إرسال إلى ${widget.volunteers.length} متطوع',
             style: const TextStyle(
               fontFamily: 'Cairo',
-              color: Colors.black,
+              color: AppTheme.textDark,
               fontSize: 18,
               fontWeight: FontWeight.w600,
             ),
@@ -871,7 +871,7 @@ class _MessageComposerScreenState extends State<MessageComposerScreen> {
                           style: TextStyle(
                             fontFamily: 'Cairo',
                             fontSize: 12,
-                            color: Colors.grey,
+                            color: AppTheme.secondary,
                           ),
                         ),
                         const SizedBox(height: 12),
@@ -888,7 +888,7 @@ class _MessageComposerScreenState extends State<MessageComposerScreen> {
                             hintText: 'اكتب رسالتك هنا...',
                             hintStyle: const TextStyle(
                               fontFamily: 'Cairo',
-                              color: Colors.grey,
+                              color: AppTheme.secondary,
                             ),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
@@ -919,7 +919,7 @@ class _MessageComposerScreenState extends State<MessageComposerScreen> {
                                     fontFamily: 'Cairo',
                                     fontSize: 11,
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.grey,
+                                    color: AppTheme.secondary,
                                   ),
                                 ),
                                 const SizedBox(height: 4),
@@ -1057,7 +1057,7 @@ class _MessageComposerScreenState extends State<MessageComposerScreen> {
                     onPressed: _isSending ? null : _sendMessages,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.primary,
-                      foregroundColor: Colors.white,
+                      foregroundColor: AppTheme.textLight,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -1071,7 +1071,7 @@ class _MessageComposerScreenState extends State<MessageComposerScreen> {
                                 height: 20,
                                 width: 20,
                                 child: CircularProgressIndicator(
-                                  color: Colors.white,
+                                  color: AppTheme.cardBackground,
                                   strokeWidth: 2.5,
                                 ),
                               ),

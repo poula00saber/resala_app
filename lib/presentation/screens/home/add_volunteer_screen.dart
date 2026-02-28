@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:resala/presentation/themes/app_theme.dart';
 import '../../../core/utils/validators.dart';
 
@@ -49,7 +49,7 @@ class _AddVolunteerScreenState extends State<AddVolunteerScreen> {
       appBar: AppBar(
         title: const Text("إضافة متطوع جديد"),
         backgroundColor: AppTheme.primary,
-        foregroundColor: Colors.white,
+        foregroundColor: AppTheme.textLight,
       ),
       body: Container(
         color: AppTheme.primary,
@@ -207,7 +207,7 @@ class _AddVolunteerScreenState extends State<AddVolunteerScreen> {
                               onPressed: _saveVolunteer,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppTheme.primary,
-                                foregroundColor: Colors.white,
+                                foregroundColor: AppTheme.textLight,
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 15,
                                 ),

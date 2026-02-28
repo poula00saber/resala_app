@@ -1,4 +1,4 @@
-// ============================================
+﻿// ============================================
 // FILE 2: lib/presentation/screens/home/volunteer_evaluation_details_screen.dart
 // UPDATED: Fixed notes display to show full text with wrapping
 // ============================================
@@ -49,7 +49,7 @@ class _VolunteerEvaluationDetailsScreenState
         backgroundColor: AppTheme.background,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_forward, color: Colors.black),
+          icon: const Icon(Icons.arrow_forward, color: AppTheme.textDark),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -118,7 +118,7 @@ class _VolunteerEvaluationDetailsScreenState
                       fontFamily: 'Cairo',
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+                      color: AppTheme.textDark,
                     ),
                   ),
 
@@ -127,11 +127,11 @@ class _VolunteerEvaluationDetailsScreenState
                   // Evaluations Table
                   Container(
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppTheme.cardBackground,
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
+                          color: AppTheme.primary.withOpacity(0.05),
                           blurRadius: 10,
                           offset: const Offset(0, 4),
                         ),
@@ -150,7 +150,7 @@ class _VolunteerEvaluationDetailsScreenState
                           onPressed: _openAddEvaluationDialog,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppTheme.primary,
-                            foregroundColor: Colors.white,
+                            foregroundColor: AppTheme.textLight,
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(25),
@@ -174,7 +174,7 @@ class _VolunteerEvaluationDetailsScreenState
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppTheme.primary,
-                            foregroundColor: Colors.white,
+                            foregroundColor: AppTheme.textLight,
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(25),
@@ -234,7 +234,7 @@ class _VolunteerEvaluationDetailsScreenState
             child: Center(
               child: Text(
                 errorMessage,
-                style: const TextStyle(fontFamily: 'Cairo', color: Colors.grey),
+                style: const TextStyle(fontFamily: 'Cairo', color: AppTheme.secondary),
               ),
             ),
           );
@@ -247,7 +247,7 @@ class _VolunteerEvaluationDetailsScreenState
             child: Center(
               child: Text(
                 'لا توجد تقييمات',
-                style: TextStyle(fontFamily: 'Cairo', color: Colors.grey),
+                style: TextStyle(fontFamily: 'Cairo', color: AppTheme.secondary),
               ),
             ),
           );
@@ -263,7 +263,7 @@ class _VolunteerEvaluationDetailsScreenState
             child: Center(
               child: Text(
                 'خطأ في تحميل البيانات',
-                style: const TextStyle(fontFamily: 'Cairo', color: Colors.grey),
+                style: const TextStyle(fontFamily: 'Cairo', color: AppTheme.secondary),
               ),
             ),
           );
@@ -297,7 +297,7 @@ class _VolunteerEvaluationDetailsScreenState
             padding: EdgeInsets.all(40),
             child: Text(
               'لا توجد تقييمات',
-              style: TextStyle(fontFamily: 'Cairo', color: Colors.grey),
+              style: TextStyle(fontFamily: 'Cairo', color: AppTheme.secondary),
             ),
           )
         else
@@ -361,7 +361,7 @@ class _VolunteerEvaluationDetailsScreenState
           fontSize: 12,
         ),
         filled: true,
-        fillColor: Colors.white,
+        fillColor: AppTheme.cardBackground,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 20,
           vertical: 14,
@@ -391,7 +391,7 @@ class _VolunteerEvaluationDetailsScreenState
           fontFamily: 'Cairo',
           fontSize: 12,
           fontWeight: FontWeight.bold,
-          color: Colors.black87,
+          color: AppTheme.textDark,
         ),
         textAlign: TextAlign.center,
       ),
@@ -408,7 +408,7 @@ class _VolunteerEvaluationDetailsScreenState
           style: const TextStyle(
             fontFamily: 'Cairo',
             fontSize: 11,
-            color: Colors.black87,
+            color: AppTheme.textDark,
           ),
           textAlign: TextAlign.center,
           maxLines: 2, // Allow 2 lines for other cells
@@ -429,7 +429,7 @@ class _VolunteerEvaluationDetailsScreenState
           style: const TextStyle(
             fontFamily: 'Cairo',
             fontSize: 11,
-            color: Colors.black87,
+            color: AppTheme.textDark,
           ),
           textAlign: TextAlign.right,
           maxLines: null, // REMOVED line limit - allows wrapping

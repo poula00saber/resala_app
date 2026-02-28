@@ -1,4 +1,4 @@
-// ============================================
+﻿// ============================================
 // FILE: lib/presentation/screens/administrative/administrative_screen.dart
 // اداريات - Administrative Main Screen
 // ============================================
@@ -35,7 +35,7 @@ class AdministrativeScreen extends StatelessWidget {
           backgroundColor: AppTheme.background,
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
+            icon: const Icon(Icons.arrow_back_ios, color: AppTheme.textDark),
             onPressed: () => Navigator.pop(context),
           ),
         ),
@@ -107,7 +107,7 @@ class AdministrativeScreen extends StatelessWidget {
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.2),
+                color: AppTheme.primary.withOpacity(0.2),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -116,14 +116,14 @@ class AdministrativeScreen extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 60, color: Colors.white),
+              Icon(icon, size: 60, color: AppTheme.textLight),
               const SizedBox(height: 12),
               Text(
                 title,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   fontFamily: 'Cairo',
-                  color: Colors.white,
+                  color: AppTheme.cardBackground,
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
                 ),

@@ -1,4 +1,4 @@
-// ============================================
+﻿// ============================================
 // FILE: lib/presentation/screens/reports/fund_report_screen.dart
 // الصندوق - Fund Report Screen
 // ============================================
@@ -147,7 +147,7 @@ class _FundReportScreenState extends State<FundReportScreen> {
           backgroundColor: AppTheme.background,
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
+            icon: const Icon(Icons.arrow_back_ios, color: AppTheme.textDark),
             onPressed: () => Navigator.pop(context),
           ),
           actions: [
@@ -171,7 +171,7 @@ class _FundReportScreenState extends State<FundReportScreen> {
               margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppTheme.cardBackground,
                 borderRadius: BorderRadius.circular(25),
                 border: Border.all(color: AppTheme.primary),
               ),

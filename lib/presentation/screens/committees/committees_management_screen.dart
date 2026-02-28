@@ -1,4 +1,4 @@
-// ============================================
+﻿// ============================================
 // FILE: lib/presentation/screens/settings/committees_management_screen.dart
 // UPDATED: Collapse/expand with inline volunteers (#16)
 // UPDATED: Removed description from committees (#17)
@@ -43,14 +43,14 @@ class _CommitteesManagementScreenState
         backgroundColor: AppTheme.background,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_forward, color: Colors.black),
+          icon: const Icon(Icons.arrow_forward, color: AppTheme.textDark),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
           'إدارة اللجان',
           style: TextStyle(
             fontFamily: 'Cairo',
-            color: Colors.black,
+            color: AppTheme.textDark,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -105,7 +105,7 @@ class _CommitteesManagementScreenState
                     style: TextStyle(
                       fontFamily: 'Cairo',
                       fontSize: 16,
-                      color: Colors.grey[600],
+                      color: AppTheme.secondary,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -226,7 +226,7 @@ class _CommitteesManagementScreenState
                               duration: const Duration(milliseconds: 200),
                               child: const Icon(
                                 Icons.arrow_forward_ios,
-                                color: Colors.grey,
+                                color: AppTheme.secondary,
                                 size: 16,
                               ),
                             ),
@@ -248,12 +248,12 @@ class _CommitteesManagementScreenState
           ? FloatingActionButton.extended(
               onPressed: () => _showAddDialog(context),
               backgroundColor: AppTheme.primary,
-              icon: const Icon(Icons.add, color: Colors.white),
+              icon: const Icon(Icons.add, color: AppTheme.textLight),
               label: const Text(
                 'إضافة لجنة',
                 style: TextStyle(
                   fontFamily: 'Cairo',
-                  color: Colors.white,
+                  color: AppTheme.cardBackground,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -294,7 +294,7 @@ class _CommitteesManagementScreenState
               'لا يوجد متطوعون في هذه اللجنة',
               style: TextStyle(
                 fontFamily: 'Cairo',
-                color: Colors.grey[600],
+                color: AppTheme.secondary,
                 fontSize: 14,
               ),
               textAlign: TextAlign.center,
@@ -315,7 +315,7 @@ class _CommitteesManagementScreenState
                     style: TextStyle(
                       fontFamily: 'Cairo',
                       fontSize: 12,
-                      color: Colors.grey[600],
+                      color: AppTheme.secondary,
                     ),
                   ),
                   const Spacer(),
@@ -411,7 +411,7 @@ class _CommitteesManagementScreenState
             Container(
               padding: const EdgeInsets.all(8),
               decoration: const BoxDecoration(
-                color: Colors.white,
+                color: AppTheme.cardBackground,
                 shape: BoxShape.circle,
               ),
               child: const Icon(
@@ -430,7 +430,7 @@ class _CommitteesManagementScreenState
                     volunteer.name,
                     style: const TextStyle(
                       fontFamily: 'Cairo',
-                      color: Colors.white,
+                      color: AppTheme.cardBackground,
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                     ),
@@ -484,7 +484,7 @@ class _CommitteesManagementScreenState
             onPressed: () => Navigator.pop(context),
             child: const Text(
               'إلغاء',
-              style: TextStyle(fontFamily: 'Cairo', color: Colors.grey),
+              style: TextStyle(fontFamily: 'Cairo', color: AppTheme.secondary),
             ),
           ),
           ElevatedButton(
@@ -521,7 +521,7 @@ class _CommitteesManagementScreenState
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.primary,
-              foregroundColor: Colors.white,
+              foregroundColor: AppTheme.textLight,
             ),
             child: const Text('إضافة', style: TextStyle(fontFamily: 'Cairo')),
           ),
@@ -557,7 +557,7 @@ class _CommitteesManagementScreenState
             onPressed: () => Navigator.pop(context),
             child: const Text(
               'إلغاء',
-              style: TextStyle(fontFamily: 'Cairo', color: Colors.grey),
+              style: TextStyle(fontFamily: 'Cairo', color: AppTheme.secondary),
             ),
           ),
           ElevatedButton(
@@ -599,7 +599,7 @@ class _CommitteesManagementScreenState
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.primary,
-              foregroundColor: Colors.white,
+              foregroundColor: AppTheme.textLight,
             ),
             child: const Text('حفظ', style: TextStyle(fontFamily: 'Cairo')),
           ),
@@ -650,7 +650,7 @@ class _CommitteesManagementScreenState
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
+              foregroundColor: AppTheme.textLight,
             ),
             child: const Text('حذف', style: TextStyle(fontFamily: 'Cairo')),
           ),

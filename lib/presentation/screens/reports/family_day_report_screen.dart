@@ -1,4 +1,4 @@
-// ============================================
+﻿// ============================================
 // FILE: lib/presentation/screens/reports/family_day_report_screen.dart
 // اليوم العائلي - Family Day Report Screen
 // ============================================
@@ -142,7 +142,7 @@ class _FamilyDayReportScreenState extends State<FamilyDayReportScreen> {
           backgroundColor: AppTheme.background,
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
+            icon: const Icon(Icons.arrow_back_ios, color: AppTheme.textDark),
             onPressed: () => Navigator.pop(context),
           ),
           actions: [

@@ -1,4 +1,4 @@
-// ============================================
+﻿// ============================================
 // FILE: lib/presentation/screens/home/profiles_screen.dart
 // Matching your design from Image 2
 // ============================================
@@ -43,7 +43,7 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
         elevation: 0,
         leading: _isDeleteMode
             ? IconButton(
-                icon: const Icon(Icons.close, color: Colors.black),
+                icon: const Icon(Icons.close, color: AppTheme.textDark),
                 onPressed: () {
                   setState(() {
                     _isDeleteMode = false;
@@ -52,14 +52,14 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
                 },
               )
             : IconButton(
-                icon: const Icon(Icons.arrow_back, color: Colors.black),
+                icon: const Icon(Icons.arrow_back, color: AppTheme.textDark),
                 onPressed: () => Navigator.pop(context),
               ),
         title: Text(
           _isDeleteMode ? 'حذف (${_selectedForDelete.length})' : 'البروفايلات',
           style: const TextStyle(
             fontFamily: 'Cairo',
-            color: Colors.black,
+            color: AppTheme.textDark,
             fontSize: 20,
             fontWeight: FontWeight.w600,
           ),
@@ -102,11 +102,11 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
                 hintText: 'بحث',
                 hintStyle: const TextStyle(
                   fontFamily: 'Cairo',
-                  color: Colors.grey,
+                  color: AppTheme.secondary,
                 ),
-                prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                prefixIcon: const Icon(Icons.search, color: AppTheme.secondary),
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: AppTheme.cardBackground,
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 20,
                   vertical: 16,
@@ -166,7 +166,7 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
                       'لا توجد بروفايلات',
                       style: TextStyle(
                         fontFamily: 'Cairo',
-                        color: Colors.grey,
+                        color: AppTheme.secondary,
                         fontSize: 16,
                       ),
                     ),
@@ -199,7 +199,7 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
         borderRadius: BorderRadius.circular(30),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: AppTheme.primary.withOpacity(0.1),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -243,7 +243,7 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppTheme.cardBackground,
                   shape: BoxShape.circle,
                   image:
                       volunteer.profileImage != null &&
@@ -273,7 +273,7 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
                   volunteer.name,
                   style: const TextStyle(
                     fontFamily: 'Cairo',
-                    color: Colors.white,
+                    color: AppTheme.cardBackground,
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                   ),
@@ -305,7 +305,7 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: const BoxDecoration(
-                    color: Colors.white,
+                    color: AppTheme.cardBackground,
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(

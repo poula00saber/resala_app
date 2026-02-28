@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:resala/presentation/screens/home/add_volunteer_screen.dart';
 import 'package:resala/presentation/themes/app_theme.dart';
 
@@ -91,7 +91,7 @@ class _VolunteerManagementScreenState extends State<VolunteerManagementScreen> {
         appBar: AppBar(
           title: Text("متطوعين ${widget.event['title']}"),
           backgroundColor: AppTheme.primary,
-          foregroundColor: Colors.white,
+          foregroundColor: AppTheme.textLight,
           bottom: const TabBar(
             tabs: [
               Tab(text: 'المتطوعين المضافين'),
@@ -113,7 +113,7 @@ class _VolunteerManagementScreenState extends State<VolunteerManagementScreen> {
         floatingActionButton: FloatingActionButton(
           onPressed: _navigateToAddVolunteer,
           backgroundColor: AppTheme.primary,
-          foregroundColor: Colors.white,
+          foregroundColor: AppTheme.textLight,
           child: const Icon(Icons.person_add),
         ),
       ),
@@ -154,7 +154,7 @@ class _VolunteerManagementScreenState extends State<VolunteerManagementScreen> {
                 ? const Center(
                     child: Text(
                       'لا يوجد متطوعين مضافين',
-                      style: TextStyle(color: Colors.white, fontSize: 16),
+                      style: TextStyle(color: AppTheme.cardBackground, fontSize: 16),
                     ),
                   )
                 : ListView.builder(
@@ -168,7 +168,7 @@ class _VolunteerManagementScreenState extends State<VolunteerManagementScreen> {
                             backgroundColor: AppTheme.primary,
                             child: Text(
                               volunteer['name'][0],
-                              style: const TextStyle(color: Colors.white),
+                              style: const TextStyle(color: AppTheme.textLight),
                             ),
                           ),
                           title: Text(volunteer['name']),
@@ -205,7 +205,7 @@ class _VolunteerManagementScreenState extends State<VolunteerManagementScreen> {
                   Expanded(
                     child: Text(
                       'اختر متطوعين من قاعدة البيانات لإضافتهم للحدث',
-                      style: TextStyle(color: Colors.grey[700]),
+                      style: TextStyle(color: AppTheme.secondary),
                     ),
                   ),
                 ],
@@ -229,7 +229,7 @@ class _VolunteerManagementScreenState extends State<VolunteerManagementScreen> {
                       backgroundColor: AppTheme.primary,
                       child: Text(
                         volunteer['name'][0],
-                        style: const TextStyle(color: Colors.white),
+                        style: const TextStyle(color: AppTheme.textLight),
                       ),
                     ),
                     title: Text(volunteer['name']),

@@ -1,4 +1,4 @@
-// ============================================
+﻿// ============================================
 // FILE: lib/presentation/screens/volunteers/select_volunteer_screen.dart
 // UPDATED: Supports multi-select via long press + tap to toggle
 // Single tap selects one (returns String), long press enables multi-select (returns List<String>)
@@ -50,7 +50,7 @@ class _SelectVolunteerScreenState extends State<SelectVolunteerScreen> {
         backgroundColor: const Color(0xFFE8DDD3),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.arrow_back, color: AppTheme.textDark),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -58,7 +58,7 @@ class _SelectVolunteerScreenState extends State<SelectVolunteerScreen> {
               ? 'تم اختيار ${_selectedIds.length}'
               : 'اختيار متطوع حالي',
           style: const TextStyle(
-            color: Colors.black,
+            color: AppTheme.textDark,
             fontSize: 20,
             fontWeight: FontWeight.w500,
           ),
@@ -67,7 +67,7 @@ class _SelectVolunteerScreenState extends State<SelectVolunteerScreen> {
         actions: [
           if (_isMultiSelectMode) ...[
             IconButton(
-              icon: const Icon(Icons.close, color: Colors.black),
+              icon: const Icon(Icons.close, color: AppTheme.textDark),
               onPressed: () {
                 setState(() {
                   _isMultiSelectMode = false;
@@ -82,11 +82,11 @@ class _SelectVolunteerScreenState extends State<SelectVolunteerScreen> {
           ? FloatingActionButton.extended(
               onPressed: _confirmMultiSelect,
               backgroundColor: AppTheme.primary,
-              icon: const Icon(Icons.check, color: Colors.white),
+              icon: const Icon(Icons.check, color: AppTheme.textLight),
               label: Text(
                 'تأكيد (${_selectedIds.length})',
                 style: const TextStyle(
-                  color: Colors.white,
+                  color: AppTheme.cardBackground,
                   fontFamily: 'Cairo',
                   fontWeight: FontWeight.bold,
                 ),
@@ -104,7 +104,7 @@ class _SelectVolunteerScreenState extends State<SelectVolunteerScreen> {
                 style: TextStyle(
                   fontFamily: 'Cairo',
                   fontSize: 12,
-                  color: Colors.grey[600],
+                  color: AppTheme.secondary,
                 ),
               ),
             ),
@@ -112,14 +112,14 @@ class _SelectVolunteerScreenState extends State<SelectVolunteerScreen> {
             child: Container(
               margin: const EdgeInsets.symmetric(horizontal: 30),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppTheme.cardBackground,
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(30),
                   topRight: Radius.circular(30),
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: AppTheme.primary.withOpacity(0.1),
                     blurRadius: 10,
                     offset: const Offset(0, -2),
                   ),
@@ -136,9 +136,9 @@ class _SelectVolunteerScreenState extends State<SelectVolunteerScreen> {
                       decoration: InputDecoration(
                         hintText: 'بحث',
                         hintStyle: TextStyle(color: Colors.grey[400]),
-                        prefixIcon: Icon(Icons.search, color: Colors.grey[600]),
+                        prefixIcon: Icon(Icons.search, color: AppTheme.secondary),
                         filled: true,
-                        fillColor: Colors.white,
+                        fillColor: AppTheme.cardBackground,
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 20,
                           vertical: 12,
@@ -209,7 +209,7 @@ class _SelectVolunteerScreenState extends State<SelectVolunteerScreen> {
                             child: Text(
                               'لا توجد نتائج',
                               style: TextStyle(
-                                color: Colors.grey,
+                                color: AppTheme.secondary,
                                 fontSize: 16,
                               ),
                             ),
@@ -248,7 +248,7 @@ class _SelectVolunteerScreenState extends State<SelectVolunteerScreen> {
                                   backgroundColor: isSelected
                                       ? AppTheme.primary.withOpacity(0.8)
                                       : AppTheme.primary,
-                                  foregroundColor: Colors.white,
+                                  foregroundColor: AppTheme.textLight,
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 20,
                                     vertical: 16,
@@ -257,7 +257,7 @@ class _SelectVolunteerScreenState extends State<SelectVolunteerScreen> {
                                     borderRadius: BorderRadius.circular(25),
                                     side: isSelected
                                         ? const BorderSide(
-                                            color: Colors.white,
+                                            color: AppTheme.cardBackground,
                                             width: 2,
                                           )
                                         : BorderSide.none,
@@ -272,7 +272,7 @@ class _SelectVolunteerScreenState extends State<SelectVolunteerScreen> {
                                         isSelected
                                             ? Icons.check_circle
                                             : Icons.radio_button_unchecked,
-                                        color: Colors.white,
+                                        color: AppTheme.cardBackground,
                                         size: 22,
                                       ),
                                     if (_isMultiSelectMode)
@@ -313,7 +313,7 @@ class _SelectVolunteerScreenState extends State<SelectVolunteerScreen> {
                                       child: const Icon(
                                         Icons.person,
                                         size: 24,
-                                        color: Colors.white,
+                                        color: AppTheme.cardBackground,
                                       ),
                                     ),
                                   ],

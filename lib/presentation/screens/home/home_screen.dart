@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:resala/presentation/screens/contacts/contacts_screen.dart';
 import 'package:resala/presentation/screens/promotions/promotions_screen.dart';
 import 'package:resala/presentation/screens/committees/committees_management_screen.dart';
@@ -72,12 +72,12 @@ class _HomeScreenState extends State<HomeScreen> {
               fontFamily: 'Cairo',
               fontWeight: FontWeight.bold,
               fontSize: 24,
-              color: Colors.white,
+              color: AppTheme.cardBackground,
             ),
           ),
           centerTitle: true,
           backgroundColor: AppTheme.primary,
-          foregroundColor: Colors.white,
+          foregroundColor: AppTheme.textLight,
           leading: IconButton(
             icon: const Icon(Icons.menu),
             onPressed: () => _scaffoldKey.currentState?.openDrawer(),
@@ -88,14 +88,14 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.lock_outline, size: 80, color: Colors.grey),
+              Icon(Icons.lock_outline, size: 80, color: AppTheme.secondary),
               SizedBox(height: 16),
               Text(
                 'لا توجد صلاحيات',
                 style: TextStyle(
                   fontFamily: 'Cairo',
                   fontSize: 20,
-                  color: Colors.grey,
+                  color: AppTheme.secondary,
                 ),
               ),
               SizedBox(height: 8),
@@ -104,7 +104,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 style: TextStyle(
                   fontFamily: 'Cairo',
                   fontSize: 14,
-                  color: Colors.grey,
+                  color: AppTheme.secondary,
                 ),
               ),
             ],
@@ -122,12 +122,12 @@ class _HomeScreenState extends State<HomeScreen> {
             fontFamily: 'Cairo',
             fontWeight: FontWeight.bold,
             fontSize: 22,
-            color: Colors.white,
+            color: AppTheme.cardBackground,
           ),
         ),
         centerTitle: true,
         backgroundColor: AppTheme.primary,
-        foregroundColor: Colors.white,
+        foregroundColor: AppTheme.textLight,
         leading: IconButton(
           icon: const Icon(Icons.menu),
           onPressed: () => _scaffoldKey.currentState?.openDrawer(),
@@ -166,7 +166,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   const CircleAvatar(
                     radius: 35,
-                    backgroundColor: Colors.white,
+                    backgroundColor: AppTheme.cardBackground,
                     child: Icon(
                       Icons.person,
                       size: 40,
@@ -178,7 +178,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     user?.displayName ?? user?.email ?? 'مدير النظام',
                     style: const TextStyle(
                       fontFamily: 'Cairo',
-                      color: Colors.white,
+                      color: AppTheme.cardBackground,
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
@@ -414,7 +414,7 @@ class _HomeScreenState extends State<HomeScreen> {
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.2),
+                color: AppTheme.primary.withOpacity(0.2),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -423,13 +423,13 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 60, color: Colors.white),
+              Icon(icon, size: 60, color: AppTheme.textLight),
               const SizedBox(height: 12),
               Text(
                 title,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
-                  color: Colors.white,
+                  color: AppTheme.cardBackground,
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),

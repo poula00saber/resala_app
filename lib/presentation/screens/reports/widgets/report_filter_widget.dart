@@ -1,4 +1,4 @@
-// ============================================
+﻿// ============================================
 // FILE: lib/presentation/screens/reports/widgets/report_filter_widget.dart
 // Reusable filter widget for reports
 // ============================================
@@ -167,7 +167,7 @@ class _ReportFilterWidgetState extends State<ReportFilterWidget> {
                   onPressed: () => Navigator.pop(context),
                   child: const Text(
                     'إلغاء',
-                    style: TextStyle(fontFamily: 'Cairo', color: Colors.grey),
+                    style: TextStyle(fontFamily: 'Cairo', color: AppTheme.secondary),
                   ),
                 ),
                 ElevatedButton(
@@ -183,7 +183,7 @@ class _ReportFilterWidgetState extends State<ReportFilterWidget> {
                   ),
                   child: const Text(
                     'تطبيق',
-                    style: TextStyle(fontFamily: 'Cairo', color: Colors.white),
+                    style: TextStyle(fontFamily: 'Cairo', color: AppTheme.textLight),
                   ),
                 ),
               ],
@@ -287,7 +287,7 @@ class _ReportFilterWidgetState extends State<ReportFilterWidget> {
                   onPressed: () => Navigator.pop(context),
                   child: const Text(
                     'إلغاء',
-                    style: TextStyle(fontFamily: 'Cairo', color: Colors.grey),
+                    style: TextStyle(fontFamily: 'Cairo', color: AppTheme.secondary),
                   ),
                 ),
                 ElevatedButton(
@@ -303,7 +303,7 @@ class _ReportFilterWidgetState extends State<ReportFilterWidget> {
                   ),
                   child: const Text(
                     'تطبيق',
-                    style: TextStyle(fontFamily: 'Cairo', color: Colors.white),
+                    style: TextStyle(fontFamily: 'Cairo', color: AppTheme.textLight),
                   ),
                 ),
               ],
@@ -328,7 +328,7 @@ class _ReportFilterWidgetState extends State<ReportFilterWidget> {
               hintText: 'الاسم',
               hintStyle: TextStyle(color: Colors.grey[500]),
               filled: true,
-              fillColor: Colors.white,
+              fillColor: AppTheme.cardBackground,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(25),
                 borderSide: const BorderSide(color: AppTheme.primary),
@@ -363,7 +363,7 @@ class _ReportFilterWidgetState extends State<ReportFilterWidget> {
                     vertical: 14,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppTheme.cardBackground,
                     borderRadius: BorderRadius.circular(25),
                     border: Border.all(color: AppTheme.primary),
                   ),
@@ -415,7 +415,7 @@ class _ReportFilterWidgetState extends State<ReportFilterWidget> {
                       vertical: 14,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppTheme.cardBackground,
                       borderRadius: BorderRadius.circular(25),
                       border: Border.all(color: AppTheme.primary),
                     ),
@@ -461,7 +461,7 @@ class _ReportFilterWidgetState extends State<ReportFilterWidget> {
             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             padding: const EdgeInsets.symmetric(horizontal: 12),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppTheme.cardBackground,
               borderRadius: BorderRadius.circular(25),
               border: Border.all(color: AppTheme.primary),
             ),
@@ -470,7 +470,7 @@ class _ReportFilterWidgetState extends State<ReportFilterWidget> {
                 isExpanded: true,
                 hint: const Text(
                   'اللجنة',
-                  style: TextStyle(color: Colors.grey),
+                  style: TextStyle(color: AppTheme.secondary),
                 ),
                 value: _selectedCommitteeId,
                 items: [

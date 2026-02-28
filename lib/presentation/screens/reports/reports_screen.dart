@@ -1,4 +1,4 @@
-// ============================================
+﻿// ============================================
 // FILE: lib/presentation/screens/reports/reports_screen.dart
 // Main Reports Menu Screen
 // ============================================
@@ -39,7 +39,7 @@ class ReportsScreen extends StatelessWidget {
           backgroundColor: AppTheme.background,
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
+            icon: const Icon(Icons.arrow_back_ios, color: AppTheme.textDark),
             onPressed: () => Navigator.pop(context),
           ),
         ),
@@ -164,7 +164,7 @@ class ReportsScreen extends StatelessWidget {
         onPressed: onTap,
         style: ElevatedButton.styleFrom(
           backgroundColor: AppTheme.primary,
-          foregroundColor: Colors.white,
+          foregroundColor: AppTheme.textLight,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
           ),

@@ -1,4 +1,4 @@
-// ============================================
+﻿// ============================================
 // FILE: lib/presentation/screens/reports/marketing_report_screen.dart
 // الدعايا - Marketing Report Screen
 // ============================================
@@ -139,7 +139,7 @@ class _MarketingReportScreenState extends State<MarketingReportScreen> {
           backgroundColor: AppTheme.background,
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
+            icon: const Icon(Icons.arrow_back_ios, color: AppTheme.textDark),
             onPressed: () => Navigator.pop(context),
           ),
           actions: [

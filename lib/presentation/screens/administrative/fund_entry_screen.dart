@@ -1,4 +1,4 @@
-// ============================================
+﻿// ============================================
 // FILE: lib/presentation/screens/administrative/fund_entry_screen.dart
 // الصندوق - Fund Entry Screen (Data Entry)
 // UPDATED: Added permission checks for add/delete
@@ -264,7 +264,7 @@ class _FundEntryScreenState extends State<FundEntryScreen> {
           backgroundColor: AppTheme.background,
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
+            icon: const Icon(Icons.arrow_back_ios, color: AppTheme.textDark),
             onPressed: () => Navigator.pop(context),
           ),
         ),
@@ -300,7 +300,7 @@ class _FundEntryScreenState extends State<FundEntryScreen> {
                             '${_totalFundBalance.toStringAsFixed(0)} جنيه',
                             style: const TextStyle(
                               fontFamily: 'Cairo',
-                              color: Colors.white,
+                              color: AppTheme.cardBackground,
                               fontSize: 32,
                               fontWeight: FontWeight.bold,
                             ),
@@ -313,7 +313,7 @@ class _FundEntryScreenState extends State<FundEntryScreen> {
                     // Transaction Type Toggle
                     Container(
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppTheme.cardBackground,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           color: AppTheme.primary.withOpacity(0.3),
@@ -399,7 +399,7 @@ class _FundEntryScreenState extends State<FundEntryScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppTheme.cardBackground,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           color: AppTheme.primary.withOpacity(0.3),
@@ -478,7 +478,7 @@ class _FundEntryScreenState extends State<FundEntryScreen> {
                                     horizontal: 12,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: Colors.white,
+                                    color: AppTheme.cardBackground,
                                     borderRadius: BorderRadius.circular(12),
                                     border: Border.all(
                                       color: AppTheme.primary.withOpacity(0.3),
@@ -528,7 +528,7 @@ class _FundEntryScreenState extends State<FundEntryScreen> {
                                     horizontal: 12,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: Colors.white,
+                                    color: AppTheme.cardBackground,
                                     borderRadius: BorderRadius.circular(12),
                                     border: Border.all(
                                       color: AppTheme.primary.withOpacity(0.3),
@@ -582,7 +582,7 @@ class _FundEntryScreenState extends State<FundEntryScreen> {
                     const SizedBox(height: 8),
                     Container(
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppTheme.cardBackground,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           color: AppTheme.primary.withOpacity(0.3),
@@ -624,7 +624,7 @@ class _FundEntryScreenState extends State<FundEntryScreen> {
                       const SizedBox(height: 8),
                       Container(
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: AppTheme.cardBackground,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
                             color: AppTheme.primary.withOpacity(0.3),
@@ -665,7 +665,7 @@ class _FundEntryScreenState extends State<FundEntryScreen> {
                                   height: 20,
                                   width: 20,
                                   child: CircularProgressIndicator(
-                                    color: Colors.white,
+                                    color: AppTheme.cardBackground,
                                     strokeWidth: 2,
                                   ),
                                 )
@@ -677,7 +677,7 @@ class _FundEntryScreenState extends State<FundEntryScreen> {
                                     fontFamily: 'Cairo',
                                     fontWeight: FontWeight.bold,
                                     fontSize: 18,
-                                    color: Colors.white,
+                                    color: AppTheme.cardBackground,
                                   ),
                                 ),
                         ),
@@ -742,13 +742,13 @@ class _FundEntryScreenState extends State<FundEntryScreen> {
       return Container(
         padding: const EdgeInsets.all(32),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppTheme.cardBackground,
           borderRadius: BorderRadius.circular(12),
         ),
         child: const Center(
           child: Text(
             'لا توجد سجلات',
-            style: TextStyle(fontFamily: 'Cairo', color: Colors.grey),
+            style: TextStyle(fontFamily: 'Cairo', color: AppTheme.secondary),
           ),
         ),
       );
@@ -760,7 +760,7 @@ class _FundEntryScreenState extends State<FundEntryScreen> {
           margin: const EdgeInsets.only(bottom: 8),
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppTheme.cardBackground,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: record.isWithdrawal
@@ -803,7 +803,7 @@ class _FundEntryScreenState extends State<FundEntryScreen> {
                         style: const TextStyle(
                           fontFamily: 'Cairo',
                           fontSize: 12,
-                          color: Colors.grey,
+                          color: AppTheme.secondary,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -814,7 +814,7 @@ class _FundEntryScreenState extends State<FundEntryScreen> {
                         style: const TextStyle(
                           fontFamily: 'Cairo',
                           fontSize: 12,
-                          color: Colors.grey,
+                          color: AppTheme.secondary,
                         ),
                       ),
                   ],

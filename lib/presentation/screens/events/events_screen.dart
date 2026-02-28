@@ -1,4 +1,4 @@
-// ============================================
+﻿// ============================================
 // FILE: lib/presentation/screens/events/events_screen.dart
 // UPDATED: Calculates shirt count from volunteers' hasTshirt field
 // UPDATED: Shows committee name for meetings (type: 'اجتماع')
@@ -163,7 +163,7 @@ class _EventsScreenState extends State<EventsScreen> {
   void _showFilterMenu(BuildContext context, EventProvider provider) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: AppTheme.cardBackground,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -192,7 +192,7 @@ class _EventsScreenState extends State<EventsScreen> {
                       fontFamily: 'Cairo',
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+                      color: AppTheme.textDark,
                     ),
                   ),
                 ),
@@ -267,7 +267,7 @@ class _EventsScreenState extends State<EventsScreen> {
                   fontFamily: 'Cairo',
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
-                  color: Colors.black87,
+                  color: AppTheme.textDark,
                 ),
               ),
             ),
@@ -288,7 +288,7 @@ class _EventsScreenState extends State<EventsScreen> {
           children: [
             // Static Header Section - Always visible at top
             Container(
-              color: Colors.white,
+              color: AppTheme.cardBackground,
               padding: const EdgeInsets.fromLTRB(24, 60, 24, 24),
               child: Column(
                 children: [
@@ -308,7 +308,7 @@ class _EventsScreenState extends State<EventsScreen> {
                             _selectionMode != SelectionMode.none
                                 ? Icons.close
                                 : Icons.arrow_back,
-                            color: Colors.black87,
+                            color: AppTheme.textDark,
                           ),
                           padding: EdgeInsets.zero,
                           onPressed: () {
@@ -336,7 +336,7 @@ class _EventsScreenState extends State<EventsScreen> {
                               : 'الأحداث',
                           style: const TextStyle(
                             fontFamily: 'Cairo',
-                            color: Colors.black87,
+                            color: AppTheme.textDark,
                             fontSize: 28,
                             fontWeight: FontWeight.bold,
                           ),
@@ -468,7 +468,7 @@ class _EventsScreenState extends State<EventsScreen> {
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.primary,
-                          foregroundColor: Colors.white,
+                          foregroundColor: AppTheme.textLight,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                           ),
@@ -525,7 +525,7 @@ class _EventsScreenState extends State<EventsScreen> {
                     if (eventProvider.isLoading) {
                       return const Center(
                         child: CircularProgressIndicator(
-                          color: Colors.white,
+                          color: AppTheme.cardBackground,
                           strokeWidth: 3,
                         ),
                       );
@@ -555,7 +555,7 @@ class _EventsScreenState extends State<EventsScreen> {
                               'لا توجد أحداث حالياً',
                               style: TextStyle(
                                 fontFamily: 'Cairo',
-                                color: Colors.white,
+                                color: AppTheme.cardBackground,
                                 fontSize: 22,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -864,11 +864,11 @@ class _DayCardState extends State<_DayCard>
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.cardBackground,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.12),
+            color: AppTheme.primary.withOpacity(0.12),
             blurRadius: 16,
             offset: const Offset(0, 8),
           ),
@@ -916,7 +916,7 @@ class _DayCardState extends State<_DayCard>
                             fontFamily: 'Cairo',
                             fontSize: 26,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                            color: AppTheme.cardBackground,
                             height: 1,
                           ),
                         ),
@@ -936,7 +936,7 @@ class _DayCardState extends State<_DayCard>
                               fontFamily: 'Cairo',
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
-                              color: Colors.white,
+                              color: AppTheme.cardBackground,
                             ),
                           ),
                         ),
@@ -957,7 +957,7 @@ class _DayCardState extends State<_DayCard>
                             fontFamily: 'Cairo',
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
-                            color: Colors.black87,
+                            color: AppTheme.textDark,
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -966,7 +966,7 @@ class _DayCardState extends State<_DayCard>
                             Icon(
                               Icons.calendar_month,
                               size: 18,
-                              color: Colors.grey[600],
+                              color: AppTheme.secondary,
                             ),
                             const SizedBox(width: 8),
                             Text(
@@ -974,7 +974,7 @@ class _DayCardState extends State<_DayCard>
                               style: TextStyle(
                                 fontFamily: 'Cairo',
                                 fontSize: 16,
-                                color: Colors.grey[600],
+                                color: AppTheme.secondary,
                               ),
                             ),
                             const Spacer(),
@@ -1210,7 +1210,7 @@ class _EventTileState extends State<_EventTile> {
                             widget.event.title,
                             style: const TextStyle(
                               fontFamily: 'Cairo',
-                              color: Colors.white,
+                              color: AppTheme.cardBackground,
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
                             ),
@@ -1227,7 +1227,7 @@ class _EventTileState extends State<_EventTile> {
                           ),
                           child: const Icon(
                             Icons.arrow_forward_ios,
-                            color: Colors.white,
+                            color: AppTheme.cardBackground,
                             size: 16,
                           ),
                         ),
@@ -1249,7 +1249,7 @@ class _EventTileState extends State<_EventTile> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(typeIcon, color: Colors.white, size: 18),
+                          Icon(typeIcon, color: AppTheme.cardBackground, size: 18),
                           const SizedBox(width: 10),
                           Flexible(
                             child:
@@ -1260,7 +1260,7 @@ class _EventTileState extends State<_EventTile> {
                                     width: 20,
                                     height: 20,
                                     child: CircularProgressIndicator(
-                                      color: Colors.white,
+                                      color: AppTheme.cardBackground,
                                       strokeWidth: 2,
                                     ),
                                   )
@@ -1268,7 +1268,7 @@ class _EventTileState extends State<_EventTile> {
                                     _eventTypeDetails,
                                     style: const TextStyle(
                                       fontFamily: 'Cairo',
-                                      color: Colors.white,
+                                      color: AppTheme.cardBackground,
                                       fontSize: 14,
                                       fontWeight: FontWeight.w600,
                                     ),
@@ -1312,7 +1312,7 @@ class _EventTileState extends State<_EventTile> {
                                     width: 20,
                                     height: 20,
                                     child: CircularProgressIndicator(
-                                      color: Colors.white,
+                                      color: AppTheme.cardBackground,
                                       strokeWidth: 2,
                                     ),
                                   ),
@@ -1379,7 +1379,7 @@ class _EventTileState extends State<_EventTile> {
                   ),
                 ),
                 child: widget.isSelected
-                    ? const Icon(Icons.check, color: Colors.white, size: 18)
+                    ? const Icon(Icons.check, color: AppTheme.cardBackground, size: 18)
                     : null,
               ),
             ),

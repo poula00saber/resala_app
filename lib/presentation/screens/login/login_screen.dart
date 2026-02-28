@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -457,7 +457,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppTheme.cardBackground,
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
@@ -498,7 +498,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         style: TextStyle(
                           fontFamily: 'Cairo',
                           fontSize: 16,
-                          color: Colors.grey,
+                          color: AppTheme.secondary,
                         ),
                       ),
                     ],
@@ -510,11 +510,11 @@ class _LoginScreenState extends State<LoginScreen> {
                   Container(
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppTheme.cardBackground,
                       borderRadius: BorderRadius.circular(24),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.08),
+                          color: AppTheme.primary.withOpacity(0.08),
                           blurRadius: 20,
                           offset: const Offset(0, 10),
                         ),
@@ -574,7 +574,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     style: TextStyle(
                                       fontFamily: 'Cairo',
                                       fontSize: 12,
-                                      color: Colors.grey,
+                                      color: AppTheme.secondary,
                                     ),
                                   ),
                                   const SizedBox(height: 8),
@@ -707,7 +707,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   : _login,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppTheme.primary,
-                                foregroundColor: Colors.white,
+                                foregroundColor: AppTheme.textLight,
                                 elevation: 0,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(16),
@@ -719,7 +719,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                       height: 24,
                                       width: 24,
                                       child: CircularProgressIndicator(
-                                        color: Colors.white,
+                                        color: AppTheme.cardBackground,
                                         strokeWidth: 2.5,
                                       ),
                                     )
@@ -756,7 +756,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     style: TextStyle(
                       fontFamily: 'Cairo',
                       fontSize: 12,
-                      color: Colors.grey,
+                      color: AppTheme.secondary,
                     ),
                   ),
 
@@ -798,7 +798,7 @@ class _LoginScreenState extends State<LoginScreen> {
           style: const TextStyle(
             fontFamily: 'Cairo',
             fontSize: 15,
-            color: Colors.black87,
+            color: AppTheme.textDark,
           ),
           decoration: InputDecoration(
             hintText: hint,

@@ -1,4 +1,4 @@
-  import 'package:flutter/material.dart';
+﻿  import 'package:flutter/material.dart';
   import 'package:provider/provider.dart';
   import '../../providers/evaluation_provider.dart';
   import '../../themes/app_theme.dart';
@@ -110,7 +110,7 @@
             maxWidth: 400,
           ),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppTheme.cardBackground,
             borderRadius: BorderRadius.circular(30),
           ),
           child: Form(
@@ -132,7 +132,7 @@
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       IconButton(
-                        icon: const Icon(Icons.close, color: Colors.white),
+                        icon: const Icon(Icons.close, color: AppTheme.textLight),
                         onPressed: () => Navigator.pop(context),
                       ),
                       const Text(
@@ -141,7 +141,7 @@
                           fontFamily: 'Cairo',
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                          color: AppTheme.cardBackground,
                         ),
                       ),
                       const SizedBox(width: 48), // For balance
@@ -170,7 +170,7 @@
                               fontFamily: 'Cairo',
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
-                              color: Colors.black87,
+                              color: AppTheme.textDark,
                             ),
                           ),
                         ),
@@ -224,7 +224,7 @@
                                   fontFamily: 'Cairo',
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.black87,
+                                  color: AppTheme.textDark,
                                 ),
                               ),
                               const SizedBox(height: 12),
@@ -269,7 +269,7 @@
                                   fontFamily: 'Cairo',
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.black87,
+                                  color: AppTheme.textDark,
                                 ),
                               ),
                             ],
@@ -294,7 +294,7 @@
                             onPressed: _isLoading ? null : _saveEvaluation,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppTheme.primary,
-                              foregroundColor: Colors.white,
+                              foregroundColor: AppTheme.textLight,
                               padding: const EdgeInsets.symmetric(vertical: 16),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(25),
@@ -306,7 +306,7 @@
                                     height: 20,
                                     width: 20,
                                     child: CircularProgressIndicator(
-                                      color: Colors.white,
+                                      color: AppTheme.cardBackground,
                                       strokeWidth: 2,
                                     ),
                                   )
@@ -348,7 +348,7 @@
         style: const TextStyle(
           fontFamily: 'Cairo',
           fontSize: 14,
-          color: Colors.black87,
+          color: AppTheme.textDark,
         ),
         decoration: InputDecoration(
           hintText: label,
@@ -358,7 +358,7 @@
             fontSize: 13,
           ),
           filled: true,
-          fillColor: Colors.white,
+          fillColor: AppTheme.cardBackground,
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 16,
             vertical: 14,

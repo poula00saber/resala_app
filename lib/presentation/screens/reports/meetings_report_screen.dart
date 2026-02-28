@@ -1,4 +1,4 @@
-// ============================================
+﻿// ============================================
 // FILE: lib/presentation/screens/reports/meetings_report_screen.dart
 // الأجتماعات - Meetings Report Screen
 // ============================================
@@ -142,7 +142,7 @@ class _MeetingsReportScreenState extends State<MeetingsReportScreen> {
           backgroundColor: AppTheme.background,
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
+            icon: const Icon(Icons.arrow_back_ios, color: AppTheme.textDark),
             onPressed: () => Navigator.pop(context),
           ),
           actions: [

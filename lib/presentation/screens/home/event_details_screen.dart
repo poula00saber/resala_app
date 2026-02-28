@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:resala/presentation/screens/home/volunteer_management_screen.dart';
 import 'package:resala/presentation/themes/app_theme.dart';
 
@@ -71,7 +71,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
       appBar: AppBar(
         title: const Text("تفاصيل الحدث"),
         backgroundColor: AppTheme.primary,
-        foregroundColor: Colors.white,
+        foregroundColor: AppTheme.textLight,
         actions: [
           IconButton(
             icon: const Icon(Icons.save),
@@ -243,7 +243,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                               const SizedBox(height: 10),
                               const Text(
                                 'يمكنك إضافة متطوعين جدد أو اختيار من قاعدة البيانات',
-                                style: TextStyle(color: Colors.grey),
+                                style: TextStyle(color: AppTheme.secondary),
                               ),
                               const SizedBox(height: 15),
                               Row(
@@ -255,7 +255,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                                       label: const Text('إدارة المتطوعين'),
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: AppTheme.primary,
-                                        foregroundColor: Colors.white,
+                                        foregroundColor: AppTheme.textLight,
                                         padding: const EdgeInsets.symmetric(
                                           vertical: 12,
                                         ),
@@ -278,7 +278,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                               onPressed: _saveChanges,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppTheme.primary,
-                                foregroundColor: Colors.white,
+                                foregroundColor: AppTheme.textLight,
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 15,
                                 ),

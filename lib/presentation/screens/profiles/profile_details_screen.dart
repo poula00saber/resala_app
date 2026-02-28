@@ -1,4 +1,4 @@
-// ============================================
+﻿// ============================================
 // FILE: lib/presentation/screens/home/profile_details_screen.dart
 // REDESIGNED - Exact match to your image layout
 // ============================================
@@ -314,7 +314,7 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
                       decoration: BoxDecoration(
                         border: Border.all(color: AppTheme.primary, width: 3),
                         borderRadius: BorderRadius.circular(60),
-                        color: Colors.white,
+                        color: AppTheme.cardBackground,
                         boxShadow: [
                           BoxShadow(
                             color: Colors.grey.withOpacity(0.3),
@@ -382,12 +382,12 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
                           decoration: BoxDecoration(
                             color: AppTheme.primary,
                             shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 2),
+                            border: Border.all(color: AppTheme.cardBackground, width: 2),
                           ),
                           child: const Icon(
                             Icons.camera_alt,
                             size: 20,
-                            color: Colors.white,
+                            color: AppTheme.cardBackground,
                           ),
                         ),
                       ),
@@ -536,7 +536,7 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
 
                               return Container(
                                 decoration: BoxDecoration(
-                                  color: Colors.white,
+                                  color: AppTheme.cardBackground,
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
                                     color: AppTheme.primary,
@@ -553,7 +553,7 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
                                     style: const TextStyle(
                                       fontFamily: 'Cairo',
                                       fontSize: 14,
-                                      color: Colors.black,
+                                      color: AppTheme.textDark,
                                     ),
                                     items: [
                                       const DropdownMenuItem(
@@ -562,7 +562,7 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
                                           'اختر اللجنة',
                                           style: TextStyle(
                                             fontFamily: 'Cairo',
-                                            color: Colors.grey,
+                                            color: AppTheme.secondary,
                                           ),
                                         ),
                                       ),
@@ -642,7 +642,7 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
                           ),
                           Container(
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: AppTheme.cardBackground,
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
                                 color: AppTheme.primary,
@@ -659,7 +659,7 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
                                 style: const TextStyle(
                                   fontFamily: 'Cairo',
                                   fontSize: 14,
-                                  color: Colors.black,
+                                  color: AppTheme.textDark,
                                 ),
                                 items: [
                                   const DropdownMenuItem(
@@ -668,7 +668,7 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
                                       'اختر النوع',
                                       style: TextStyle(
                                         fontFamily: 'Cairo',
-                                        color: Colors.grey,
+                                        color: AppTheme.secondary,
                                       ),
                                     ),
                                   ),
@@ -751,7 +751,7 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
                                 const Icon(
                                   Icons.school,
                                   size: 20,
-                                  color: Colors.grey,
+                                  color: AppTheme.secondary,
                                 ),
                                 Expanded(
                                   child: Text(
@@ -830,7 +830,7 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
                       onPressed: _isLoading ? null : _saveProfile,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primary,
-                        foregroundColor: Colors.white,
+                        foregroundColor: AppTheme.textLight,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
@@ -842,7 +842,7 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
                               height: 24,
                               width: 24,
                               child: CircularProgressIndicator(
-                                color: Colors.white,
+                                color: AppTheme.cardBackground,
                                 strokeWidth: 2.5,
                               ),
                             )
@@ -956,7 +956,7 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
             hintText: 'أدخل $label',
             hintStyle: const TextStyle(
               fontFamily: 'Cairo',
-              color: Colors.grey,
+              color: AppTheme.secondary,
               fontSize: 13,
             ),
           ),
@@ -1024,7 +1024,7 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
     return Container(
       height: 56,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.cardBackground,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppTheme.primary, width: 1.5),
       ),

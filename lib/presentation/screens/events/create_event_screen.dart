@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/event_provider.dart';
 import '../../providers/committee_provider.dart';
@@ -217,7 +217,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       appBar: AppBar(
         title: const Text("إضافة حدث جديد"),
         backgroundColor: AppTheme.primary,
-        foregroundColor: Colors.white,
+        foregroundColor: AppTheme.textLight,
       ),
       body: Container(
         color: AppTheme.primary,
@@ -456,7 +456,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                               onPressed: _isLoading ? null : _createEvent,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppTheme.primary,
-                                foregroundColor: Colors.white,
+                                foregroundColor: AppTheme.textLight,
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 15,
                                 ),
@@ -466,7 +466,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                                       height: 20,
                                       width: 20,
                                       child: CircularProgressIndicator(
-                                        color: Colors.white,
+                                        color: AppTheme.cardBackground,
                                         strokeWidth: 2,
                                       ),
                                     )

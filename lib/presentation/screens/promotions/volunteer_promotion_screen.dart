@@ -1,4 +1,4 @@
-// ============================================
+﻿// ============================================
 // FILE: lib/presentation/screens/promotions/volunteer_promotion_screen.dart
 // UPDATED: New hierarchy with age checks
 // ============================================
@@ -155,14 +155,14 @@ class _VolunteerPromotionScreenState extends State<VolunteerPromotionScreen> {
         backgroundColor: AppTheme.background,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.arrow_back, color: AppTheme.textDark),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           widget.volunteer.name,
           style: const TextStyle(
             fontFamily: 'Cairo',
-            color: Colors.black,
+            color: AppTheme.textDark,
             fontSize: 18,
             fontWeight: FontWeight.w600,
           ),
@@ -183,11 +183,11 @@ class _VolunteerPromotionScreenState extends State<VolunteerPromotionScreen> {
                     width: double.infinity,
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppTheme.cardBackground,
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
+                          color: AppTheme.primary.withOpacity(0.05),
                           blurRadius: 10,
                           offset: const Offset(0, 4),
                         ),
@@ -200,7 +200,7 @@ class _VolunteerPromotionScreenState extends State<VolunteerPromotionScreen> {
                           style: TextStyle(
                             fontFamily: 'Cairo',
                             fontSize: 14,
-                            color: Colors.grey,
+                            color: AppTheme.secondary,
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -257,7 +257,7 @@ class _VolunteerPromotionScreenState extends State<VolunteerPromotionScreen> {
                                 style: const TextStyle(
                                   fontFamily: 'Cairo',
                                   fontSize: 12,
-                                  color: Colors.grey,
+                                  color: AppTheme.secondary,
                                 ),
                               ),
                             ),
@@ -278,7 +278,7 @@ class _VolunteerPromotionScreenState extends State<VolunteerPromotionScreen> {
                         fontFamily: 'Cairo',
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black87,
+                        color: AppTheme.textDark,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -287,7 +287,7 @@ class _VolunteerPromotionScreenState extends State<VolunteerPromotionScreen> {
                       style: const TextStyle(
                         fontFamily: 'Cairo',
                         fontSize: 12,
-                        color: Colors.grey,
+                        color: AppTheme.secondary,
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -339,7 +339,7 @@ class _VolunteerPromotionScreenState extends State<VolunteerPromotionScreen> {
                                     widget.volunteer.age < 17))
                             ? AppTheme.primary
                             : Colors.grey,
-                        foregroundColor: Colors.white,
+                        foregroundColor: AppTheme.textLight,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(25),
@@ -375,7 +375,7 @@ class _VolunteerPromotionScreenState extends State<VolunteerPromotionScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.cardBackground,
         borderRadius: BorderRadius.circular(15),
         border: Border.all(
           color: requirement.isCompleted ? AppTheme.primary : Colors.grey[300]!,
@@ -406,7 +406,7 @@ class _VolunteerPromotionScreenState extends State<VolunteerPromotionScreen> {
                   ),
                 ),
                 child: requirement.isCompleted
-                    ? const Icon(Icons.check, size: 16, color: Colors.white)
+                    ? const Icon(Icons.check, size: 16, color: AppTheme.textLight)
                     : (isAgeRequirement && widget.volunteer.age < 17)
                     ? Icon(Icons.block, size: 16, color: Colors.grey[400])
                     : null,
@@ -454,7 +454,7 @@ class _VolunteerPromotionScreenState extends State<VolunteerPromotionScreen> {
                   style: const TextStyle(
                     fontFamily: 'Cairo',
                     fontSize: 10,
-                    color: Colors.grey,
+                    color: AppTheme.secondary,
                   ),
                 ),
               ],

@@ -1,4 +1,4 @@
-// ============================================
+﻿// ============================================
 // FILE: lib/presentation/screens/users/user_management_screen.dart
 // Screen for admin to manage users
 // ============================================
@@ -40,14 +40,14 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
           backgroundColor: AppTheme.background,
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
+            icon: const Icon(Icons.arrow_back_ios, color: AppTheme.textDark),
             onPressed: () => Navigator.pop(context),
           ),
         ),
         floatingActionButton: FloatingActionButton(
           onPressed: () => _showAddUserDialog(context),
           backgroundColor: AppTheme.primary,
-          child: const Icon(Icons.person_add, color: Colors.white),
+          child: const Icon(Icons.person_add, color: AppTheme.textLight),
         ),
         body: StreamBuilder<List<AppUserModel>>(
           stream: _userRepository.getAllUsers(),
@@ -102,7 +102,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
           backgroundColor: user.isAdmin ? AppTheme.primary : Colors.grey,
           child: Icon(
             user.isAdmin ? Icons.admin_panel_settings : Icons.person,
-            color: Colors.white,
+            color: AppTheme.cardBackground,
           ),
         ),
         title: Text(
@@ -554,7 +554,7 @@ class _AddEditUserDialogState extends State<_AddEditUserDialog> {
                               height: 20,
                               width: 20,
                               child: CircularProgressIndicator(
-                                color: Colors.white,
+                                color: AppTheme.cardBackground,
                                 strokeWidth: 2,
                               ),
                             )
@@ -562,7 +562,7 @@ class _AddEditUserDialogState extends State<_AddEditUserDialog> {
                               isEditing ? 'تحديث' : 'إضافة',
                               style: const TextStyle(
                                 fontFamily: 'Cairo',
-                                color: Colors.white,
+                                color: AppTheme.cardBackground,
                               ),
                             ),
                     ),
@@ -583,7 +583,7 @@ class _AddEditUserDialogState extends State<_AddEditUserDialog> {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.cardBackground,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: Colors.grey.shade300),
       ),
@@ -669,7 +669,7 @@ class _AddEditUserDialogState extends State<_AddEditUserDialog> {
           style: TextStyle(
             fontFamily: 'Cairo',
             fontSize: 12,
-            color: Colors.grey,
+            color: AppTheme.secondary,
           ),
         ),
       ),

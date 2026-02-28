@@ -1,4 +1,4 @@
-// ============================================
+﻿// ============================================
 // FILE: lib/screens/home/volunteer_details_sheet.dart
 // Copy this ENTIRE file
 // ============================================
@@ -45,7 +45,7 @@ class _VolunteerDetailsSheetState extends State<VolunteerDetailsSheet> {
         top: 16,
       ),
       decoration: const BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.cardBackground,
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: SingleChildScrollView(
@@ -91,7 +91,7 @@ class _VolunteerDetailsSheetState extends State<VolunteerDetailsSheet> {
                           child: Text(
                             widget.volunteer['name'][0],
                             style: const TextStyle(
-                              color: Colors.white,
+                              color: AppTheme.cardBackground,
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
                             ),
@@ -113,7 +113,7 @@ class _VolunteerDetailsSheetState extends State<VolunteerDetailsSheet> {
                               Text(
                                 'متطوع',
                                 style: TextStyle(
-                                  color: Colors.grey[600],
+                                  color: AppTheme.secondary,
                                   fontSize: 14,
                                 ),
                               ),
@@ -185,7 +185,7 @@ class _VolunteerDetailsSheetState extends State<VolunteerDetailsSheet> {
                   _hasTshirt
                       ? 'المتطوع يمتلك تيشيرت الفعالية'
                       : 'المتطوع لا يمتلك تيشيرت',
-                  style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                  style: TextStyle(fontSize: 13, color: AppTheme.secondary),
                 ),
                 secondary: Container(
                   padding: const EdgeInsets.all(8),
@@ -213,7 +213,7 @@ class _VolunteerDetailsSheetState extends State<VolunteerDetailsSheet> {
                     onPressed: _confirm,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.primary,
-                      foregroundColor: Colors.white,
+                      foregroundColor: AppTheme.textLight,
                       padding: const EdgeInsets.symmetric(vertical: 15),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -244,7 +244,7 @@ class _VolunteerDetailsSheetState extends State<VolunteerDetailsSheet> {
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: Colors.grey[700],
+                        color: AppTheme.secondary,
                       ),
                     ),
                   ),
@@ -282,7 +282,7 @@ class _VolunteerDetailsSheetState extends State<VolunteerDetailsSheet> {
             children: [
               Text(
                 label,
-                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                style: TextStyle(fontSize: 12, color: AppTheme.secondary),
               ),
               const SizedBox(height: 2),
               Text(
