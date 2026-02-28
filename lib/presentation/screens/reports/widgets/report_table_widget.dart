@@ -55,18 +55,21 @@ class ReportTableWidget extends StatelessWidget {
               horizontalMargin: 16,
               columns: headers.map((header) {
                 return DataColumn(
-                  label: Text(
-                    header,
-                    style: const TextStyle(
-                      fontFamily: 'Cairo',
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                      color: AppTheme.primary,
+                  label: Expanded(
+                    child: Center(
+                      child: Text(
+                        header,
+                        style: const TextStyle(
+                          fontFamily: 'Cairo',
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                          color: AppTheme.primary,
+                        ),
+                        softWrap: true,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                    textAlign: TextAlign.right,
-                    softWrap: true,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
                   ),
                 );
               }).toList(),
