@@ -137,7 +137,22 @@ class _VolunteerEvaluationDetailsScreenState
                         ),
                       ],
                     ),
-                    child: _buildEvaluationsContent(),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(20),
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.vertical,
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: SizedBox(
+                            width: 600,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [_buildEvaluationsContent()],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
 
                   const SizedBox(height: 24),
@@ -234,7 +249,10 @@ class _VolunteerEvaluationDetailsScreenState
             child: Center(
               child: Text(
                 errorMessage,
-                style: const TextStyle(fontFamily: 'Cairo', color: AppTheme.secondary),
+                style: const TextStyle(
+                  fontFamily: 'Cairo',
+                  color: AppTheme.secondary,
+                ),
               ),
             ),
           );
@@ -247,7 +265,10 @@ class _VolunteerEvaluationDetailsScreenState
             child: Center(
               child: Text(
                 'لا توجد تقييمات',
-                style: TextStyle(fontFamily: 'Cairo', color: AppTheme.secondary),
+                style: TextStyle(
+                  fontFamily: 'Cairo',
+                  color: AppTheme.secondary,
+                ),
               ),
             ),
           );
@@ -263,7 +284,10 @@ class _VolunteerEvaluationDetailsScreenState
             child: Center(
               child: Text(
                 'خطأ في تحميل البيانات',
-                style: const TextStyle(fontFamily: 'Cairo', color: AppTheme.secondary),
+                style: const TextStyle(
+                  fontFamily: 'Cairo',
+                  color: AppTheme.secondary,
+                ),
               ),
             ),
           );
@@ -277,16 +301,19 @@ class _VolunteerEvaluationDetailsScreenState
       children: [
         // Table Header
         Container(
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+          padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
             border: Border(bottom: BorderSide(color: Colors.grey[300]!)),
           ),
           child: Row(
             children: [
-              _buildTableHeader('الاسم', flex: 2),
-              _buildTableHeader('التقييم', flex: 2),
-              _buildTableHeader('الشهر', flex: 2),
-              _buildTableHeader('ملاحظات', flex: 2), // Increased flex for notes
+              SizedBox(width: 100, child: _buildTableHeader('الاسم')),
+              const SizedBox(width: 20),
+              SizedBox(width: 80, child: _buildTableHeader('التقييم')),
+              const SizedBox(width: 20),
+              SizedBox(width: 100, child: _buildTableHeader('الشهر')),
+              const SizedBox(width: 20),
+              SizedBox(width: 200, child: _buildTableHeader('ملاحظات')),
             ],
           ),
         ),
@@ -310,21 +337,19 @@ class _VolunteerEvaluationDetailsScreenState
               final month = evaluation.month?.toString() ?? '-';
 
               return Container(
-                padding: const EdgeInsets.symmetric(
-                  vertical: 12,
-                  horizontal: 16,
-                ),
+                padding: const EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(
                   border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
                 ),
                 child: Row(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start, // Align items to top
                   children: [
-                    _buildTableCell(evaluatorName, flex: 2),
-                    _buildTableCell('$rating/10', flex: 2),
-                    _buildTableCell(month, flex: 2),
-                    _buildNotesCell(notes, flex: 3), // Use special notes cell
+                    SizedBox(width: 100, child: _buildTableCell(evaluatorName)),
+                    const SizedBox(width: 20),
+                    SizedBox(width: 80, child: _buildTableCell('$rating/10')),
+                    const SizedBox(width: 20),
+                    SizedBox(width: 100, child: _buildTableCell(month)),
+                    const SizedBox(width: 20),
+                    SizedBox(width: 200, child: _buildNotesCell(notes)),
                   ],
                 ),
               );
@@ -382,9 +407,8 @@ class _VolunteerEvaluationDetailsScreenState
     );
   }
 
-  Widget _buildTableHeader(String text, {int flex = 1}) {
-    return Expanded(
-      flex: flex,
+  Widget _buildTableHeader(String text) {
+    return Center(
       child: Text(
         text,
         style: const TextStyle(
@@ -398,43 +422,36 @@ class _VolunteerEvaluationDetailsScreenState
     );
   }
 
-  Widget _buildTableCell(String text, {int flex = 1}) {
-    return Expanded(
-      flex: flex,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 4),
-        child: Text(
-          text,
-          style: const TextStyle(
-            fontFamily: 'Cairo',
-            fontSize: 11,
-            color: AppTheme.textDark,
-          ),
-          textAlign: TextAlign.center,
-          maxLines: 2, // Allow 2 lines for other cells
-          overflow: TextOverflow.ellipsis,
+  Widget _buildTableCell(String text) {
+    return Center(
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontFamily: 'Cairo',
+          fontSize: 11,
+          color: AppTheme.textDark,
         ),
+        textAlign: TextAlign.center,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
       ),
     );
   }
 
-  // NEW: Special widget for notes that can expand
-  Widget _buildNotesCell(String text, {int flex = 1}) {
-    return Expanded(
-      flex: flex,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 4),
-        child: Text(
-          text,
-          style: const TextStyle(
-            fontFamily: 'Cairo',
-            fontSize: 11,
-            color: AppTheme.textDark,
-          ),
-          textAlign: TextAlign.right,
-          maxLines: null, // REMOVED line limit - allows wrapping
-          overflow: TextOverflow.visible, // Changed from ellipsis to visible
+  // Special widget for notes that can expand
+  Widget _buildNotesCell(String text) {
+    return Align(
+      alignment: Alignment.centerRight,
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontFamily: 'Cairo',
+          fontSize: 11,
+          color: AppTheme.textDark,
         ),
+        textAlign: TextAlign.right,
+        maxLines: null,
+        overflow: TextOverflow.visible,
       ),
     );
   }
