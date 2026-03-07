@@ -6,6 +6,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:resala/services/excel_export_helper.dart';
+import 'package:resala/services/word_export_helper.dart';
 import '../../providers/event_provider.dart';
 import '../../providers/volunteer_provider.dart';
 import '../../themes/app_theme.dart';
@@ -38,8 +39,17 @@ class _EditEventScreenState extends State<EditEventScreen> {
   bool _isLoading = false;
   bool _isExporting = false;
 
+  // Meeting-specific state
+  late List<String> _previousMeetingPoints;
+  late List<String> _newMeetingPoints;
+  late List<Map<String, String>> _votingItems;
+  late List<String> _meetingDecisions;
+  late List<String> _deferredPoints;
+  late TextEditingController _additionalDetailsController;
+
   bool get _isQafla => widget.event.type == 'قافلة';
   bool get _isOnline => widget.event.meetingPlace == 'أونلاين';
+  bool get _isMeeting => widget.event.type == FirebaseConstants.typeMeeting;
 
   @override
   void initState() {
@@ -57,6 +67,20 @@ class _EditEventScreenState extends State<EditEventScreen> {
     _qaflaPreparation = Map<String, bool>.from(widget.event.qaflaPreparation);
     _qaflaFilling = Map<String, bool>.from(widget.event.qaflaFilling);
     _qaflaDistribution = Map<String, bool>.from(widget.event.qaflaDistribution);
+
+    // Meeting fields
+    _previousMeetingPoints = List<String>.from(
+      widget.event.previousMeetingPoints,
+    );
+    _newMeetingPoints = List<String>.from(widget.event.newMeetingPoints);
+    _votingItems = widget.event.votingItems
+        .map((item) => Map<String, String>.from(item))
+        .toList();
+    _meetingDecisions = List<String>.from(widget.event.meetingDecisions);
+    _deferredPoints = List<String>.from(widget.event.deferredPoints);
+    _additionalDetailsController = TextEditingController(
+      text: widget.event.additionalDetails ?? '',
+    );
   }
 
   bool _allowVolunteerManagement() {
@@ -114,6 +138,400 @@ class _EditEventScreenState extends State<EditEventScreen> {
         setState(() => _isExporting = false);
       }
     }
+  }
+
+  Future<void> _exportToWord() async {
+    setState(() => _isExporting = true);
+    try {
+      final updatedEvent = EventModel(
+        id: widget.event.id,
+        title: _titleController.text,
+        type: widget.event.type,
+        date: _dateController.text,
+        description: _descriptionController.text,
+        location: _locationController.text.isEmpty
+            ? null
+            : _locationController.text,
+        meetingPlace: widget.event.meetingPlace,
+        administrativeType: widget.event.administrativeType,
+        committeeId: widget.event.committeeId,
+        committeeName: widget.event.committeeName,
+        volunteerIds: _volunteerIds,
+        previousMeetingPoints: _previousMeetingPoints,
+        newMeetingPoints: _newMeetingPoints,
+        votingItems: _votingItems,
+        meetingDecisions: _meetingDecisions,
+        deferredPoints: _deferredPoints,
+        additionalDetails: _additionalDetailsController.text.isEmpty
+            ? null
+            : _additionalDetailsController.text,
+        meetingCategory: widget.event.meetingCategory,
+        createdAt: widget.event.createdAt,
+        updatedAt: DateTime.now(),
+      );
+      await WordExportHelper.exportMeetingToWord(event: updatedEvent);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'تم تصدير المحضر بنجاح',
+              style: TextStyle(fontFamily: 'Cairo'),
+            ),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'فشل تصدير المحضر: $e',
+              style: const TextStyle(fontFamily: 'Cairo'),
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isExporting = false);
+    }
+  }
+
+  Future<String?> _showAddItemDialog(String title) async {
+    final controller = TextEditingController();
+    return showDialog<String>(
+      context: context,
+      builder: (ctx) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          title: Text(title, style: const TextStyle(fontFamily: 'Cairo')),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            style: const TextStyle(fontFamily: 'Cairo'),
+            decoration: InputDecoration(
+              hintText: 'أدخل النص',
+              hintStyle: const TextStyle(fontFamily: 'Cairo'),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('إلغاء', style: TextStyle(fontFamily: 'Cairo')),
+            ),
+            TextButton(
+              onPressed: () {
+                if (controller.text.trim().isNotEmpty) {
+                  Navigator.pop(ctx, controller.text.trim());
+                }
+              },
+              child: const Text(
+                'إضافة',
+                style: TextStyle(fontFamily: 'Cairo', color: AppTheme.primary),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _addVotingItem() async {
+    final topicController = TextEditingController();
+    String? selectedResult;
+
+    final result = await showDialog<Map<String, String>>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => Directionality(
+          textDirection: TextDirection.rtl,
+          child: AlertDialog(
+            title: const Text(
+              'بند تصويت جديد',
+              style: TextStyle(fontFamily: 'Cairo'),
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: topicController,
+                  style: const TextStyle(fontFamily: 'Cairo'),
+                  decoration: InputDecoration(
+                    hintText: 'موضوع التصويت',
+                    hintStyle: const TextStyle(fontFamily: 'Cairo'),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  value: selectedResult,
+                  decoration: InputDecoration(
+                    hintText: 'النتيجة',
+                    hintStyle: const TextStyle(fontFamily: 'Cairo'),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  items: FirebaseConstants.votingResults
+                      .map(
+                        (r) => DropdownMenuItem(
+                          value: r,
+                          child: Text(
+                            r,
+                            style: const TextStyle(fontFamily: 'Cairo'),
+                          ),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (v) => setDialogState(() => selectedResult = v),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text(
+                  'إلغاء',
+                  style: TextStyle(fontFamily: 'Cairo'),
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  if (topicController.text.trim().isNotEmpty) {
+                    Navigator.pop(ctx, {
+                      'topic': topicController.text.trim(),
+                      'result': selectedResult ?? '',
+                    });
+                  }
+                },
+                child: const Text(
+                  'إضافة',
+                  style: TextStyle(
+                    fontFamily: 'Cairo',
+                    color: AppTheme.primary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (result != null) {
+      setState(() => _votingItems.add(result));
+    }
+  }
+
+  Widget _buildMeetingSection({
+    required String title,
+    required List<String> items,
+    required VoidCallback onAdd,
+    required Function(int) onRemove,
+  }) {
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 40, vertical: 6),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      color: AppTheme.cardBackground,
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(
+                fontFamily: 'Cairo',
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: AppTheme.primary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const Divider(),
+            ...items.asMap().entries.map(
+              (entry) => Padding(
+                padding: const EdgeInsets.symmetric(vertical: 2),
+                child: Row(
+                  children: [
+                    InkWell(
+                      onTap: () => setState(() => onRemove(entry.key)),
+                      child: const Icon(
+                        Icons.remove_circle_outline,
+                        color: Colors.red,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        entry.value,
+                        style: const TextStyle(
+                          fontFamily: 'Cairo',
+                          fontSize: 13,
+                        ),
+                        textDirection: TextDirection.rtl,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 4),
+            TextButton.icon(
+              onPressed: onAdd,
+              icon: const Icon(Icons.add, color: AppTheme.primary, size: 20),
+              label: const Text(
+                'إضافة',
+                style: TextStyle(
+                  fontFamily: 'Cairo',
+                  color: AppTheme.primary,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildVotingSection() {
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 40, vertical: 6),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      color: AppTheme.cardBackground,
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              'بنود التصويت',
+              style: TextStyle(
+                fontFamily: 'Cairo',
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: AppTheme.primary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const Divider(),
+            ..._votingItems.asMap().entries.map(
+              (entry) => Padding(
+                padding: const EdgeInsets.symmetric(vertical: 2),
+                child: Row(
+                  children: [
+                    InkWell(
+                      onTap: () =>
+                          setState(() => _votingItems.removeAt(entry.key)),
+                      child: const Icon(
+                        Icons.remove_circle_outline,
+                        color: Colors.red,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            entry.value['topic'] ?? '',
+                            style: const TextStyle(
+                              fontFamily: 'Cairo',
+                              fontSize: 13,
+                            ),
+                          ),
+                          Text(
+                            'النتيجة: ${entry.value['result']?.isNotEmpty == true ? entry.value['result'] : '-'}',
+                            style: const TextStyle(
+                              fontFamily: 'Cairo',
+                              fontSize: 12,
+                              color: AppTheme.secondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 4),
+            TextButton.icon(
+              onPressed: _addVotingItem,
+              icon: const Icon(Icons.add, color: AppTheme.primary, size: 20),
+              label: const Text(
+                'إضافة بند',
+                style: TextStyle(
+                  fontFamily: 'Cairo',
+                  color: AppTheme.primary,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _buildMeetingSections() {
+    return [
+      const SizedBox(height: 8),
+      _buildMeetingSection(
+        title: 'نقاط الاجتماع السابق',
+        items: _previousMeetingPoints,
+        onAdd: () async {
+          final text = await _showAddItemDialog('نقطة من الاجتماع السابق');
+          if (text != null) setState(() => _previousMeetingPoints.add(text));
+        },
+        onRemove: (i) => _previousMeetingPoints.removeAt(i),
+      ),
+      _buildMeetingSection(
+        title: 'نقاط جديدة للاجتماع',
+        items: _newMeetingPoints,
+        onAdd: () async {
+          final text = await _showAddItemDialog('نقطة جديدة');
+          if (text != null) setState(() => _newMeetingPoints.add(text));
+        },
+        onRemove: (i) => _newMeetingPoints.removeAt(i),
+      ),
+      _buildVotingSection(),
+      _buildMeetingSection(
+        title: 'قرارات الاجتماع',
+        items: _meetingDecisions,
+        onAdd: () async {
+          final text = await _showAddItemDialog('قرار');
+          if (text != null) setState(() => _meetingDecisions.add(text));
+        },
+        onRemove: (i) => _meetingDecisions.removeAt(i),
+      ),
+      _buildMeetingSection(
+        title: 'نقاط مؤجلة للاجتماع القادم',
+        items: _deferredPoints,
+        onAdd: () async {
+          final text = await _showAddItemDialog('نقطة مؤجلة');
+          if (text != null) setState(() => _deferredPoints.add(text));
+        },
+        onRemove: (i) => _deferredPoints.removeAt(i),
+      ),
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 6),
+        child: _buildTextField(
+          controller: _additionalDetailsController,
+          label: 'تفاصيل أخرى',
+          readOnly: false,
+        ),
+      ),
+    ];
   }
 
   Future<void> _selectDate() async {
@@ -278,6 +696,15 @@ class _EditEventScreenState extends State<EditEventScreen> {
       qaflaPreparation: _qaflaPreparation,
       qaflaFilling: _qaflaFilling,
       qaflaDistribution: _qaflaDistribution,
+      previousMeetingPoints: _previousMeetingPoints,
+      newMeetingPoints: _newMeetingPoints,
+      votingItems: _votingItems,
+      meetingDecisions: _meetingDecisions,
+      deferredPoints: _deferredPoints,
+      additionalDetails: _additionalDetailsController.text.isEmpty
+          ? null
+          : _additionalDetailsController.text,
+      meetingCategory: widget.event.meetingCategory,
       createdAt: widget.event.createdAt,
       updatedAt: DateTime.now(),
     );
@@ -335,6 +762,22 @@ class _EditEventScreenState extends State<EditEventScreen> {
         ),
         centerTitle: true,
         actions: [
+          // Export to Word Button (for meetings)
+          if (_isMeeting)
+            IconButton(
+              onPressed: _isExporting ? null : _exportToWord,
+              icon: _isExporting
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppTheme.primary,
+                      ),
+                    )
+                  : const Icon(Icons.description, color: AppTheme.primary),
+              tooltip: 'تصدير محضر (Word)',
+            ),
           // Export to Excel Button
           FutureBuilder(
             future: Provider.of<VolunteerProvider>(
@@ -371,7 +814,7 @@ class _EditEventScreenState extends State<EditEventScreen> {
       ),
       body: Form(
         key: _formKey,
-        child: Column(
+        child: ListView(
           children: [
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
@@ -407,6 +850,8 @@ class _EditEventScreenState extends State<EditEventScreen> {
               ),
             ),
 
+            if (_isMeeting) ..._buildMeetingSections(),
+
             const SizedBox(height: 8),
 
             Padding(
@@ -432,335 +877,317 @@ class _EditEventScreenState extends State<EditEventScreen> {
 
             const SizedBox(height: 16),
 
-            Expanded(
-              child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 40),
-                decoration: BoxDecoration(
-                  color: AppTheme.cardBackground,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppTheme.primary.withOpacity(0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.vertical,
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          decoration: BoxDecoration(
-                            border: Border(
-                              bottom: BorderSide(color: Colors.grey[300]!),
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              SizedBox(
-                                width: 40,
-                                child: _buildTableHeader('#'),
-                              ),
-                              const SizedBox(width: 20),
-                              SizedBox(
-                                width: 100,
-                                child: _buildTableHeader('الاسم'),
-                              ),
-                              const SizedBox(width: 20),
-                              SizedBox(
-                                width: 140,
-                                child: _buildTableHeader('رقم التليفون'),
-                              ),
-                              const SizedBox(width: 20),
-                              if (!_isOnline) ...[
-                                SizedBox(
-                                  width: 60,
-                                  child: _buildTableHeader('تيشيرت'),
-                                ),
-                              ],
-                              if (_isQafla) ...[
-                                SizedBox(
-                                  width: 60,
-                                  child: _buildTableHeader('تجهيز'),
-                                ),
-                                const SizedBox(width: 20),
-                                SizedBox(
-                                  width: 60,
-                                  child: _buildTableHeader('تعبئة'),
-                                ),
-                                const SizedBox(width: 20),
-                                SizedBox(
-                                  width: 60,
-                                  child: _buildTableHeader('توزيع'),
-                                ),
-                              ],
-                            ],
-                          ),
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 40),
+              decoration: BoxDecoration(
+                color: AppTheme.cardBackground,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppTheme.primary.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(color: Colors.grey[300]!),
                         ),
-                        FutureBuilder(
-                          future: Provider.of<VolunteerProvider>(
-                            context,
-                            listen: false,
-                          ).getVolunteersByIds(_volunteerIds),
-                          builder: (context, snapshot) {
-                            if (snapshot.connectionState ==
-                                ConnectionState.waiting) {
-                              return const Center(
-                                child: CircularProgressIndicator(
-                                  color: AppTheme.primary,
+                      ),
+                      child: Row(
+                        children: [
+                          SizedBox(width: 40, child: _buildTableHeader('#')),
+                          const SizedBox(width: 20),
+                          SizedBox(
+                            width: 100,
+                            child: _buildTableHeader('الاسم'),
+                          ),
+                          const SizedBox(width: 20),
+                          SizedBox(
+                            width: 140,
+                            child: _buildTableHeader('رقم التليفون'),
+                          ),
+                          const SizedBox(width: 20),
+                          if (!_isOnline) ...[
+                            SizedBox(
+                              width: 60,
+                              child: _buildTableHeader('تيشيرت'),
+                            ),
+                          ],
+                          if (_isQafla) ...[
+                            SizedBox(
+                              width: 60,
+                              child: _buildTableHeader('تجهيز'),
+                            ),
+                            const SizedBox(width: 20),
+                            SizedBox(
+                              width: 60,
+                              child: _buildTableHeader('تعبئة'),
+                            ),
+                            const SizedBox(width: 20),
+                            SizedBox(
+                              width: 60,
+                              child: _buildTableHeader('توزيع'),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    FutureBuilder(
+                      future: Provider.of<VolunteerProvider>(
+                        context,
+                        listen: false,
+                      ).getVolunteersByIds(_volunteerIds),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const Center(
+                            child: CircularProgressIndicator(
+                              color: AppTheme.primary,
+                            ),
+                          );
+                        }
+
+                        final volunteers = snapshot.data ?? [];
+                        volunteers.sort(
+                          (a, b) => FirebaseConstants.compareByDegreeAndName(
+                            a.educationalLevel ?? '',
+                            a.name,
+                            b.educationalLevel ?? '',
+                            b.name,
+                          ),
+                        );
+
+                        for (var volunteer in volunteers) {
+                          if (!_volunteerTshirtStatus.containsKey(
+                            volunteer.id,
+                          )) {
+                            _volunteerTshirtStatus[volunteer.id] =
+                                (volunteer as VolunteerModel).hasTshirt;
+                          }
+                        }
+
+                        if (volunteers.isEmpty) {
+                          return const Center(
+                            child: Text(
+                              'لا يوجد متطوعون',
+                              style: TextStyle(
+                                fontFamily: 'Cairo',
+                                color: AppTheme.secondary,
+                              ),
+                            ),
+                          );
+                        }
+
+                        return Column(
+                          children: volunteers.asMap().entries.map((entry) {
+                            final index = entry.key;
+                            final volunteer = entry.value;
+                            return Dismissible(
+                              key: Key(volunteer.id),
+                              direction: DismissDirection.endToStart,
+                              background: Container(
+                                alignment: Alignment.centerLeft,
+                                padding: const EdgeInsets.only(left: 20),
+                                color: Colors.red,
+                                child: const Icon(
+                                  Icons.delete,
+                                  color: AppTheme.cardBackground,
                                 ),
-                              );
-                            }
-
-                            final volunteers = snapshot.data ?? [];
-                            volunteers.sort(
-                              (a, b) =>
-                                  FirebaseConstants.compareByDegreeAndName(
-                                    a.educationalLevel ?? '',
-                                    a.name,
-                                    b.educationalLevel ?? '',
-                                    b.name,
-                                  ),
-                            );
-
-                            for (var volunteer in volunteers) {
-                              if (!_volunteerTshirtStatus.containsKey(
-                                volunteer.id,
-                              )) {
-                                _volunteerTshirtStatus[volunteer.id] =
-                                    (volunteer as VolunteerModel).hasTshirt;
-                              }
-                            }
-
-                            if (volunteers.isEmpty) {
-                              return const Center(
-                                child: Text(
-                                  'لا يوجد متطوعون',
-                                  style: TextStyle(
-                                    fontFamily: 'Cairo',
-                                    color: AppTheme.secondary,
-                                  ),
-                                ),
-                              );
-                            }
-
-                            return Column(
-                              children: volunteers.asMap().entries.map((entry) {
-                                final index = entry.key;
-                                final volunteer = entry.value;
-                                return Dismissible(
-                                  key: Key(volunteer.id),
-                                  direction: DismissDirection.endToStart,
-                                  background: Container(
-                                    alignment: Alignment.centerLeft,
-                                    padding: const EdgeInsets.only(left: 20),
-                                    color: Colors.red,
-                                    child: const Icon(
-                                      Icons.delete,
-                                      color: AppTheme.cardBackground,
-                                    ),
-                                  ),
-                                  confirmDismiss: (direction) async {
-                                    return await showDialog(
-                                      context: context,
-                                      builder: (context) => Directionality(
-                                        textDirection: TextDirection.rtl,
-                                        child: AlertDialog(
-                                          title: const Text(
-                                            'حذف متطوع',
+                              ),
+                              confirmDismiss: (direction) async {
+                                return await showDialog(
+                                  context: context,
+                                  builder: (context) => Directionality(
+                                    textDirection: TextDirection.rtl,
+                                    child: AlertDialog(
+                                      title: const Text(
+                                        'حذف متطوع',
+                                        style: TextStyle(fontFamily: 'Cairo'),
+                                      ),
+                                      content: Text(
+                                        'هل أنت متأكد من حذف ${volunteer.name} من هذا الحدث؟',
+                                        style: const TextStyle(
+                                          fontFamily: 'Cairo',
+                                        ),
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.pop(context, false),
+                                          child: const Text(
+                                            'إلغاء',
                                             style: TextStyle(
                                               fontFamily: 'Cairo',
                                             ),
                                           ),
-                                          content: Text(
-                                            'هل أنت متأكد من حذف ${volunteer.name} من هذا الحدث؟',
-                                            style: const TextStyle(
+                                        ),
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.pop(context, true),
+                                          child: const Text(
+                                            'حذف',
+                                            style: TextStyle(
                                               fontFamily: 'Cairo',
+                                              color: Colors.red,
                                             ),
                                           ),
-                                          actions: [
-                                            TextButton(
-                                              onPressed: () =>
-                                                  Navigator.pop(context, false),
-                                              child: const Text(
-                                                'إلغاء',
-                                                style: TextStyle(
-                                                  fontFamily: 'Cairo',
-                                                ),
-                                              ),
-                                            ),
-                                            TextButton(
-                                              onPressed: () =>
-                                                  Navigator.pop(context, true),
-                                              child: const Text(
-                                                'حذف',
-                                                style: TextStyle(
-                                                  fontFamily: 'Cairo',
-                                                  color: Colors.red,
-                                                ),
-                                              ),
-                                            ),
-                                          ],
                                         ),
-                                      ),
-                                    );
-                                  },
-                                  onDismissed: (direction) {
-                                    setState(() {
-                                      _volunteerIds.remove(volunteer.id);
-                                      _volunteerTshirtStatus.remove(
-                                        volunteer.id,
-                                      );
-                                    });
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          'تم حذف ${volunteer.name} من الحدث',
-                                          style: const TextStyle(
-                                            fontFamily: 'Cairo',
-                                          ),
-                                        ),
-                                        backgroundColor: Colors.orange,
-                                        action: SnackBarAction(
-                                          label: 'تراجع',
-                                          textColor: AppTheme.textLight,
-                                          onPressed: () {
-                                            setState(() {
-                                              _volunteerIds.add(volunteer.id);
-                                            });
-                                          },
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      border: Border(
-                                        bottom: BorderSide(
-                                          color: Colors.grey[200]!,
-                                        ),
-                                      ),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        SizedBox(
-                                          width: 40,
-                                          child: _buildTableCell(
-                                            (index + 1).toString(),
-                                          ),
-                                        ),
-                                        const SizedBox(width: 20),
-                                        SizedBox(
-                                          width: 100,
-                                          child: _buildTableCell(
-                                            volunteer.name,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 20),
-                                        SizedBox(
-                                          width: 140,
-                                          child: _buildTableCell(
-                                            volunteer.phone,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 20),
-                                        if (!_isOnline)
-                                          SizedBox(
-                                            width: 60,
-                                            child: Center(
-                                              child: Checkbox(
-                                                value:
-                                                    _volunteerTshirtStatus[volunteer
-                                                        .id] ??
-                                                    false,
-                                                onChanged: (value) {
-                                                  setState(() {
-                                                    _volunteerTshirtStatus[volunteer
-                                                            .id] =
-                                                        value ?? false;
-                                                  });
-                                                },
-                                                activeColor: AppTheme.primary,
-                                              ),
-                                            ),
-                                          ),
-                                        if (_isQafla) ...[
-                                          SizedBox(
-                                            width: 60,
-                                            child: Center(
-                                              child: Checkbox(
-                                                value:
-                                                    _qaflaPreparation[volunteer
-                                                        .id] ??
-                                                    false,
-                                                onChanged: (value) {
-                                                  setState(() {
-                                                    _qaflaPreparation[volunteer
-                                                            .id] =
-                                                        value ?? false;
-                                                  });
-                                                },
-                                                activeColor: AppTheme.primary,
-                                              ),
-                                            ),
-                                          ),
-                                          const SizedBox(width: 20),
-                                          SizedBox(
-                                            width: 60,
-                                            child: Center(
-                                              child: Checkbox(
-                                                value:
-                                                    _qaflaFilling[volunteer
-                                                        .id] ??
-                                                    false,
-                                                onChanged: (value) {
-                                                  setState(() {
-                                                    _qaflaFilling[volunteer
-                                                            .id] =
-                                                        value ?? false;
-                                                  });
-                                                },
-                                                activeColor: AppTheme.primary,
-                                              ),
-                                            ),
-                                          ),
-                                          const SizedBox(width: 20),
-                                          SizedBox(
-                                            width: 60,
-                                            child: Center(
-                                              child: Checkbox(
-                                                value:
-                                                    _qaflaDistribution[volunteer
-                                                        .id] ??
-                                                    false,
-                                                onChanged: (value) {
-                                                  setState(() {
-                                                    _qaflaDistribution[volunteer
-                                                            .id] =
-                                                        value ?? false;
-                                                  });
-                                                },
-                                                activeColor: AppTheme.primary,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
                                       ],
                                     ),
                                   ),
                                 );
-                              }).toList(),
+                              },
+                              onDismissed: (direction) {
+                                setState(() {
+                                  _volunteerIds.remove(volunteer.id);
+                                  _volunteerTshirtStatus.remove(volunteer.id);
+                                });
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'تم حذف ${volunteer.name} من الحدث',
+                                      style: const TextStyle(
+                                        fontFamily: 'Cairo',
+                                      ),
+                                    ),
+                                    backgroundColor: Colors.orange,
+                                    action: SnackBarAction(
+                                      label: 'تراجع',
+                                      textColor: AppTheme.textLight,
+                                      onPressed: () {
+                                        setState(() {
+                                          _volunteerIds.add(volunteer.id);
+                                        });
+                                      },
+                                    ),
+                                  ),
+                                );
+                              },
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  border: Border(
+                                    bottom: BorderSide(
+                                      color: Colors.grey[200]!,
+                                    ),
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    SizedBox(
+                                      width: 40,
+                                      child: _buildTableCell(
+                                        (index + 1).toString(),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 20),
+                                    SizedBox(
+                                      width: 100,
+                                      child: _buildTableCell(volunteer.name),
+                                    ),
+                                    const SizedBox(width: 20),
+                                    SizedBox(
+                                      width: 140,
+                                      child: _buildTableCell(volunteer.phone),
+                                    ),
+                                    const SizedBox(width: 20),
+                                    if (!_isOnline)
+                                      SizedBox(
+                                        width: 60,
+                                        child: Center(
+                                          child: Checkbox(
+                                            value:
+                                                _volunteerTshirtStatus[volunteer
+                                                    .id] ??
+                                                false,
+                                            onChanged: (value) {
+                                              setState(() {
+                                                _volunteerTshirtStatus[volunteer
+                                                        .id] =
+                                                    value ?? false;
+                                              });
+                                            },
+                                            activeColor: AppTheme.primary,
+                                          ),
+                                        ),
+                                      ),
+                                    if (_isQafla) ...[
+                                      SizedBox(
+                                        width: 60,
+                                        child: Center(
+                                          child: Checkbox(
+                                            value:
+                                                _qaflaPreparation[volunteer
+                                                    .id] ??
+                                                false,
+                                            onChanged: (value) {
+                                              setState(() {
+                                                _qaflaPreparation[volunteer
+                                                        .id] =
+                                                    value ?? false;
+                                              });
+                                            },
+                                            activeColor: AppTheme.primary,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 20),
+                                      SizedBox(
+                                        width: 60,
+                                        child: Center(
+                                          child: Checkbox(
+                                            value:
+                                                _qaflaFilling[volunteer.id] ??
+                                                false,
+                                            onChanged: (value) {
+                                              setState(() {
+                                                _qaflaFilling[volunteer.id] =
+                                                    value ?? false;
+                                              });
+                                            },
+                                            activeColor: AppTheme.primary,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 20),
+                                      SizedBox(
+                                        width: 60,
+                                        child: Center(
+                                          child: Checkbox(
+                                            value:
+                                                _qaflaDistribution[volunteer
+                                                    .id] ??
+                                                false,
+                                            onChanged: (value) {
+                                              setState(() {
+                                                _qaflaDistribution[volunteer
+                                                        .id] =
+                                                    value ?? false;
+                                              });
+                                            },
+                                            activeColor: AppTheme.primary,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
                             );
-                          },
-                        ),
-                      ],
+                          }).toList(),
+                        );
+                      },
                     ),
-                  ),
+                  ],
                 ),
               ),
             ),
@@ -890,6 +1317,7 @@ class _EditEventScreenState extends State<EditEventScreen> {
     _dateController.dispose();
     _locationController.dispose();
     _descriptionController.dispose();
+    _additionalDetailsController.dispose();
     super.dispose();
   }
 }

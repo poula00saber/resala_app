@@ -243,6 +243,81 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
     }
   }
 
+  Future<void> _resignVolunteer() async {
+    final currentLevel = widget.volunteer.educationalLevel ?? '';
+    final resignedLevel = FirebaseConstants.getResignedLevel(currentLevel);
+    if (resignedLevel == null) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          title: const Text(
+            'تأكيد الاستقالة',
+            style: TextStyle(fontFamily: 'Cairo'),
+          ),
+          content: Text(
+            'هل أنت متأكد من تغيير تصنيف ${widget.volunteer.name} من "$currentLevel" إلى "$resignedLevel"؟',
+            style: const TextStyle(fontFamily: 'Cairo'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('إلغاء', style: TextStyle(fontFamily: 'Cairo')),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text(
+                'تأكيد',
+                style: TextStyle(fontFamily: 'Cairo', color: Colors.red),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    setState(() => _isLoading = true);
+    try {
+      final volunteerProvider = Provider.of<VolunteerProvider>(
+        context,
+        listen: false,
+      );
+      await volunteerProvider.updateVolunteerData(widget.volunteer.id, {
+        'educationalLevel': resignedLevel,
+      });
+      setState(() => _isLoading = false);
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'تم تغيير التصنيف إلى $resignedLevel',
+              style: const TextStyle(fontFamily: 'Cairo'),
+            ),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+    } catch (e) {
+      setState(() => _isLoading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'حدث خطأ: $e',
+              style: const TextStyle(fontFamily: 'Cairo'),
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   Future<void> _selectDate(TextEditingController controller) async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -382,7 +457,10 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
                           decoration: BoxDecoration(
                             color: AppTheme.primary,
                             shape: BoxShape.circle,
-                            border: Border.all(color: AppTheme.cardBackground, width: 2),
+                            border: Border.all(
+                              color: AppTheme.cardBackground,
+                              width: 2,
+                            ),
                           ),
                           child: const Icon(
                             Icons.camera_alt,
@@ -856,6 +934,36 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
                             ),
                     ),
                   ),
+                // Resign Button - استقالة (only for eligible levels with permission)
+                if (_canAddDelete &&
+                    FirebaseConstants.getResignedLevel(
+                          widget.volunteer.educationalLevel ?? '',
+                        ) !=
+                        null) ...[
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: OutlinedButton(
+                      onPressed: _isLoading ? null : _resignVolunteer,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.red,
+                        side: const BorderSide(color: Colors.red, width: 2),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      child: const Text(
+                        'استقالة',
+                        style: TextStyle(
+                          fontFamily: 'Cairo',
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
                 // No permission message
                 if (!_canAddDelete)
                   Container(

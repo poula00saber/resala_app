@@ -117,3 +117,33 @@ class ReportFilter {
       committeeId != null ||
       (months != null && months!.isNotEmpty);
 }
+
+class MonthlyReportStats {
+  final int masoolParticipantCount;
+  final int mashroParticipantCount;
+  final int gododCount;
+  final int tshirtCount;
+  final int eventCount;
+  final double masoolParticipationRate;
+  final double mashroParticipationRate;
+  final int leadersMeetingCount;
+  final int teamMeetingCount;
+  final Map<String, int> committeeMeetingCounts;
+  final List<VolunteerReportData> masoolNonParticipants;
+  final List<VolunteerReportData> mashroNonParticipants;
+
+  MonthlyReportStats({
+    required this.masoolParticipantCount,
+    required this.mashroParticipantCount,
+    required this.gododCount,
+    required this.tshirtCount,
+    required this.eventCount,
+    required this.masoolParticipationRate,
+    required this.mashroParticipationRate,
+    required this.leadersMeetingCount,
+    required this.teamMeetingCount,
+    required this.committeeMeetingCounts,
+    required this.masoolNonParticipants,
+    required this.mashroNonParticipants,
+  });
+}

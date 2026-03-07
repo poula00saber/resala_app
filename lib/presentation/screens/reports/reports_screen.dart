@@ -14,6 +14,7 @@ import 'cubs_report_screen.dart';
 import 'meetings_report_screen.dart';
 import 'fund_report_screen.dart';
 import 'marketing_report_screen.dart';
+import 'monthly_report_screen.dart';
 
 class ReportsScreen extends StatelessWidget {
   const ReportsScreen({super.key});
@@ -140,6 +141,22 @@ class ReportsScreen extends StatelessWidget {
                       context,
                       MaterialPageRoute(
                         builder: (context) => const MarketingReportScreen(),
+                      ),
+                    ),
+                  ),
+                ],
+                if (authService.canAccessSubPage(
+                  AppPages.reports,
+                  AppPages.reportMonthly,
+                )) ...[
+                  const SizedBox(height: 16),
+                  _buildReportButton(
+                    context,
+                    title: 'الشهري',
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const MonthlyReportScreen(),
                       ),
                     ),
                   ),

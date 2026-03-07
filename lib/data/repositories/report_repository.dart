@@ -598,4 +598,161 @@ class ReportRepository {
       return 0;
     }
   }
+
+  // Get monthly report statistics
+  Future<MonthlyReportStats> getMonthlyReportStats({
+    required int month,
+    required int year,
+  }) async {
+    try {
+      final volunteers = await getAllVolunteers();
+      final events = await getEventsByFilter(months: [month], year: year);
+
+      // Categorize volunteers by level
+      final masoolVolunteers = volunteers
+          .where((v) => v.educationalLevel == 'مسئول')
+          .toList();
+      final mashroVolunteers = volunteers
+          .where((v) => v.educationalLevel == 'مشروع مسئول')
+          .toList();
+      final gododVolunteers = volunteers
+          .where((v) => v.educationalLevel == 'جدد')
+          .toList();
+
+      // Track who participated
+      final Set<String> allParticipantIds = {};
+      final Set<String> masoolParticipantIds = {};
+      final Set<String> mashroParticipantIds = {};
+      final Set<String> gododParticipantIds = {};
+      int tshirtCount = 0;
+      int leadersMeetingCount = 0;
+      int teamMeetingCount = 0;
+      final Map<String, int> committeeMeetingCounts = {};
+
+      // Track per-volunteer participation count (capped at 8)
+      final Map<String, int> masoolParticipationCount = {};
+      final Map<String, int> mashroParticipationCount = {};
+
+      for (var event in events) {
+        // Count meetings
+        if (event.type == 'اجتماع') {
+          if (event.administrativeType == 'اجتماع ليدرات') {
+            leadersMeetingCount++;
+          } else if (event.committeeName != null &&
+              event.committeeName!.isNotEmpty) {
+            committeeMeetingCounts[event.committeeName!] =
+                (committeeMeetingCounts[event.committeeName!] ?? 0) + 1;
+          } else {
+            teamMeetingCount++;
+          }
+        }
+
+        // Count t-shirts
+        for (var volunteerId in event.volunteerIds) {
+          final volunteer = volunteers
+              .where((v) => v.id == volunteerId)
+              .firstOrNull;
+          if (volunteer != null && (volunteer as VolunteerModel).hasTshirt) {
+            tshirtCount++;
+          }
+        }
+
+        // Count participants
+        for (var volunteerId in event.volunteerIds) {
+          allParticipantIds.add(volunteerId);
+
+          // Check masool
+          if (masoolVolunteers.any((v) => v.id == volunteerId)) {
+            masoolParticipantIds.add(volunteerId);
+            masoolParticipationCount[volunteerId] =
+                (masoolParticipationCount[volunteerId] ?? 0) + 1;
+          }
+          // Check mashro
+          if (mashroVolunteers.any((v) => v.id == volunteerId)) {
+            mashroParticipantIds.add(volunteerId);
+            mashroParticipationCount[volunteerId] =
+                (mashroParticipationCount[volunteerId] ?? 0) + 1;
+          }
+          // Check godod
+          if (gododVolunteers.any((v) => v.id == volunteerId)) {
+            gododParticipantIds.add(volunteerId);
+          }
+        }
+      }
+
+      // Calculate participation rates (capped at 8)
+      double masoolRate = 0;
+      if (masoolVolunteers.isNotEmpty) {
+        final totalPossible = masoolVolunteers.length * 8;
+        final totalActual = masoolParticipationCount.values.fold<int>(
+          0,
+          (sum, count) => sum + (count > 8 ? 8 : count),
+        );
+        masoolRate = (totalActual / totalPossible) * 100;
+      }
+
+      double mashroRate = 0;
+      if (mashroVolunteers.isNotEmpty) {
+        final totalPossible = mashroVolunteers.length * 8;
+        final totalActual = mashroParticipationCount.values.fold<int>(
+          0,
+          (sum, count) => sum + (count > 8 ? 8 : count),
+        );
+        mashroRate = (totalActual / totalPossible) * 100;
+      }
+
+      // Build non-participant lists
+      VolunteerReportData _toReportData(VolunteerModel v) {
+        return VolunteerReportData(
+          volunteerId: v.id,
+          volunteerName: v.name,
+          phone: v.phone,
+          educationalLevel: v.educationalLevel,
+          committeeName: v.committeeName,
+          committeeId: v.committeeId,
+        );
+      }
+
+      final masoolNonParticipants = masoolVolunteers
+          .where((v) => !masoolParticipantIds.contains(v.id))
+          .map((v) => _toReportData(v as VolunteerModel))
+          .toList();
+
+      final mashroNonParticipants = mashroVolunteers
+          .where((v) => !mashroParticipantIds.contains(v.id))
+          .map((v) => _toReportData(v as VolunteerModel))
+          .toList();
+
+      return MonthlyReportStats(
+        masoolParticipantCount: masoolParticipantIds.length,
+        mashroParticipantCount: mashroParticipantIds.length,
+        gododCount: gododParticipantIds.length,
+        tshirtCount: tshirtCount,
+        eventCount: events.where((e) => e.type != 'اجتماع').length,
+        masoolParticipationRate: masoolRate,
+        mashroParticipationRate: mashroRate,
+        leadersMeetingCount: leadersMeetingCount,
+        teamMeetingCount: teamMeetingCount,
+        committeeMeetingCounts: committeeMeetingCounts,
+        masoolNonParticipants: masoolNonParticipants,
+        mashroNonParticipants: mashroNonParticipants,
+      );
+    } catch (e) {
+      print('Error generating monthly report: $e');
+      return MonthlyReportStats(
+        masoolParticipantCount: 0,
+        mashroParticipantCount: 0,
+        gododCount: 0,
+        tshirtCount: 0,
+        eventCount: 0,
+        masoolParticipationRate: 0,
+        mashroParticipationRate: 0,
+        leadersMeetingCount: 0,
+        teamMeetingCount: 0,
+        committeeMeetingCounts: {},
+        masoolNonParticipants: [],
+        mashroNonParticipants: [],
+      );
+    }
+  }
 }

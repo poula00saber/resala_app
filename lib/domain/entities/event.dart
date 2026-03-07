@@ -1,6 +1,6 @@
 // ============================================
 // FILE: lib/domain/entities/event.dart
-// FIXED: Added committeeId, committeeName, and qafla role fields
+// UPDATED: Added meeting-specific fields for Word export
 // ============================================
 
 class Event {
@@ -12,14 +12,23 @@ class Event {
   final String? location;
   final String? meetingPlace;
   final String? administrativeType;
-  final String? committeeId; // NEW
-  final String? committeeName; // NEW
+  final String? committeeId;
+  final String? committeeName;
   final List<String> volunteerIds;
-  final Map<String, bool> qaflaPreparation; // تجهيز per volunteer
-  final Map<String, bool> qaflaFilling; // تعبئة per volunteer
-  final Map<String, bool> qaflaDistribution; // توزيع per volunteer
+  final Map<String, bool> qaflaPreparation;
+  final Map<String, bool> qaflaFilling;
+  final Map<String, bool> qaflaDistribution;
   final DateTime createdAt;
   final DateTime updatedAt;
+
+  // Meeting-specific fields (محضر الاجتماع)
+  final String? meetingCategory;
+  final List<String> previousMeetingPoints;
+  final List<String> newMeetingPoints;
+  final List<Map<String, String>> votingItems;
+  final List<String> meetingDecisions;
+  final List<String> deferredPoints;
+  final String? additionalDetails;
 
   Event({
     required this.id,
@@ -30,13 +39,20 @@ class Event {
     this.location,
     this.meetingPlace,
     this.administrativeType,
-    this.committeeId, // NEW
-    this.committeeName, // NEW
+    this.committeeId,
+    this.committeeName,
     required this.volunteerIds,
     this.qaflaPreparation = const {},
     this.qaflaFilling = const {},
     this.qaflaDistribution = const {},
     required this.createdAt,
     required this.updatedAt,
+    this.meetingCategory,
+    this.previousMeetingPoints = const [],
+    this.newMeetingPoints = const [],
+    this.votingItems = const [],
+    this.meetingDecisions = const [],
+    this.deferredPoints = const [],
+    this.additionalDetails,
   });
 }

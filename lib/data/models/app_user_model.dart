@@ -235,6 +235,7 @@ class AppPages {
   static const String reportMeetings = 'report_meetings';
   static const String reportFund = 'report_fund';
   static const String reportMarketing = 'report_marketing';
+  static const String reportMonthly = 'report_monthly';
 
   // Administrative sub-pages
   static const String adminFund = 'admin_fund';
@@ -271,6 +272,11 @@ class AppPages {
       SubPermission(
         subPageId: reportMarketing,
         subPageName: 'الدعايا',
+        canAccess: false,
+      ),
+      SubPermission(
+        subPageId: reportMonthly,
+        subPageName: 'الشهري',
         canAccess: false,
       ),
     ];

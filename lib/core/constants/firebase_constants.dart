@@ -81,16 +81,22 @@ class FirebaseConstants {
     'شبل', // Under 17 path start
     'شبل مميز', // Under 17 path second level
     'جدد', // 17+ path start
+    'داخل متابعه', // 17+ after first month
     'تدريب', // 17+ path second level
     'مشروع مسئول', // Both paths converge here
+    'مشروع مستقيل', // Resigned project responsible
     'مسئول', // Final level
+    'مسئول مستقيل', // Resigned responsible
   ];
 
   // NEW: Educational Levels with Order (for sorting - higher value = higher rank)
   static const Map<String, int> educationalLevelsOrder = {
-    'مسئول': 6,
-    'مشروع مسئول': 5,
-    'تدريب': 4,
+    'مسئول': 9,
+    'مسئول مستقيل': 8,
+    'مشروع مسئول': 7,
+    'مشروع مستقيل': 6,
+    'تدريب': 5,
+    'داخل متابعه': 4,
     'شبل مميز': 3,
     'شبل': 2,
     'جدد': 1,
@@ -127,9 +133,20 @@ class FirebaseConstants {
       'انترفيو التسكين',
       'الميني كامب',
     ],
+    'داخل متابعه': ['مشاركة شهر إضافي', 'انترفيو التسكين'],
     'تدريب': ['انترفيو الاعمدة', 'مشاركة 4 شهور'],
     'مشروع مسئول': ['كامب 48', 'تارجت رسالاوي', 'حفلة التخرج'],
   };
+
+  // Meeting Categories
+  static const List<String> meetingCategories = [
+    'اجتماع لجنة',
+    'اجتماع ليدرات',
+    'اجتماع الفريق',
+  ];
+
+  // Voting Results
+  static const List<String> votingResults = ['موافق', 'مرفوض', 'معلق'];
 
   // Helper method to determine initial educational level based on age
   static String getInitialEducationalLevel(int age) {
@@ -146,9 +163,10 @@ class FirebaseConstants {
       case 'شبل':
         return 'شبل مميز';
       case 'شبل مميز':
-        // Check if volunteer is above 17
         return 'مشروع مسئول';
       case 'جدد':
+        return 'داخل متابعه';
+      case 'داخل متابعه':
         return 'تدريب';
       case 'تدريب':
         return 'مشروع مسئول';
@@ -156,9 +174,30 @@ class FirebaseConstants {
         return 'مسئول';
       case 'مسئول':
         return null;
+      case 'مشروع مستقيل':
+        return null;
+      case 'مسئول مستقيل':
+        return null;
       default:
         return null;
     }
+  }
+
+  // Helper to get the resigned version of a level
+  static String? getResignedLevel(String currentLevel) {
+    switch (currentLevel) {
+      case 'مشروع مسئول':
+        return 'مشروع مستقيل';
+      case 'مسئول':
+        return 'مسئول مستقيل';
+      default:
+        return null;
+    }
+  }
+
+  // Check if a level is a resigned level
+  static bool isResignedLevel(String level) {
+    return level == 'مشروع مستقيل' || level == 'مسئول مستقيل';
   }
 
   // Field names for Volunteers

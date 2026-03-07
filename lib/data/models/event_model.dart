@@ -1,6 +1,6 @@
 // ============================================
 // FILE: lib/data/models/event_model.dart
-// UPDATED: Added committeeId, committeeName, and qafla role fields
+// UPDATED: Added meeting-specific fields for Word export
 // ============================================
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -24,6 +24,13 @@ class EventModel extends Event {
     super.qaflaDistribution,
     required super.createdAt,
     required super.updatedAt,
+    super.meetingCategory,
+    super.previousMeetingPoints,
+    super.newMeetingPoints,
+    super.votingItems,
+    super.meetingDecisions,
+    super.deferredPoints,
+    super.additionalDetails,
   });
 
   // From Firestore
@@ -48,6 +55,19 @@ class EventModel extends Event {
       ),
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       updatedAt: (data['updatedAt'] as Timestamp).toDate(),
+      meetingCategory: data['meetingCategory'],
+      previousMeetingPoints: List<String>.from(
+        data['previousMeetingPoints'] ?? [],
+      ),
+      newMeetingPoints: List<String>.from(data['newMeetingPoints'] ?? []),
+      votingItems:
+          (data['votingItems'] as List<dynamic>?)
+              ?.map((item) => Map<String, String>.from(item as Map))
+              .toList() ??
+          [],
+      meetingDecisions: List<String>.from(data['meetingDecisions'] ?? []),
+      deferredPoints: List<String>.from(data['deferredPoints'] ?? []),
+      additionalDetails: data['additionalDetails'],
     );
   }
 
@@ -69,6 +89,13 @@ class EventModel extends Event {
       'qaflaDistribution': qaflaDistribution,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.now(),
+      'meetingCategory': meetingCategory,
+      'previousMeetingPoints': previousMeetingPoints,
+      'newMeetingPoints': newMeetingPoints,
+      'votingItems': votingItems,
+      'meetingDecisions': meetingDecisions,
+      'deferredPoints': deferredPoints,
+      'additionalDetails': additionalDetails,
     };
   }
 }
