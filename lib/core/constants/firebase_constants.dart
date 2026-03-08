@@ -200,6 +200,18 @@ class FirebaseConstants {
     return level == 'مشروع مستقيل' || level == 'مسئول مستقيل';
   }
 
+  // Get the active version of a resigned level
+  static String? getActiveLevel(String resignedLevel) {
+    switch (resignedLevel) {
+      case 'مشروع مستقيل':
+        return 'مشروع مسئول';
+      case 'مسئول مستقيل':
+        return 'مسئول';
+      default:
+        return null;
+    }
+  }
+
   // Field names for Volunteers
   static const String nameField = 'name';
   static const String phoneField = 'phone';

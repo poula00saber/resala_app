@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:resala/presentation/themes/app_theme.dart';
 import 'package:resala/services/auth_service.dart';
+import '../../widgets/whale_loading.dart';
 import '../home/home_screen.dart';
 
 // Key for tracking if user just logged out
@@ -715,13 +716,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                 shadowColor: AppTheme.primary.withOpacity(0.4),
                               ),
                               child: _isLoading || _isAutoLoggingIn
-                                  ? const SizedBox(
-                                      height: 24,
-                                      width: 24,
-                                      child: CircularProgressIndicator(
-                                        color: AppTheme.cardBackground,
-                                        strokeWidth: 2.5,
-                                      ),
+                                  ? WhaleLoading(
+                                      size: 24,
+                                      color: AppTheme.cardBackground,
                                     )
                                   : const Row(
                                       mainAxisAlignment:

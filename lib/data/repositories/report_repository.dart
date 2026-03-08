@@ -466,16 +466,13 @@ class ReportRepository {
 
             var reportData = reportDataMap[volunteerId]!;
 
-            if (isWithdrawal) {
-              reportData.totalFundAmount -= amount;
-            } else {
+            if (!isWithdrawal) {
               reportData.fundCount++; // Increment count of contributions
               reportData.fundAmount += amount;
               reportData.totalFundAmount += amount;
-            }
-
-            if (month != null) {
-              reportData.monthsParticipated.add(month);
+              if (month != null) {
+                reportData.monthsParticipated.add(month);
+              }
             }
           }
         }
@@ -485,7 +482,7 @@ class ReportRepository {
 
       // Filter out volunteers with no fund activity
       return reportDataMap.values
-          .where((data) => data.fundCount > 0 || data.totalFundAmount != 0)
+          .where((data) => data.fundCount > 0 || data.fundAmount != 0)
           .toList();
     } catch (e) {
       print('Error generating fund report: $e');
@@ -647,13 +644,32 @@ class ReportRepository {
           }
         }
 
-        // Count t-shirts
-        for (var volunteerId in event.volunteerIds) {
-          final volunteer = volunteers
-              .where((v) => v.id == volunteerId)
-              .firstOrNull;
-          if (volunteer != null && (volunteer as VolunteerModel).hasTshirt) {
-            tshirtCount++;
+        // Count t-shirts based on event type
+        // Online meeting → 0
+        // قافلة → count تجهيز/تعبئة/توزيع only if volunteer has t-shirt (0-3)
+        // Otherwise → 1 if has t-shirt, 0 if not
+        final bool isOnlineMeeting =
+            event.type == 'اجتماع' && event.meetingPlace == 'أونلاين';
+        final bool isQafla = event.type == 'قافلة';
+
+        if (!isOnlineMeeting) {
+          for (var volunteerId in event.volunteerIds) {
+            final volunteer = volunteers
+                .where((v) => v.id == volunteerId)
+                .firstOrNull;
+            if (volunteer == null) continue;
+            final hasTshirt = (volunteer as VolunteerModel).hasTshirt;
+            if (!hasTshirt) continue;
+
+            if (isQafla) {
+              int count = 0;
+              if (event.qaflaPreparation[volunteerId] == true) count++;
+              if (event.qaflaFilling[volunteerId] == true) count++;
+              if (event.qaflaDistribution[volunteerId] == true) count++;
+              tshirtCount += count;
+            } else {
+              tshirtCount++;
+            }
           }
         }
 

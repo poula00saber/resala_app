@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../providers/event_provider.dart';
 import '../../providers/committee_provider.dart';
 import '../../themes/app_theme.dart';
+import '../../widgets/whale_loading.dart';
 import '../../../core/constants/firebase_constants.dart';
 import '../../../core/utils/validators.dart';
 
@@ -462,13 +463,9 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                                 ),
                               ),
                               child: _isLoading
-                                  ? const SizedBox(
-                                      height: 20,
-                                      width: 20,
-                                      child: CircularProgressIndicator(
-                                        color: AppTheme.cardBackground,
-                                        strokeWidth: 2,
-                                      ),
+                                  ? WhaleLoading(
+                                      size: 20,
+                                      color: AppTheme.cardBackground,
                                     )
                                   : const Text('حفظ الحدث'),
                             ),

@@ -7,6 +7,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../themes/app_theme.dart';
+import '../../widgets/whale_loading.dart';
 import '../../../core/constants/firebase_constants.dart';
 import '../../../data/models/marketing_model.dart';
 import '../../../data/repositories/marketing_repository.dart';
@@ -210,9 +211,7 @@ class _MarketingEntryScreenState extends State<MarketingEntryScreen> {
           ),
         ),
         body: _isLoading
-            ? const Center(
-                child: CircularProgressIndicator(color: AppTheme.primary),
-              )
+            ? Center(child: WhaleLoading())
             : SingleChildScrollView(
                 padding: const EdgeInsets.all(16),
                 child: Column(
@@ -447,13 +446,9 @@ class _MarketingEntryScreenState extends State<MarketingEntryScreen> {
                             ),
                           ),
                           child: _isSaving
-                              ? const SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(
-                                    color: AppTheme.cardBackground,
-                                    strokeWidth: 2,
-                                  ),
+                              ? WhaleLoading(
+                                  size: 20,
+                                  color: AppTheme.cardBackground,
                                 )
                               : const Text(
                                   'تسجيل الستوري',

@@ -1,6 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
 import '../themes/app_theme.dart';
+import '../widgets/whale_loading.dart';
 import 'home/home_screen.dart';
 import 'login/login_screen.dart';
 
@@ -62,10 +63,7 @@ class _SplashScreenState extends State<SplashScreen> {
             ),
             const SizedBox(height: 40),
             // Loading indicator with app color
-            const CircularProgressIndicator(
-              color: Color(0xFF6B2D3A),
-              strokeWidth: 3,
-            ),
+            WhaleLoading(size: 60),
           ],
         ),
       ),

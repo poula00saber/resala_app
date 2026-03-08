@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/volunteer_provider.dart';
 import '../../themes/app_theme.dart';
+import '../../widgets/whale_loading.dart';
 import '../../../core/utils/validators.dart';
 import '../../../core/constants/firebase_constants.dart';
 
@@ -266,13 +267,9 @@ class _CreateVolunteerScreenState extends State<CreateVolunteerScreen> {
                           elevation: 2,
                         ),
                         child: _isLoading
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  color: AppTheme.cardBackground,
-                                  strokeWidth: 2,
-                                ),
+                            ? WhaleLoading(
+                                size: 20,
+                                color: AppTheme.cardBackground,
                               )
                             : const Text(
                                 'إضافة',

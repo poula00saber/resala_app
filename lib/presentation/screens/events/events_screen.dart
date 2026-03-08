@@ -11,6 +11,7 @@ import 'package:provider/provider.dart';
 import '../../providers/event_provider.dart';
 import '../../providers/volunteer_provider.dart';
 import '../../themes/app_theme.dart';
+import '../../widgets/whale_loading.dart';
 import 'edit_event_screen.dart';
 import 'create_event_screen.dart';
 import '../../../services/auth_service.dart';
@@ -369,10 +370,10 @@ class _EventsScreenState extends State<EventsScreen> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: _isExporting
-                              ? const Padding(
-                                  padding: EdgeInsets.all(10),
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
+                              ? Padding(
+                                  padding: const EdgeInsets.all(10),
+                                  child: WhaleLoading(
+                                    size: 20,
                                     color: Colors.green,
                                   ),
                                 )
@@ -523,11 +524,8 @@ class _EventsScreenState extends State<EventsScreen> {
                 child: Consumer<EventProvider>(
                   builder: (context, eventProvider, _) {
                     if (eventProvider.isLoading) {
-                      return const Center(
-                        child: CircularProgressIndicator(
-                          color: AppTheme.cardBackground,
-                          strokeWidth: 3,
-                        ),
+                      return Center(
+                        child: WhaleLoading(color: AppTheme.cardBackground),
                       );
                     }
 
@@ -1249,7 +1247,11 @@ class _EventTileState extends State<_EventTile> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(typeIcon, color: AppTheme.cardBackground, size: 18),
+                          Icon(
+                            typeIcon,
+                            color: AppTheme.cardBackground,
+                            size: 18,
+                          ),
                           const SizedBox(width: 10),
                           Flexible(
                             child:
@@ -1259,9 +1261,9 @@ class _EventTileState extends State<_EventTile> {
                                 ? SizedBox(
                                     width: 20,
                                     height: 20,
-                                    child: CircularProgressIndicator(
+                                    child: WhaleLoading(
+                                      size: 20,
                                       color: AppTheme.cardBackground,
-                                      strokeWidth: 2,
                                     ),
                                   )
                                 : Text(
@@ -1308,13 +1310,9 @@ class _EventTileState extends State<_EventTile> {
                                     color: Colors.white.withOpacity(0.15),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: const SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                      color: AppTheme.cardBackground,
-                                      strokeWidth: 2,
-                                    ),
+                                  child: WhaleLoading(
+                                    size: 20,
+                                    color: AppTheme.cardBackground,
                                   ),
                                 )
                               : _buildStatItem(
@@ -1379,7 +1377,11 @@ class _EventTileState extends State<_EventTile> {
                   ),
                 ),
                 child: widget.isSelected
-                    ? const Icon(Icons.check, color: AppTheme.cardBackground, size: 18)
+                    ? const Icon(
+                        Icons.check,
+                        color: AppTheme.cardBackground,
+                        size: 18,
+                      )
                     : null,
               ),
             ),

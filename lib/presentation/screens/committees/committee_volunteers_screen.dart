@@ -11,6 +11,7 @@ import 'package:resala/services/excel_export_helper.dart';
 import '../../providers/volunteer_provider.dart';
 import '../../providers/committee_provider.dart';
 import '../../themes/app_theme.dart';
+import '../../widgets/whale_loading.dart';
 import '../../../data/models/volunteer_model.dart';
 import '../../../services/auth_service.dart';
 import '../../../data/models/app_user_model.dart';
@@ -130,14 +131,7 @@ class _CommitteeVolunteersScreenState extends State<CommitteeVolunteersScreen> {
                     : () =>
                           _exportToExcel(snapshot.data as List<VolunteerModel>),
                 icon: _isExporting
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: AppTheme.primary,
-                        ),
-                      )
+                    ? WhaleLoading(size: 20)
                     : const Icon(Icons.file_download, color: AppTheme.primary),
                 tooltip: 'تصدير إلى Excel',
               );
@@ -197,9 +191,7 @@ class _CommitteeVolunteersScreenState extends State<CommitteeVolunteersScreen> {
               ).getVolunteersByCommittee(widget.committeeId),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(
-                    child: CircularProgressIndicator(color: AppTheme.primary),
-                  );
+                  return Center(child: WhaleLoading());
                 }
 
                 if (snapshot.hasError) {

@@ -1,6 +1,6 @@
 ﻿// ============================================
 // FILE: lib/presentation/screens/contacts/contacts_screen.dart
-// UPDATED VERSION: With long press options and WhatsApp working for all volunteers
+// UPDATED: Filter by degree (شبل/جدد/داخل متابعة) + join month
 // ============================================
 
 import 'package:flutter/material.dart';
@@ -10,6 +10,7 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../providers/volunteer_provider.dart';
 import '../../themes/app_theme.dart';
+import '../../widgets/whale_loading.dart';
 
 class ContactsScreen extends StatefulWidget {
   const ContactsScreen({super.key});
@@ -22,6 +23,56 @@ class _ContactsScreenState extends State<ContactsScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   final Set<String> _selectedVolunteers = {};
+
+  // Allowed degrees for this screen
+  static const List<String> _allowedDegrees = ['شبل', 'جدد', 'داخل متابعه'];
+
+  // Filter state – empty means show all
+  final Set<String> _selectedDegrees = {};
+  final Set<int> _selectedMonths = {};
+
+  static const List<String> _arabicMonths = [
+    'يناير',
+    'فبراير',
+    'مارس',
+    'أبريل',
+    'مايو',
+    'يونيو',
+    'يوليو',
+    'أغسطس',
+    'سبتمبر',
+    'أكتوبر',
+    'نوفمبر',
+    'ديسمبر',
+  ];
+
+  bool _showFilters = false;
+
+  List<dynamic> _applyFilters(List<dynamic> volunteers) {
+    // First: only show allowed degrees
+    var filtered = volunteers.where((v) {
+      final level = v.educationalLevel ?? '';
+      return _allowedDegrees.contains(level);
+    }).toList();
+
+    // Degree filter
+    if (_selectedDegrees.isNotEmpty) {
+      filtered = filtered.where((v) {
+        final level = v.educationalLevel ?? '';
+        return _selectedDegrees.contains(level);
+      }).toList();
+    }
+
+    // Month filter (based on createdAt month)
+    if (_selectedMonths.isNotEmpty) {
+      filtered = filtered.where((v) {
+        final joinMonth = v.createdAt.month;
+        return _selectedMonths.contains(joinMonth);
+      }).toList();
+    }
+
+    return filtered;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -57,6 +108,16 @@ class _ContactsScreenState extends State<ContactsScreen> {
                 ),
           centerTitle: true,
           actions: [
+            IconButton(
+              icon: Icon(
+                _showFilters ? Icons.filter_list_off : Icons.filter_list,
+                color:
+                    (_selectedDegrees.isNotEmpty || _selectedMonths.isNotEmpty)
+                    ? AppTheme.primary
+                    : AppTheme.textDark,
+              ),
+              onPressed: () => setState(() => _showFilters = !_showFilters),
+            ),
             if (_selectedVolunteers.isNotEmpty)
               IconButton(
                 icon: const Icon(Icons.message, color: AppTheme.primary),
@@ -66,8 +127,9 @@ class _ContactsScreenState extends State<ContactsScreen> {
         ),
         body: Column(
           children: [
+            // Search bar
             Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: TextField(
                 controller: _searchController,
                 textAlign: TextAlign.right,
@@ -78,7 +140,10 @@ class _ContactsScreenState extends State<ContactsScreen> {
                     fontFamily: 'Cairo',
                     color: AppTheme.secondary,
                   ),
-                  prefixIcon: const Icon(Icons.search, color: AppTheme.secondary),
+                  prefixIcon: const Icon(
+                    Icons.search,
+                    color: AppTheme.secondary,
+                  ),
                   filled: true,
                   fillColor: AppTheme.cardBackground,
                   contentPadding: const EdgeInsets.symmetric(
@@ -105,6 +170,10 @@ class _ContactsScreenState extends State<ContactsScreen> {
                 },
               ),
             ),
+
+            // Filter section
+            if (_showFilters) _buildFilterSection(),
+
             Expanded(
               child: StreamBuilder(
                 stream: Provider.of<VolunteerProvider>(
@@ -113,9 +182,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
                 ).searchVolunteers(_searchQuery),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(
-                      child: CircularProgressIndicator(color: AppTheme.primary),
-                    );
+                    return Center(child: WhaleLoading());
                   }
 
                   if (snapshot.hasError) {
@@ -130,7 +197,8 @@ class _ContactsScreenState extends State<ContactsScreen> {
                     );
                   }
 
-                  final volunteers = snapshot.data ?? [];
+                  final allVolunteers = snapshot.data ?? [];
+                  final volunteers = _applyFilters(allVolunteers);
 
                   if (volunteers.isEmpty) {
                     return const Center(
@@ -165,9 +233,158 @@ class _ContactsScreenState extends State<ContactsScreen> {
     );
   }
 
+  Widget _buildFilterSection() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppTheme.cardBackground,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.primary.withOpacity(0.08),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Degree filter
+          Row(
+            children: [
+              const Icon(Icons.school, size: 18, color: AppTheme.primary),
+              const SizedBox(width: 6),
+              const Text(
+                'الدرجة:',
+                style: TextStyle(
+                  fontFamily: 'Cairo',
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.textDark,
+                ),
+              ),
+              const Spacer(),
+              if (_selectedDegrees.isNotEmpty || _selectedMonths.isNotEmpty)
+                GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _selectedDegrees.clear();
+                      _selectedMonths.clear();
+                    });
+                  },
+                  child: const Text(
+                    'مسح الكل',
+                    style: TextStyle(
+                      fontFamily: 'Cairo',
+                      fontSize: 12,
+                      color: Colors.red,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 8,
+            children: _allowedDegrees.map((degree) {
+              final selected = _selectedDegrees.contains(degree);
+              return FilterChip(
+                label: Text(
+                  degree,
+                  style: TextStyle(
+                    fontFamily: 'Cairo',
+                    fontSize: 13,
+                    color: selected ? Colors.white : AppTheme.textDark,
+                  ),
+                ),
+                selected: selected,
+                selectedColor: AppTheme.primary,
+                checkmarkColor: Colors.white,
+                backgroundColor: AppTheme.background,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                onSelected: (_) {
+                  setState(() {
+                    if (selected) {
+                      _selectedDegrees.remove(degree);
+                    } else {
+                      _selectedDegrees.add(degree);
+                    }
+                  });
+                },
+              );
+            }).toList(),
+          ),
+          const Divider(height: 16),
+          // Month filter
+          Row(
+            children: [
+              const Icon(
+                Icons.calendar_month,
+                size: 18,
+                color: AppTheme.primary,
+              ),
+              const SizedBox(width: 6),
+              const Text(
+                'شهر الانضمام:',
+                style: TextStyle(
+                  fontFamily: 'Cairo',
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.textDark,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 6,
+            runSpacing: 4,
+            children: List.generate(12, (i) {
+              final month = i + 1;
+              final selected = _selectedMonths.contains(month);
+              return FilterChip(
+                label: Text(
+                  _arabicMonths[i],
+                  style: TextStyle(
+                    fontFamily: 'Cairo',
+                    fontSize: 12,
+                    color: selected ? Colors.white : AppTheme.textDark,
+                  ),
+                ),
+                selected: selected,
+                selectedColor: AppTheme.primary,
+                checkmarkColor: Colors.white,
+                backgroundColor: AppTheme.background,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                visualDensity: VisualDensity.compact,
+                onSelected: (_) {
+                  setState(() {
+                    if (selected) {
+                      _selectedMonths.remove(month);
+                    } else {
+                      _selectedMonths.add(month);
+                    }
+                  });
+                },
+              );
+            }),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildContactCard(dynamic volunteer, bool isSelected) {
     final hasValidPhone =
         volunteer.phone != null && volunteer.phone!.isNotEmpty;
+    final joinMonth = _arabicMonths[volunteer.createdAt.month - 1];
+    final joinYear = volunteer.createdAt.year;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -228,6 +445,38 @@ class _ContactsScreenState extends State<ContactsScreen> {
                       textAlign: TextAlign.start,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
+                    ),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppTheme.primary.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            volunteer.educationalLevel ?? '',
+                            style: const TextStyle(
+                              fontFamily: 'Cairo',
+                              color: AppTheme.primary,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          '$joinMonth $joinYear',
+                          style: const TextStyle(
+                            fontFamily: 'Cairo',
+                            color: AppTheme.secondary,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
                     ),
                     if (hasValidPhone)
                       Text(
@@ -1067,13 +1316,9 @@ class _MessageComposerScreenState extends State<MessageComposerScreen> {
                         ? Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  color: AppTheme.cardBackground,
-                                  strokeWidth: 2.5,
-                                ),
+                              WhaleLoading(
+                                size: 20,
+                                color: AppTheme.cardBackground,
                               ),
                               const SizedBox(width: 12),
                               Text(

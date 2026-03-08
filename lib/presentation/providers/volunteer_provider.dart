@@ -10,6 +10,7 @@ import '../../data/repositories/volunteer_repository.dart';
 
 class VolunteerProvider with ChangeNotifier {
   final VolunteerRepository _repository = VolunteerRepository();
+  final Set<String> _autoPromotingVolunteerIds = <String>{};
 
   List<VolunteerModel> _volunteers = [];
   List<VolunteerModel> get volunteers => _volunteers;
@@ -24,7 +25,14 @@ class VolunteerProvider with ChangeNotifier {
   void initVolunteers() {
     _repository.getAllVolunteers().listen(
       (volunteers) {
-        _volunteers = volunteers;
+        _applyAutomaticLevelTransitions(volunteers);
+        _volunteers = volunteers
+            .map(
+              (volunteer) => _shouldAutoPromoteVolunteer(volunteer)
+                  ? volunteer.copyWith(educationalLevel: 'داخل متابعه')
+                  : volunteer,
+            )
+            .toList();
         _volunteers.sort(
           (a, b) => FirebaseConstants.compareByDegreeAndName(
             a.educationalLevel ?? '',
@@ -40,6 +48,35 @@ class VolunteerProvider with ChangeNotifier {
         notifyListeners();
       },
     );
+  }
+
+  bool _shouldAutoPromoteVolunteer(VolunteerModel volunteer) {
+    if (volunteer.educationalLevel != 'جدد') {
+      return false;
+    }
+
+    return !DateTime.now().isBefore(
+      volunteer.createdAt.add(const Duration(days: 30)),
+    );
+  }
+
+  Future<void> _applyAutomaticLevelTransitions(
+    List<VolunteerModel> volunteers,
+  ) async {
+    final eligibleVolunteers = volunteers.where(_shouldAutoPromoteVolunteer);
+
+    for (final volunteer in eligibleVolunteers) {
+      if (_autoPromotingVolunteerIds.contains(volunteer.id)) {
+        continue;
+      }
+
+      _autoPromotingVolunteerIds.add(volunteer.id);
+      try {
+        await _repository.updateVolunteerLevel(volunteer.id, 'داخل متابعه');
+      } finally {
+        _autoPromotingVolunteerIds.remove(volunteer.id);
+      }
+    }
   }
 
   // Get all volunteers stream

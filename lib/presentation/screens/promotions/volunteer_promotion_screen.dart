@@ -10,6 +10,7 @@ import 'package:resala/data/models/promotion_model.dart';
 import 'package:resala/presentation/providers/promotion_provider.dart';
 import 'package:resala/presentation/providers/volunteer_provider.dart';
 import '../../themes/app_theme.dart';
+import '../../widgets/whale_loading.dart';
 
 class VolunteerPromotionScreen extends StatefulWidget {
   final dynamic volunteer;
@@ -140,6 +141,88 @@ class _VolunteerPromotionScreenState extends State<VolunteerPromotionScreen> {
     }
   }
 
+  Future<void> _returnFromResignation() async {
+    final activeLevel = FirebaseConstants.getActiveLevel(_currentLevel);
+    if (activeLevel == null) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text(
+          'تأكيد الإعادة',
+          style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold),
+          textAlign: TextAlign.center,
+        ),
+        content: Text(
+          'هل تريد إعادة ${widget.volunteer.name} من $_currentLevel إلى $activeLevel؟',
+          style: const TextStyle(fontFamily: 'Cairo'),
+          textAlign: TextAlign.center,
+        ),
+        actionsAlignment: MainAxisAlignment.center,
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('إلغاء', style: TextStyle(fontFamily: 'Cairo')),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green[700],
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(15),
+              ),
+            ),
+            child: const Text(
+              'تأكيد',
+              style: TextStyle(fontFamily: 'Cairo', color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    await Provider.of<VolunteerProvider>(
+      context,
+      listen: false,
+    ).updateVolunteerLevel(widget.volunteer.id, activeLevel);
+
+    setState(() {
+      _currentLevel = activeLevel;
+    });
+
+    // Load promotion requirements for the active level
+    final nextLevel = FirebaseConstants.getNextLevel(
+      activeLevel,
+      age: widget.volunteer.age,
+    );
+    if (nextLevel != null) {
+      await Provider.of<PromotionProvider>(
+        context,
+        listen: false,
+      ).loadPromotionRequirements(
+        volunteerId: widget.volunteer.id,
+        currentLevel: activeLevel,
+        nextLevel: nextLevel,
+      );
+    }
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'تم إعادة ${widget.volunteer.name} كـ $activeLevel',
+            style: const TextStyle(fontFamily: 'Cairo'),
+            textAlign: TextAlign.center,
+          ),
+          backgroundColor: Colors.green[700],
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final promotionProvider = Provider.of<PromotionProvider>(context);
@@ -170,9 +253,7 @@ class _VolunteerPromotionScreenState extends State<VolunteerPromotionScreen> {
         centerTitle: true,
       ),
       body: _isLoading || promotionProvider.isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: AppTheme.primary),
-            )
+          ? Center(child: WhaleLoading())
           : SingleChildScrollView(
               padding: const EdgeInsets.all(20),
               child: Column(
@@ -348,7 +429,9 @@ class _VolunteerPromotionScreenState extends State<VolunteerPromotionScreen> {
                       ),
                       child: Text(
                         isMaxLevel
-                            ? 'أعلى مستوى'
+                            ? (FirebaseConstants.isResignedLevel(_currentLevel)
+                                  ? 'مستقيل'
+                                  : 'أعلى مستوى')
                             : (_currentLevel == 'شبل مميز' &&
                                   widget.volunteer.age < 17)
                             ? 'يجب أن يكون فوق 17 للترقية'
@@ -361,6 +444,35 @@ class _VolunteerPromotionScreenState extends State<VolunteerPromotionScreen> {
                       ),
                     ),
                   ),
+
+                  // Return from resignation button
+                  if (FirebaseConstants.isResignedLevel(_currentLevel)) ...[
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: _returnFromResignation,
+                        icon: const Icon(Icons.undo),
+                        label: Text(
+                          'إعادة كـ ${FirebaseConstants.getActiveLevel(_currentLevel)}',
+                          style: const TextStyle(
+                            fontFamily: 'Cairo',
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green[700],
+                          foregroundColor: AppTheme.textLight,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(25),
+                          ),
+                          elevation: 0,
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -406,7 +518,11 @@ class _VolunteerPromotionScreenState extends State<VolunteerPromotionScreen> {
                   ),
                 ),
                 child: requirement.isCompleted
-                    ? const Icon(Icons.check, size: 16, color: AppTheme.textLight)
+                    ? const Icon(
+                        Icons.check,
+                        size: 16,
+                        color: AppTheme.textLight,
+                      )
                     : (isAgeRequirement && widget.volunteer.age < 17)
                     ? Icon(Icons.block, size: 16, color: Colors.grey[400])
                     : null,

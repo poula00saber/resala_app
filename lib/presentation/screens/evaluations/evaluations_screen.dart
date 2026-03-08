@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import 'package:resala/presentation/screens/evaluations/evaluation_details_screen.dart';
 import '../../providers/volunteer_provider.dart';
 import '../../themes/app_theme.dart';
+import '../../widgets/whale_loading.dart';
 
 class EvaluationsScreen extends StatefulWidget {
   const EvaluationsScreen({super.key});
@@ -94,9 +95,7 @@ class _EvaluationsScreenState extends State<EvaluationsScreen> {
               ).searchVolunteers(_searchQuery),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(
-                    child: CircularProgressIndicator(color: AppTheme.primary),
-                  );
+                  return Center(child: WhaleLoading());
                 }
 
                 if (snapshot.hasError) {

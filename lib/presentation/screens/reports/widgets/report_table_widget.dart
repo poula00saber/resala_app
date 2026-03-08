@@ -5,6 +5,7 @@
 
 import 'package:flutter/material.dart';
 import '../../../themes/app_theme.dart';
+import '../../../widgets/whale_loading.dart';
 
 class ReportTableWidget extends StatelessWidget {
   final List<String> headers;
@@ -21,10 +22,10 @@ class ReportTableWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      return const Center(
+      return Center(
         child: Padding(
-          padding: EdgeInsets.all(40),
-          child: CircularProgressIndicator(color: AppTheme.primary),
+          padding: const EdgeInsets.all(40),
+          child: WhaleLoading(),
         ),
       );
     }

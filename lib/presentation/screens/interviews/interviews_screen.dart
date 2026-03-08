@@ -11,6 +11,7 @@ import 'package:resala/presentation/providers/interview_provider.dart';
 import 'package:resala/presentation/providers/volunteer_provider.dart';
 import 'package:resala/presentation/screens/interviews/interview_details_screen.dart';
 import 'package:resala/presentation/themes/app_theme.dart';
+import '../../widgets/whale_loading.dart';
 
 class InterviewsScreen extends StatefulWidget {
   const InterviewsScreen({super.key});
@@ -220,9 +221,7 @@ class _InterviewsScreenState extends State<InterviewsScreen> {
       ).searchVolunteers(_searchQuery),
       builder: (context, volunteerSnapshot) {
         if (volunteerSnapshot.connectionState == ConnectionState.waiting) {
-          return const Center(
-            child: CircularProgressIndicator(color: AppTheme.primary),
-          );
+          return Center(child: WhaleLoading());
         }
 
         final volunteers = volunteerSnapshot.data ?? [];
@@ -239,9 +238,7 @@ class _InterviewsScreenState extends State<InterviewsScreen> {
               ),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(
-                    child: CircularProgressIndicator(color: AppTheme.primary),
-                  );
+                  return Center(child: WhaleLoading());
                 }
 
                 final items = snapshot.data ?? [];
@@ -331,9 +328,7 @@ class _InterviewsScreenState extends State<InterviewsScreen> {
       ).searchVolunteers(_searchQuery),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(
-            child: CircularProgressIndicator(color: AppTheme.primary),
-          );
+          return Center(child: WhaleLoading());
         }
 
         final volunteers = snapshot.data ?? [];
@@ -447,9 +442,7 @@ class _InterviewsScreenState extends State<InterviewsScreen> {
       ).searchVolunteers(_searchQuery),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(
-            child: CircularProgressIndicator(color: AppTheme.primary),
-          );
+          return Center(child: WhaleLoading());
         }
 
         final volunteers = snapshot.data ?? [];
@@ -474,9 +467,7 @@ class _InterviewsScreenState extends State<InterviewsScreen> {
           ).getVolunteersWithoutInterviews(volunteers),
           builder: (context, asyncSnapshot) {
             if (asyncSnapshot.connectionState == ConnectionState.waiting) {
-              return const Center(
-                child: CircularProgressIndicator(color: AppTheme.primary),
-              );
+              return Center(child: WhaleLoading());
             }
 
             final volunteersWithoutInterviews = asyncSnapshot.data ?? [];
@@ -829,9 +820,7 @@ class _InterviewsScreenState extends State<InterviewsScreen> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const Center(
-        child: CircularProgressIndicator(color: AppTheme.primary),
-      ),
+      builder: (context) => Center(child: WhaleLoading()),
     );
 
     final interviewProvider = Provider.of<InterviewProvider>(

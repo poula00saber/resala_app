@@ -7,6 +7,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../themes/app_theme.dart';
+import '../../widgets/whale_loading.dart';
 import '../../../core/constants/firebase_constants.dart';
 import '../../../data/models/fund_model.dart';
 import '../../../data/repositories/fund_repository.dart';
@@ -269,9 +270,7 @@ class _FundEntryScreenState extends State<FundEntryScreen> {
           ),
         ),
         body: _isLoading
-            ? const Center(
-                child: CircularProgressIndicator(color: AppTheme.primary),
-              )
+            ? Center(child: WhaleLoading())
             : SingleChildScrollView(
                 padding: const EdgeInsets.all(16),
                 child: Column(
@@ -661,13 +660,9 @@ class _FundEntryScreenState extends State<FundEntryScreen> {
                             ),
                           ),
                           child: _isSaving
-                              ? const SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(
-                                    color: AppTheme.cardBackground,
-                                    strokeWidth: 2,
-                                  ),
+                              ? WhaleLoading(
+                                  size: 20,
+                                  color: AppTheme.cardBackground,
                                 )
                               : Text(
                                   _isWithdrawal

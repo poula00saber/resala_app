@@ -8,6 +8,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import '../../themes/app_theme.dart';
+import '../../widgets/whale_loading.dart';
 import '../../../data/models/app_user_model.dart';
 import '../../../data/repositories/app_user_repository.dart';
 
@@ -53,9 +54,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
           stream: _userRepository.getAllUsers(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(
-                child: CircularProgressIndicator(color: AppTheme.primary),
-              );
+              return Center(child: WhaleLoading());
             }
 
             if (snapshot.hasError) {
@@ -550,13 +549,9 @@ class _AddEditUserDialogState extends State<_AddEditUserDialog> {
                         ),
                       ),
                       child: _isSaving
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                color: AppTheme.cardBackground,
-                                strokeWidth: 2,
-                              ),
+                          ? WhaleLoading(
+                              size: 20,
+                              color: AppTheme.cardBackground,
                             )
                           : Text(
                               isEditing ? 'تحديث' : 'إضافة',

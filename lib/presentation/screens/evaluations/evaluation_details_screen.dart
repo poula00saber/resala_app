@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/evaluation_provider.dart';
 import '../../themes/app_theme.dart';
+import '../../widgets/whale_loading.dart';
 import 'add_evaluation_screen.dart';
 
 class VolunteerEvaluationDetailsScreen extends StatefulWidget {
@@ -226,11 +227,9 @@ class _VolunteerEvaluationDetailsScreenState
       builder: (context, snapshot) {
         // Handle loading state
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Padding(
-            padding: EdgeInsets.all(40),
-            child: Center(
-              child: CircularProgressIndicator(color: AppTheme.primary),
-            ),
+          return Padding(
+            padding: const EdgeInsets.all(40),
+            child: Center(child: WhaleLoading()),
           );
         }
 

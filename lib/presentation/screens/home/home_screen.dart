@@ -13,6 +13,7 @@ import '../administrative/administrative_screen.dart';
 import '../users/user_management_screen.dart';
 import '../../../services/auth_service.dart';
 import '../../../data/models/app_user_model.dart';
+import '../../widgets/whale_loading.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 // Key for tracking if user just logged out
@@ -52,9 +53,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_isLoading) {
       return Scaffold(
         backgroundColor: AppTheme.background,
-        body: const Center(
-          child: CircularProgressIndicator(color: AppTheme.primary),
-        ),
+        body: Center(child: WhaleLoading()),
       );
     }
 
@@ -134,16 +133,14 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
       drawer: _buildDrawer(context),
-      body: Container(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: GridView.count(
-            crossAxisCount: 2,
-            childAspectRatio: 1,
-            crossAxisSpacing: 15,
-            mainAxisSpacing: 15,
-            children: menuButtons,
-          ),
+      body: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+        child: GridView.count(
+          crossAxisCount: 2,
+          childAspectRatio: 1,
+          crossAxisSpacing: 14,
+          mainAxisSpacing: 14,
+          children: menuButtons,
         ),
       ),
     );
@@ -159,7 +156,13 @@ class _HomeScreenState extends State<HomeScreen> {
           padding: EdgeInsets.zero,
           children: [
             DrawerHeader(
-              decoration: const BoxDecoration(color: AppTheme.primary),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [AppTheme.primary, Color(0xFF6B2636)],
+                ),
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.end,
@@ -403,35 +406,47 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _menuButton(String title, IconData icon, VoidCallback onTap) {
     return Card(
-      elevation: 8,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
         child: Container(
           decoration: BoxDecoration(
-            color: AppTheme.primary,
-            borderRadius: BorderRadius.circular(20),
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [AppTheme.primary, Color(0xFF6B2636)],
+            ),
+            borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
-                color: AppTheme.primary.withOpacity(0.2),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
+                color: AppTheme.primary.withOpacity(0.35),
+                blurRadius: 14,
+                offset: const Offset(0, 6),
               ),
             ],
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 60, color: AppTheme.textLight),
-              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Icon(icon, size: 40, color: AppTheme.textLight),
+              ),
+              const SizedBox(height: 14),
               Text(
                 title,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   color: AppTheme.cardBackground,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.3,
                 ),
               ),
             ],

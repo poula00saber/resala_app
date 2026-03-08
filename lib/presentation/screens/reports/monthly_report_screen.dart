@@ -5,6 +5,7 @@
 
 import 'package:flutter/material.dart';
 import '../../themes/app_theme.dart';
+import '../../widgets/whale_loading.dart';
 import '../../../data/repositories/report_repository.dart';
 import '../../../data/models/report_data_model.dart';
 
@@ -264,9 +265,7 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
             // Stats
             Expanded(
               child: _isLoading
-                  ? const Center(
-                      child: CircularProgressIndicator(color: AppTheme.primary),
-                    )
+                  ? Center(child: WhaleLoading())
                   : _stats == null
                   ? const Center(
                       child: Text(

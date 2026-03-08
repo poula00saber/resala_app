@@ -4,6 +4,7 @@
 // ============================================
 
 import 'package:flutter/material.dart';
+import 'page_transitions.dart';
 
 class AppTheme {
   // Primary Colors
@@ -26,6 +27,21 @@ class AppTheme {
       background: background,
     ),
 
+    // Smooth page transitions on all platforms
+    pageTransitionsTheme: const PageTransitionsTheme(
+      builders: {
+        TargetPlatform.android: SmoothPageTransitionsBuilder(),
+        TargetPlatform.iOS: SmoothPageTransitionsBuilder(),
+        TargetPlatform.windows: SmoothPageTransitionsBuilder(),
+        TargetPlatform.macOS: SmoothPageTransitionsBuilder(),
+        TargetPlatform.linux: SmoothPageTransitionsBuilder(),
+      },
+    ),
+
+    // Subtle tap feedback
+    splashColor: primary.withOpacity(0.08),
+    highlightColor: primary.withOpacity(0.04),
+
     // ✅ Cairo Font Family
     fontFamily: 'Cairo',
 
@@ -43,9 +59,10 @@ class AppTheme {
     ),
 
     cardTheme: CardThemeData(
-      elevation: 4,
+      elevation: 2,
+      shadowColor: primary.withOpacity(0.15),
       color: cardBackground,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
     ),
 
     inputDecorationTheme: InputDecorationTheme(

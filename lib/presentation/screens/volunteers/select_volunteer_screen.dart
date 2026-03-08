@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/volunteer_provider.dart';
 import '../../themes/app_theme.dart';
+import '../../widgets/whale_loading.dart';
 import '../../../core/constants/firebase_constants.dart';
 
 class SelectVolunteerScreen extends StatefulWidget {
@@ -136,7 +137,10 @@ class _SelectVolunteerScreenState extends State<SelectVolunteerScreen> {
                       decoration: InputDecoration(
                         hintText: 'بحث',
                         hintStyle: TextStyle(color: Colors.grey[400]),
-                        prefixIcon: Icon(Icons.search, color: AppTheme.secondary),
+                        prefixIcon: Icon(
+                          Icons.search,
+                          color: AppTheme.secondary,
+                        ),
                         filled: true,
                         fillColor: AppTheme.cardBackground,
                         contentPadding: const EdgeInsets.symmetric(
@@ -176,11 +180,7 @@ class _SelectVolunteerScreenState extends State<SelectVolunteerScreen> {
                       builder: (context, snapshot) {
                         if (snapshot.connectionState ==
                             ConnectionState.waiting) {
-                          return const Center(
-                            child: CircularProgressIndicator(
-                              color: AppTheme.primary,
-                            ),
-                          );
+                          return Center(child: WhaleLoading());
                         }
 
                         if (snapshot.hasError) {

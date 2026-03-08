@@ -10,6 +10,7 @@ import 'package:resala/data/models/interview_model.dart';
 import 'package:resala/presentation/providers/interview_provider.dart';
 import 'package:resala/presentation/providers/volunteer_provider.dart';
 import 'package:resala/presentation/themes/app_theme.dart';
+import '../../widgets/whale_loading.dart';
 
 class InterviewDetailsScreen extends StatefulWidget {
   final InterviewModel interview;
@@ -201,14 +202,7 @@ class _InterviewDetailsScreenState extends State<InterviewDetailsScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 8.0),
             child: IconButton(
               icon: _isSaving
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: AppTheme.primary,
-                      ),
-                    )
+                  ? WhaleLoading(size: 20)
                   : const Icon(Icons.save, color: AppTheme.primary, size: 24),
               onPressed: _isSaving ? null : _saveInterview,
             ),
@@ -681,14 +675,7 @@ class _InterviewDetailsScreenState extends State<InterviewDetailsScreen> {
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       icon: _isSaving
-          ? const SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: AppTheme.cardBackground,
-              ),
-            )
+          ? WhaleLoading(size: 20, color: AppTheme.cardBackground)
           : const Icon(Icons.save, size: 20),
       label: const Text(
         'حفظ المقابلة',

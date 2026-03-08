@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import 'package:resala/core/constants/firebase_constants.dart';
 import '../../providers/volunteer_provider.dart';
 import '../../themes/app_theme.dart';
+import '../../widgets/whale_loading.dart';
 import 'volunteer_promotion_screen.dart';
 
 class PromotionsScreen extends StatefulWidget {
@@ -95,9 +96,7 @@ class _PromotionsScreenState extends State<PromotionsScreen> {
               ).searchVolunteers(_searchQuery),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(
-                    child: CircularProgressIndicator(color: AppTheme.primary),
-                  );
+                  return Center(child: WhaleLoading());
                 }
 
                 if (snapshot.hasError) {

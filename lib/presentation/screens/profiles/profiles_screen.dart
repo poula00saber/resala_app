@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/volunteer_provider.dart';
 import '../../themes/app_theme.dart';
+import '../../widgets/whale_loading.dart';
 import 'profile_details_screen.dart';
 import 'add_existing_volunteer_screen.dart';
 import '../../../services/auth_service.dart';
@@ -141,9 +142,7 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
               ).searchVolunteers(_searchQuery),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(
-                    child: CircularProgressIndicator(color: AppTheme.primary),
-                  );
+                  return Center(child: WhaleLoading());
                 }
 
                 if (snapshot.hasError) {

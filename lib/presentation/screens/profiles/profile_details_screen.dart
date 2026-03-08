@@ -13,6 +13,7 @@ import '../../../core/utils/validators.dart';
 import '../../providers/volunteer_provider.dart';
 import '../../providers/committee_provider.dart';
 import '../../themes/app_theme.dart';
+import '../../widgets/whale_loading.dart';
 import '../../../services/auth_service.dart';
 import '../../../data/models/app_user_model.dart';
 
@@ -401,11 +402,7 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(57),
                         child: _uploadingImage
-                            ? const Center(
-                                child: CircularProgressIndicator(
-                                  color: AppTheme.primary,
-                                ),
-                              )
+                            ? Center(child: WhaleLoading(size: 32))
                             : (_selectedImage != null
                                   ? Image.file(
                                       _selectedImage!,
@@ -423,12 +420,10 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
                                                 ) {
                                                   if (loadingProgress == null)
                                                     return child;
-                                                  return const Center(
-                                                    child:
-                                                        CircularProgressIndicator(
-                                                          color:
-                                                              AppTheme.primary,
-                                                        ),
+                                                  return Center(
+                                                    child: WhaleLoading(
+                                                      size: 32,
+                                                    ),
                                                   );
                                                 },
                                             errorBuilder:
@@ -916,13 +911,9 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
                         shadowColor: AppTheme.primary.withOpacity(0.3),
                       ),
                       child: _isLoading
-                          ? const SizedBox(
-                              height: 24,
-                              width: 24,
-                              child: CircularProgressIndicator(
-                                color: AppTheme.cardBackground,
-                                strokeWidth: 2.5,
-                              ),
+                          ? WhaleLoading(
+                              size: 24,
+                              color: AppTheme.cardBackground,
                             )
                           : const Text(
                               'حفظ',
@@ -1136,16 +1127,7 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppTheme.primary, width: 1.5),
       ),
-      child: const Center(
-        child: SizedBox(
-          height: 20,
-          width: 20,
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-            color: AppTheme.primary,
-          ),
-        ),
-      ),
+      child: Center(child: WhaleLoading(size: 20)),
     );
   }
 

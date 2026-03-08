@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 import '../../providers/committee_provider.dart';
 import '../../providers/volunteer_provider.dart';
 import '../../themes/app_theme.dart';
+import '../../widgets/whale_loading.dart';
 import '../profiles/profile_details_screen.dart';
 import '../../../services/auth_service.dart';
 import '../../../services/excel_export_helper.dart';
@@ -63,9 +64,7 @@ class _CommitteesManagementScreenState
         ).getAllCommittees(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(color: AppTheme.primary),
-            );
+            return Center(child: WhaleLoading());
           }
 
           if (snapshot.hasError) {
@@ -270,18 +269,9 @@ class _CommitteesManagementScreenState
       ).getVolunteersByCommittee(committeeId),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Padding(
-            padding: EdgeInsets.all(20),
-            child: Center(
-              child: SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: AppTheme.primary,
-                ),
-              ),
-            ),
+          return Padding(
+            padding: const EdgeInsets.all(20),
+            child: Center(child: WhaleLoading(size: 24)),
           );
         }
 
