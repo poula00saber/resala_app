@@ -5,6 +5,7 @@
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/fund_model.dart';
+import '../../services/operation_log_service.dart';
 
 class FundRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -93,6 +94,13 @@ class FundRepository {
       final docRef = await _firestore
           .collection(_collection)
           .add(fund.toFirestore());
+      await OperationLogService.log(
+        action: 'create',
+        entityType: 'fund_deposit',
+        entityId: docRef.id,
+        entityName: volunteerName,
+        details: {'amount': amount, 'month': month, 'year': year},
+      );
       return docRef.id;
     } catch (e) {
       print('Error adding fund: $e');
@@ -123,6 +131,13 @@ class FundRepository {
       final docRef = await _firestore
           .collection(_collection)
           .add(fund.toFirestore());
+      await OperationLogService.log(
+        action: 'create',
+        entityType: 'fund_withdrawal',
+        entityId: docRef.id,
+        entityName: volunteerName,
+        details: {'amount': amount, 'reason': reason},
+      );
       return docRef.id;
     } catch (e) {
       print('Error adding withdrawal: $e');
@@ -168,6 +183,11 @@ class FundRepository {
   Future<bool> deleteFund(String id) async {
     try {
       await _firestore.collection(_collection).doc(id).delete();
+      await OperationLogService.log(
+        action: 'delete',
+        entityType: 'fund_record',
+        entityId: id,
+      );
       return true;
     } catch (e) {
       print('Error deleting fund: $e');

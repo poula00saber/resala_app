@@ -10,6 +10,7 @@ class FirebaseConstants {
   static const String committeesCollection = 'committees';
   static const String evaluationsCollection = 'evaluations';
   static const String interviewsCollection = 'interviews';
+  static const String operationLogsCollection = 'operation_logs';
 
   // Event Types
   static const String typeQafela = 'قافلة';
@@ -82,6 +83,7 @@ class FirebaseConstants {
     'شبل مميز', // Under 17 path second level
     'جدد', // 17+ path start
     'داخل متابعه', // 17+ after first month
+    'خارج متابعة', // Inactive for last 3 months
     'تدريب', // 17+ path second level
     'مشروع مسئول', // Both paths converge here
     'مشروع مستقيل', // Resigned project responsible
@@ -100,6 +102,7 @@ class FirebaseConstants {
     'شبل مميز': 3,
     'شبل': 2,
     'جدد': 1,
+    'خارج متابعة': 0,
     '': 0,
   };
 

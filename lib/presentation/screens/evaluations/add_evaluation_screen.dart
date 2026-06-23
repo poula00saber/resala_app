@@ -16,6 +16,8 @@ class AddEvaluationScreen extends StatefulWidget {
 
 class _AddEvaluationScreenState extends State<AddEvaluationScreen> {
   final _formKey = GlobalKey<FormState>();
+  final TextEditingController _evaluationNameController =
+      TextEditingController();
   final TextEditingController _evaluatorController = TextEditingController();
   final TextEditingController _dateController = TextEditingController();
   final TextEditingController _monthController = TextEditingController();
@@ -64,6 +66,7 @@ class _AddEvaluationScreenState extends State<AddEvaluationScreen> {
       id: '',
       volunteerId: widget.volunteer.id,
       volunteerName: widget.volunteer.name,
+      evaluationName: _evaluationNameController.text.trim(),
       evaluatorName: _evaluatorController.text,
       month: _monthController.text,
       year: DateTime.now().year,
@@ -177,6 +180,15 @@ class _AddEvaluationScreenState extends State<AddEvaluationScreen> {
                       ),
 
                       const SizedBox(height: 20),
+
+                      // Evaluation Name
+                      _buildTextField(
+                        controller: _evaluationNameController,
+                        label: 'اسم التقييم',
+                        validator: (v) => v?.isEmpty ?? true ? 'مطلوب' : null,
+                      ),
+
+                      const SizedBox(height: 16),
 
                       // Evaluator Name
                       _buildTextField(
@@ -387,6 +399,7 @@ class _AddEvaluationScreenState extends State<AddEvaluationScreen> {
 
   @override
   void dispose() {
+    _evaluationNameController.dispose();
     _evaluatorController.dispose();
     _dateController.dispose();
     _monthController.dispose();

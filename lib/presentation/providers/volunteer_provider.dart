@@ -7,10 +7,14 @@ import 'package:flutter/foundation.dart';
 import 'package:resala/core/constants/firebase_constants.dart';
 import '../../data/models/volunteer_model.dart';
 import '../../data/repositories/volunteer_repository.dart';
+import '../../data/repositories/event_repository.dart';
 
 class VolunteerProvider with ChangeNotifier {
   final VolunteerRepository _repository = VolunteerRepository();
+  final EventRepository _eventRepository = EventRepository();
   final Set<String> _autoPromotingVolunteerIds = <String>{};
+  final Set<String> _autoInactivatingVolunteerIds = <String>{};
+  bool _hasCheckedInactivity = false;
 
   List<VolunteerModel> _volunteers = [];
   List<VolunteerModel> get volunteers => _volunteers;
@@ -24,8 +28,9 @@ class VolunteerProvider with ChangeNotifier {
   // Initialize volunteers stream
   void initVolunteers() {
     _repository.getAllVolunteers().listen(
-      (volunteers) {
+      (volunteers) async {
         _applyAutomaticLevelTransitions(volunteers);
+        await _applyInactivityLevelTransitions(volunteers);
         _volunteers = volunteers
             .map(
               (volunteer) => _shouldAutoPromoteVolunteer(volunteer)
@@ -75,6 +80,61 @@ class VolunteerProvider with ChangeNotifier {
         await _repository.updateVolunteerLevel(volunteer.id, 'داخل متابعه');
       } finally {
         _autoPromotingVolunteerIds.remove(volunteer.id);
+      }
+    }
+  }
+
+  Future<void> _applyInactivityLevelTransitions(
+    List<VolunteerModel> volunteers,
+  ) async {
+    if (_hasCheckedInactivity) {
+      return;
+    }
+
+    _hasCheckedInactivity = true;
+
+    final now = DateTime.now();
+    final startDate = DateTime(now.year, now.month - 2, 1);
+    final endDate = DateTime(now.year, now.month + 1, 0);
+
+    final events = await _eventRepository.getEventsByDateRangeOnce(
+      startDate,
+      endDate,
+    );
+
+    final participatedIds = <String>{};
+    for (final event in events) {
+      try {
+        final eventDate = DateTime.parse(event.date);
+        if (eventDate.isBefore(startDate) || eventDate.isAfter(endDate)) {
+          continue;
+        }
+      } catch (_) {
+        continue;
+      }
+
+      participatedIds.addAll(event.volunteerIds);
+    }
+
+    for (final volunteer in volunteers) {
+      final level = volunteer.educationalLevel ?? '';
+      if (level != 'جدد' && level != 'داخل متابعه') {
+        continue;
+      }
+
+      if (participatedIds.contains(volunteer.id)) {
+        continue;
+      }
+
+      if (_autoInactivatingVolunteerIds.contains(volunteer.id)) {
+        continue;
+      }
+
+      _autoInactivatingVolunteerIds.add(volunteer.id);
+      try {
+        await _repository.updateVolunteerLevel(volunteer.id, 'خارج متابعة');
+      } finally {
+        _autoInactivatingVolunteerIds.remove(volunteer.id);
       }
     }
   }
@@ -331,6 +391,11 @@ class VolunteerProvider with ChangeNotifier {
   // Get volunteer by ID
   Future<VolunteerModel?> getVolunteerById(String id) async {
     return await _repository.getVolunteerById(id);
+  }
+
+  // Get volunteer by email
+  Future<VolunteerModel?> getVolunteerByEmail(String email) async {
+    return await _repository.getVolunteerByEmail(email);
   }
 
   // Get volunteers by IDs

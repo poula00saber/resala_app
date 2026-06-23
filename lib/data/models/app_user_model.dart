@@ -109,18 +109,22 @@ class AppUserModel {
   final String email;
   final String? displayName;
   final bool isAdmin;
+  final bool isDeleted;
   final List<PagePermission> permissions;
   final DateTime createdAt;
   final DateTime? lastLogin;
+  final DateTime? deletedAt;
 
   AppUserModel({
     required this.id,
     required this.email,
     this.displayName,
     this.isAdmin = false,
+    this.isDeleted = false,
     required this.permissions,
     required this.createdAt,
     this.lastLogin,
+    this.deletedAt,
   });
 
   factory AppUserModel.fromFirestore(DocumentSnapshot doc) {
@@ -138,12 +142,16 @@ class AppUserModel {
       email: data['email'] ?? '',
       displayName: data['displayName'],
       isAdmin: data['isAdmin'] ?? false,
+      isDeleted: data['isDeleted'] ?? false,
       permissions: permissions,
       createdAt: data['createdAt'] != null
           ? (data['createdAt'] as Timestamp).toDate()
           : DateTime.now(),
       lastLogin: data['lastLogin'] != null
           ? (data['lastLogin'] as Timestamp).toDate()
+          : null,
+      deletedAt: data['deletedAt'] != null
+          ? (data['deletedAt'] as Timestamp).toDate()
           : null,
     );
   }
@@ -153,9 +161,11 @@ class AppUserModel {
       'email': email,
       'displayName': displayName,
       'isAdmin': isAdmin,
+      'isDeleted': isDeleted,
       'permissions': permissions.map((p) => p.toMap()).toList(),
       'createdAt': Timestamp.fromDate(createdAt),
       'lastLogin': lastLogin != null ? Timestamp.fromDate(lastLogin!) : null,
+      'deletedAt': deletedAt != null ? Timestamp.fromDate(deletedAt!) : null,
     };
   }
 
@@ -200,18 +210,22 @@ class AppUserModel {
     String? email,
     String? displayName,
     bool? isAdmin,
+    bool? isDeleted,
     List<PagePermission>? permissions,
     DateTime? createdAt,
     DateTime? lastLogin,
+    DateTime? deletedAt,
   }) {
     return AppUserModel(
       id: id ?? this.id,
       email: email ?? this.email,
       displayName: displayName ?? this.displayName,
       isAdmin: isAdmin ?? this.isAdmin,
+      isDeleted: isDeleted ?? this.isDeleted,
       permissions: permissions ?? this.permissions,
       createdAt: createdAt ?? this.createdAt,
       lastLogin: lastLogin ?? this.lastLogin,
+      deletedAt: deletedAt ?? this.deletedAt,
     );
   }
 }

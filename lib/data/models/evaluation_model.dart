@@ -86,8 +86,6 @@
 //   }
 // }
 
-
-
 // ============================================
 // FILE: lib/data/models/evaluation_model.dart (UPDATED)
 // ============================================
@@ -100,6 +98,7 @@ class EvaluationModel extends Evaluation {
     required super.id,
     required super.volunteerId,
     required super.volunteerName,
+    required super.evaluationName,
     required super.evaluatorName,
     required super.month,
     required super.year,
@@ -115,6 +114,7 @@ class EvaluationModel extends Evaluation {
       id: doc.id,
       volunteerId: data['volunteerId'] ?? '',
       volunteerName: data['volunteerName'] ?? '',
+      evaluationName: data['evaluationName'] ?? '',
       evaluatorName: data['evaluatorName'] ?? '',
       month: data['month'] ?? '',
       year: data['year'] ?? 0,
@@ -128,6 +128,7 @@ class EvaluationModel extends Evaluation {
     return {
       'volunteerId': volunteerId,
       'volunteerName': volunteerName,
+      'evaluationName': evaluationName,
       'evaluatorName': evaluatorName,
       'month': month,
       'year': year,

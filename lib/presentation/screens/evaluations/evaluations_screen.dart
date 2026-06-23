@@ -9,6 +9,7 @@ import 'package:resala/presentation/screens/evaluations/evaluation_details_scree
 import '../../providers/volunteer_provider.dart';
 import '../../themes/app_theme.dart';
 import '../../widgets/whale_loading.dart';
+import '../../../services/auth_service.dart';
 
 class EvaluationsScreen extends StatefulWidget {
   const EvaluationsScreen({super.key});
@@ -19,7 +20,54 @@ class EvaluationsScreen extends StatefulWidget {
 
 class _EvaluationsScreenState extends State<EvaluationsScreen> {
   final TextEditingController _searchController = TextEditingController();
+  final AuthService _authService = AuthService();
   String _searchQuery = '';
+  String? _evaluatorCommitteeId;
+  bool _loadingCommittee = true;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadEvaluatorCommittee();
+    });
+  }
+
+  Future<void> _loadEvaluatorCommittee() async {
+    final currentUser = _authService.currentUser;
+    if (currentUser == null || currentUser.isAdmin) {
+      if (mounted) {
+        setState(() => _loadingCommittee = false);
+      }
+      return;
+    }
+
+    final email = currentUser.email.trim();
+    if (email.isEmpty) {
+      if (mounted) {
+        setState(() => _loadingCommittee = false);
+      }
+      return;
+    }
+
+    final provider = Provider.of<VolunteerProvider>(context, listen: false);
+    final volunteer = await provider.getVolunteerByEmail(email);
+
+    if (mounted) {
+      setState(() {
+        _evaluatorCommitteeId = volunteer?.committeeId;
+        _loadingCommittee = false;
+      });
+    }
+  }
+
+  List<dynamic> _filterByCommittee(List<dynamic> volunteers) {
+    if (_authService.isAdmin) return volunteers;
+    if (_evaluatorCommitteeId == null) return [];
+    return volunteers
+        .where((v) => v.committeeId == _evaluatorCommitteeId)
+        .toList();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -94,6 +142,10 @@ class _EvaluationsScreenState extends State<EvaluationsScreen> {
                 listen: false,
               ).searchVolunteers(_searchQuery),
               builder: (context, snapshot) {
+                if (_loadingCommittee && !_authService.isAdmin) {
+                  return Center(child: WhaleLoading());
+                }
+
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return Center(child: WhaleLoading());
                 }
@@ -110,7 +162,20 @@ class _EvaluationsScreenState extends State<EvaluationsScreen> {
                   );
                 }
 
-                final volunteers = snapshot.data ?? [];
+                final volunteers = _filterByCommittee(snapshot.data ?? []);
+
+                if (!_authService.isAdmin && _evaluatorCommitteeId == null) {
+                  return const Center(
+                    child: Text(
+                      'لا توجد لجنة مرتبطة بحسابك',
+                      style: TextStyle(
+                        fontFamily: 'Cairo',
+                        color: AppTheme.secondary,
+                        fontSize: 16,
+                      ),
+                    ),
+                  );
+                }
 
                 if (volunteers.isEmpty) {
                   return const Center(

@@ -11,6 +11,7 @@ import '../reports/reports_screen.dart';
 import '../interviews/interviews_screen.dart';
 import '../administrative/administrative_screen.dart';
 import '../users/user_management_screen.dart';
+import '../users/operation_logs_screen.dart';
 import '../../../services/auth_service.dart';
 import '../../../data/models/app_user_model.dart';
 import '../../widgets/whale_loading.dart';
@@ -212,6 +213,22 @@ class _HomeScreenState extends State<HomeScreen> {
                     context,
                     MaterialPageRoute(
                       builder: (context) => const UserManagementScreen(),
+                    ),
+                  );
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.history, color: AppTheme.primary),
+                title: const Text(
+                  'سجل العمليات',
+                  style: TextStyle(fontFamily: 'Cairo'),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const OperationLogsScreen(),
                     ),
                   );
                 },

@@ -6,6 +6,7 @@ class Evaluation {
   final String id;
   final String volunteerId;
   final String volunteerName;
+  final String evaluationName;
   final String evaluatorName;
   final String month;
   final int year;
@@ -17,6 +18,7 @@ class Evaluation {
     required this.id,
     required this.volunteerId,
     required this.volunteerName,
+    required this.evaluationName,
     required this.evaluatorName,
     required this.month,
     required this.year,

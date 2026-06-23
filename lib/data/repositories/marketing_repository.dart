@@ -5,6 +5,7 @@
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/marketing_model.dart';
+import '../../services/operation_log_service.dart';
 
 class MarketingRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -76,6 +77,13 @@ class MarketingRepository {
       final docRef = await _firestore
           .collection(_collection)
           .add(marketing.toFirestore());
+      await OperationLogService.log(
+        action: 'create',
+        entityType: 'marketing',
+        entityId: docRef.id,
+        entityName: volunteerName,
+        details: {'month': month, 'year': year},
+      );
       return docRef.id;
     } catch (e) {
       print('Error adding marketing: $e');
@@ -114,6 +122,11 @@ class MarketingRepository {
   Future<bool> deleteMarketing(String id) async {
     try {
       await _firestore.collection(_collection).doc(id).delete();
+      await OperationLogService.log(
+        action: 'delete',
+        entityType: 'marketing',
+        entityId: id,
+      );
       return true;
     } catch (e) {
       print('Error deleting marketing: $e');

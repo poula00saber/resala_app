@@ -12,6 +12,7 @@ import 'package:resala/services/image_upload_service.dart';
 import '../../../core/utils/validators.dart';
 import '../../providers/volunteer_provider.dart';
 import '../../providers/committee_provider.dart';
+import '../../providers/evaluation_provider.dart';
 import '../../themes/app_theme.dart';
 import '../../widgets/whale_loading.dart';
 import '../../../services/auth_service.dart';
@@ -469,6 +470,40 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
                 ),
 
                 const SizedBox(height: 30),
+
+                FutureBuilder<double>(
+                  future: Provider.of<EvaluationProvider>(
+                    context,
+                    listen: false,
+                  ).getAverageRating(widget.volunteer.id),
+                  builder: (context, snapshot) {
+                    final avg = snapshot.data ?? 0.0;
+                    return Align(
+                      alignment: Alignment.centerRight,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primary.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Text(
+                          'متوسط التقييم: ${avg.toStringAsFixed(1)}/10',
+                          style: const TextStyle(
+                            fontFamily: 'Cairo',
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.primary,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+
+                const SizedBox(height: 12),
 
                 // Name Field - الاسم
                 _buildLabeledTextField(

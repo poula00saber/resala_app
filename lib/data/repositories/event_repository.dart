@@ -5,6 +5,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/event_model.dart';
 import '../../core/constants/firebase_constants.dart';
+import '../../services/operation_log_service.dart';
 
 class EventRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -45,6 +46,31 @@ class EventRepository {
         );
   }
 
+  // Get events by date range (one-time fetch)
+  Future<List<EventModel>> getEventsByDateRangeOnce(
+    DateTime startDate,
+    DateTime endDate,
+  ) async {
+    try {
+      final startDateStr =
+          "${startDate.year}-${startDate.month.toString().padLeft(2, '0')}-${startDate.day.toString().padLeft(2, '0')}";
+      final endDateStr =
+          "${endDate.year}-${endDate.month.toString().padLeft(2, '0')}-${endDate.day.toString().padLeft(2, '0')}";
+
+      final snapshot = await _firestore
+          .collection(FirebaseConstants.eventsCollection)
+          .where('date', isGreaterThanOrEqualTo: startDateStr)
+          .where('date', isLessThanOrEqualTo: endDateStr)
+          .orderBy('date', descending: true)
+          .get();
+
+      return snapshot.docs.map((doc) => EventModel.fromFirestore(doc)).toList();
+    } catch (e) {
+      print('Error getting events by date range: $e');
+      return [];
+    }
+  }
+
   // Get event by ID
   Future<EventModel?> getEventById(String id) async {
     try {
@@ -69,6 +95,13 @@ class EventRepository {
       final docRef = await _firestore
           .collection(FirebaseConstants.eventsCollection)
           .add(event.toFirestore());
+      await OperationLogService.log(
+        action: 'create',
+        entityType: 'event',
+        entityId: docRef.id,
+        entityName: event.title,
+        details: {'type': event.type, 'date': event.date},
+      );
       return docRef.id;
     } catch (e) {
       print('Error creating event: $e');
@@ -83,6 +116,13 @@ class EventRepository {
           .collection(FirebaseConstants.eventsCollection)
           .doc(id)
           .update(event.toFirestore());
+      await OperationLogService.log(
+        action: 'update',
+        entityType: 'event',
+        entityId: id,
+        entityName: event.title,
+        details: {'type': event.type, 'date': event.date},
+      );
       return true;
     } catch (e) {
       print('Error updating event: $e');
@@ -97,6 +137,11 @@ class EventRepository {
           .collection(FirebaseConstants.eventsCollection)
           .doc(id)
           .delete();
+      await OperationLogService.log(
+        action: 'delete',
+        entityType: 'event',
+        entityId: id,
+      );
       return true;
     } catch (e) {
       print('Error deleting event: $e');
@@ -114,6 +159,12 @@ class EventRepository {
             'volunteerIds': FieldValue.arrayUnion([volunteerId]),
             'updatedAt': Timestamp.now(),
           });
+      await OperationLogService.log(
+        action: 'update',
+        entityType: 'event_volunteer_add',
+        entityId: eventId,
+        details: {'volunteerId': volunteerId},
+      );
       return true;
     } catch (e) {
       print('Error adding volunteer to event: $e');
@@ -134,6 +185,12 @@ class EventRepository {
             'volunteerIds': FieldValue.arrayRemove([volunteerId]),
             'updatedAt': Timestamp.now(),
           });
+      await OperationLogService.log(
+        action: 'update',
+        entityType: 'event_volunteer_remove',
+        entityId: eventId,
+        details: {'volunteerId': volunteerId},
+      );
       return true;
     } catch (e) {
       print('Error removing volunteer from event: $e');

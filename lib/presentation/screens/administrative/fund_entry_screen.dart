@@ -36,6 +36,7 @@ class _FundEntryScreenState extends State<FundEntryScreen> {
   String? _selectedVolunteerName;
   bool _isLoading = true;
   bool _isSaving = false;
+  bool _showAllWithdrawals = false;
 
   final TextEditingController _amountController = TextEditingController();
   final TextEditingController _withdrawReasonController =
@@ -731,9 +732,15 @@ class _FundEntryScreenState extends State<FundEntryScreen> {
     });
     allRecords.sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
-    final recentRecords = allRecords.take(10).toList();
+    final withdrawals = allRecords.where((r) => r.isWithdrawal).toList();
+    final deposits = allRecords.where((r) => !r.isWithdrawal).toList();
 
-    if (recentRecords.isEmpty) {
+    final visibleWithdrawals = _showAllWithdrawals
+        ? withdrawals
+        : withdrawals.take(10).toList();
+    final visibleDeposits = deposits.take(10).toList();
+
+    if (withdrawals.isEmpty && deposits.isEmpty) {
       return Container(
         padding: const EdgeInsets.all(32),
         decoration: BoxDecoration(
@@ -750,83 +757,144 @@ class _FundEntryScreenState extends State<FundEntryScreen> {
     }
 
     return Column(
-      children: recentRecords.map((record) {
-        return Container(
-          margin: const EdgeInsets.only(bottom: 8),
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: AppTheme.cardBackground,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: record.isWithdrawal
-                  ? Colors.red.withOpacity(0.3)
-                  : AppTheme.primary.withOpacity(0.3),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'آخر السحوبات',
+          style: TextStyle(
+            fontFamily: 'Cairo',
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+            color: AppTheme.primary,
+          ),
+        ),
+        const SizedBox(height: 8),
+        if (visibleWithdrawals.isEmpty)
+          const Text(
+            'لا توجد سحوبات',
+            style: TextStyle(fontFamily: 'Cairo', color: AppTheme.secondary),
+          )
+        else
+          Column(
+            children: visibleWithdrawals
+                .map(_buildRecordCard)
+                .toList(growable: false),
+          ),
+        if (withdrawals.length > 10)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton(
+              onPressed: () {
+                setState(() => _showAllWithdrawals = !_showAllWithdrawals);
+              },
+              child: Text(
+                _showAllWithdrawals ? 'عرض أقل' : 'عرض المزيد',
+                style: const TextStyle(
+                  fontFamily: 'Cairo',
+                  color: AppTheme.primary,
+                ),
+              ),
             ),
           ),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: record.isWithdrawal
-                      ? Colors.red.withOpacity(0.1)
-                      : AppTheme.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(
-                  record.isWithdrawal
-                      ? Icons.arrow_upward
-                      : Icons.arrow_downward,
-                  color: record.isWithdrawal ? Colors.red : AppTheme.primary,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      record.volunteerName,
-                      style: const TextStyle(
-                        fontFamily: 'Cairo',
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    if (record.isWithdrawal && record.withdrawalReason != null)
-                      Text(
-                        record.withdrawalReason!,
-                        style: const TextStyle(
-                          fontFamily: 'Cairo',
-                          fontSize: 12,
-                          color: AppTheme.secondary,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      )
-                    else
-                      Text(
-                        '${_getArabicMonth(record.month)} ${record.year}',
-                        style: const TextStyle(
-                          fontFamily: 'Cairo',
-                          fontSize: 12,
-                          color: AppTheme.secondary,
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              Text(
-                '${record.isWithdrawal ? "-" : "+"}${record.amount.toStringAsFixed(0)} جنيه',
-                style: TextStyle(
-                  fontFamily: 'Cairo',
-                  fontWeight: FontWeight.bold,
-                  color: record.isWithdrawal ? Colors.red : Colors.green,
-                ),
-              ),
-            ],
+        const SizedBox(height: 16),
+        const Text(
+          'آخر الإيداعات',
+          style: TextStyle(
+            fontFamily: 'Cairo',
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+            color: AppTheme.primary,
           ),
-        );
-      }).toList(),
+        ),
+        const SizedBox(height: 8),
+        if (visibleDeposits.isEmpty)
+          const Text(
+            'لا توجد إيداعات',
+            style: TextStyle(fontFamily: 'Cairo', color: AppTheme.secondary),
+          )
+        else
+          Column(
+            children: visibleDeposits
+                .map(_buildRecordCard)
+                .toList(growable: false),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildRecordCard(FundModel record) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppTheme.cardBackground,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: record.isWithdrawal
+              ? Colors.red.withOpacity(0.3)
+              : AppTheme.primary.withOpacity(0.3),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: record.isWithdrawal
+                  ? Colors.red.withOpacity(0.1)
+                  : AppTheme.primary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              record.isWithdrawal ? Icons.arrow_upward : Icons.arrow_downward,
+              color: record.isWithdrawal ? Colors.red : AppTheme.primary,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  record.volunteerName,
+                  style: const TextStyle(
+                    fontFamily: 'Cairo',
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                if (record.isWithdrawal && record.withdrawalReason != null)
+                  Text(
+                    record.withdrawalReason!,
+                    style: const TextStyle(
+                      fontFamily: 'Cairo',
+                      fontSize: 12,
+                      color: AppTheme.secondary,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  )
+                else
+                  Text(
+                    '${_getArabicMonth(record.month)} ${record.year}',
+                    style: const TextStyle(
+                      fontFamily: 'Cairo',
+                      fontSize: 12,
+                      color: AppTheme.secondary,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          Text(
+            '${record.isWithdrawal ? "-" : "+"}${record.amount.toStringAsFixed(0)} جنيه',
+            style: TextStyle(
+              fontFamily: 'Cairo',
+              fontWeight: FontWeight.bold,
+              color: record.isWithdrawal ? Colors.red : Colors.green,
+            ),
+          ),
+        ],
+      ),
     );
   }
 

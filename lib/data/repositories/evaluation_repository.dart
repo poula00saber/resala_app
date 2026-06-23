@@ -5,6 +5,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/evaluation_model.dart';
 import '../../core/constants/firebase_constants.dart';
+import '../../services/operation_log_service.dart';
 
 class EvaluationRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -68,6 +69,17 @@ class EvaluationRepository {
       final docRef = await _firestore
           .collection(FirebaseConstants.evaluationsCollection)
           .add(evaluation.toFirestore());
+      await OperationLogService.log(
+        action: 'create',
+        entityType: 'evaluation',
+        entityId: docRef.id,
+        entityName: evaluation.evaluationName,
+        details: {
+          'volunteerId': evaluation.volunteerId,
+          'volunteerName': evaluation.volunteerName,
+          'rating': evaluation.rating,
+        },
+      );
       return docRef.id;
     } catch (e) {
       print('Error creating evaluation: $e');
@@ -82,6 +94,16 @@ class EvaluationRepository {
           .collection(FirebaseConstants.evaluationsCollection)
           .doc(id)
           .update(evaluation.toFirestore());
+      await OperationLogService.log(
+        action: 'update',
+        entityType: 'evaluation',
+        entityId: id,
+        entityName: evaluation.evaluationName,
+        details: {
+          'volunteerId': evaluation.volunteerId,
+          'rating': evaluation.rating,
+        },
+      );
       return true;
     } catch (e) {
       print('Error updating evaluation: $e');
@@ -96,6 +118,11 @@ class EvaluationRepository {
           .collection(FirebaseConstants.evaluationsCollection)
           .doc(id)
           .delete();
+      await OperationLogService.log(
+        action: 'delete',
+        entityType: 'evaluation',
+        entityId: id,
+      );
       return true;
     } catch (e) {
       print('Error deleting evaluation: $e');

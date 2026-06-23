@@ -7,6 +7,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../models/promotion_model.dart';
 import '../../core/constants/firebase_constants.dart';
+import '../../services/operation_log_service.dart';
 
 class PromotionRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -65,6 +66,14 @@ class PromotionRepository {
             'requirements': requirements.map((req) => req.toMap()).toList(),
             'createdAt': Timestamp.fromDate(DateTime.now()),
           });
+
+      await OperationLogService.log(
+        action: 'create',
+        entityType: 'promotion_requirements',
+        entityId: docRef.id,
+        entityName: volunteerId,
+        details: {'currentLevel': currentLevel, 'nextLevel': nextLevel},
+      );
 
       return PromotionRequirement(
         id: docRef.id,
@@ -137,6 +146,13 @@ class PromotionRepository {
             'updatedAt': Timestamp.now(),
           });
 
+      await OperationLogService.log(
+        action: 'update',
+        entityType: 'promotion_requirement',
+        entityId: promotionId,
+        details: {'requirementId': requirementId, 'isCompleted': isCompleted},
+      );
+
       return true;
     } catch (e) {
       debugPrint('Error updating requirement status: $e');
@@ -151,6 +167,11 @@ class PromotionRepository {
           .collection(FirebaseConstants.promotionRequirementsCollection)
           .doc(promotionId)
           .delete();
+      await OperationLogService.log(
+        action: 'delete',
+        entityType: 'promotion_requirements',
+        entityId: promotionId,
+      );
       return true;
     } catch (e) {
       debugPrint('Error deleting promotion requirements: $e');

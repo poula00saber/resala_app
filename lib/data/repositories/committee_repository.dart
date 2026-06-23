@@ -6,6 +6,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/committee_model.dart';
 import '../../core/constants/firebase_constants.dart';
+import '../../services/operation_log_service.dart';
 
 class CommitteeRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -83,6 +84,12 @@ class CommitteeRepository {
       final docRef = await _firestore
           .collection(FirebaseConstants.committeesCollection)
           .add(committee.toFirestore());
+      await OperationLogService.log(
+        action: 'create',
+        entityType: 'committee',
+        entityId: docRef.id,
+        entityName: committee.name,
+      );
       return docRef.id;
     } catch (e) {
       print('Error creating committee: $e');
@@ -97,6 +104,13 @@ class CommitteeRepository {
           .collection(FirebaseConstants.committeesCollection)
           .doc(id)
           .update(committee.toFirestore());
+      await OperationLogService.log(
+        action: 'update',
+        entityType: 'committee',
+        entityId: id,
+        entityName: committee.name,
+        details: {'isActive': committee.isActive},
+      );
       return true;
     } catch (e) {
       print('Error updating committee: $e');
@@ -111,6 +125,11 @@ class CommitteeRepository {
           .collection(FirebaseConstants.committeesCollection)
           .doc(id)
           .delete();
+      await OperationLogService.log(
+        action: 'delete',
+        entityType: 'committee',
+        entityId: id,
+      );
       return true;
     } catch (e) {
       print('Error deleting committee: $e');
@@ -128,6 +147,12 @@ class CommitteeRepository {
             'isActive': isActive,
             'updatedAt': FieldValue.serverTimestamp(),
           });
+      await OperationLogService.log(
+        action: 'update',
+        entityType: 'committee_status',
+        entityId: id,
+        details: {'isActive': isActive},
+      );
       return true;
     } catch (e) {
       print('Error toggling committee status: $e');

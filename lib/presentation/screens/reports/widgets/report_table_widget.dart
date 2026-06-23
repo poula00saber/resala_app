@@ -30,6 +30,13 @@ class ReportTableWidget extends StatelessWidget {
       );
     }
 
+    final indexedHeaders = ['#', ...headers];
+    final indexedRows = rows.asMap().entries.map((entry) {
+      final index = entry.key;
+      final row = entry.value;
+      return [(index + 1).toString(), ...row];
+    }).toList();
+
     return Container(
       margin: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -54,7 +61,7 @@ class ReportTableWidget extends StatelessWidget {
               ),
               columnSpacing: 20,
               horizontalMargin: 16,
-              columns: headers.map((header) {
+              columns: indexedHeaders.map((header) {
                 return DataColumn(
                   label: Expanded(
                     child: Center(
@@ -74,11 +81,11 @@ class ReportTableWidget extends StatelessWidget {
                   ),
                 );
               }).toList(),
-              rows: rows.isEmpty
+              rows: indexedRows.isEmpty
                   ? [
                       DataRow(
                         cells: List.generate(
-                          headers.length,
+                          indexedHeaders.length,
                           (index) => DataCell(
                             Center(
                               child: index == 0
@@ -95,7 +102,7 @@ class ReportTableWidget extends StatelessWidget {
                         ),
                       ),
                     ]
-                  : rows.map((row) {
+                  : indexedRows.map((row) {
                       return DataRow(
                         cells: row.map((cell) {
                           return DataCell(

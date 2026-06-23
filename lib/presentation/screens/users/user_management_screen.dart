@@ -4,7 +4,6 @@
 // ============================================
 
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import '../../themes/app_theme.dart';
@@ -163,7 +162,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
       builder: (context) => _AddEditUserDialog(
         user: user,
         onSave: (email, password, displayName, isAdmin, permissions) async {
-          await _updateUser(user.id, isAdmin, permissions);
+          await _updateUser(user.id, displayName, isAdmin, permissions);
         },
       ),
     );
@@ -182,7 +181,6 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
       if (currentAdmin == null) {
         throw Exception('يجب تسجيل الدخول أولاً');
       }
-      final adminEmail = currentAdmin.email;
 
       // Create a secondary Firebase app for user creation
       FirebaseApp? secondaryApp;
@@ -215,10 +213,10 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
         createdAt: DateTime.now(),
       );
 
-      await FirebaseFirestore.instance
-          .collection('app_users')
-          .doc(newUserId)
-          .set(newUser.toFirestore());
+      final created = await _userRepository.createUserDocument(newUser);
+      if (!created) {
+        throw Exception('فشل إنشاء مستند المستخدم');
+      }
 
       // Sign out from secondary app
       await secondaryAuth.signOut();
@@ -257,10 +255,12 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
 
   Future<void> _updateUser(
     String userId,
+    String? displayName,
     bool isAdmin,
     List<PagePermission> permissions,
   ) async {
     try {
+      await _userRepository.updateUserProfile(userId, displayName: displayName);
       await _userRepository.updateUserAdminStatus(userId, isAdmin);
       await _userRepository.updateUserPermissions(userId, permissions);
 
@@ -301,12 +301,14 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
           TextButton(
             onPressed: () async {
               Navigator.pop(context);
-              await _userRepository.deleteUser(user.id);
+              final success = await _userRepository.deleteUser(user.id);
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('تم حذف المستخدم'),
-                    backgroundColor: Colors.green,
+                  SnackBar(
+                    content: Text(
+                      success ? 'تم حذف المستخدم' : 'فشل حذف المستخدم',
+                    ),
+                    backgroundColor: success ? Colors.green : Colors.red,
                   ),
                 );
               }

@@ -6,6 +6,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/app_user_model.dart';
+import '../../services/operation_log_service.dart';
 
 class AppUserRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -21,16 +22,24 @@ class AppUserRepository {
         .map(
           (snapshot) => snapshot.docs
               .map((doc) => AppUserModel.fromFirestore(doc))
+              .where((user) => !user.isDeleted)
               .toList(),
         );
   }
 
   // Get user by ID
-  Future<AppUserModel?> getUserById(String userId) async {
+  Future<AppUserModel?> getUserById(
+    String userId, {
+    bool includeDeleted = false,
+  }) async {
     try {
       final doc = await _firestore.collection(_collection).doc(userId).get();
       if (doc.exists) {
-        return AppUserModel.fromFirestore(doc);
+        final user = AppUserModel.fromFirestore(doc);
+        if (!includeDeleted && user.isDeleted) {
+          return null;
+        }
+        return user;
       }
       return null;
     } catch (e) {
@@ -40,7 +49,10 @@ class AppUserRepository {
   }
 
   // Get user by email
-  Future<AppUserModel?> getUserByEmail(String email) async {
+  Future<AppUserModel?> getUserByEmail(
+    String email, {
+    bool includeDeleted = false,
+  }) async {
     try {
       final snapshot = await _firestore
           .collection(_collection)
@@ -49,7 +61,11 @@ class AppUserRepository {
           .get();
 
       if (snapshot.docs.isNotEmpty) {
-        return AppUserModel.fromFirestore(snapshot.docs.first);
+        final user = AppUserModel.fromFirestore(snapshot.docs.first);
+        if (!includeDeleted && user.isDeleted) {
+          return null;
+        }
+        return user;
       }
       return null;
     } catch (e) {
@@ -81,6 +97,7 @@ class AppUserRepository {
         email: email,
         displayName: displayName,
         isAdmin: isAdmin,
+        isDeleted: false,
         permissions: permissions,
         createdAt: DateTime.now(),
       );
@@ -111,6 +128,13 @@ class AppUserRepository {
           .collection(_collection)
           .doc(user.id)
           .set(user.toFirestore());
+      await OperationLogService.log(
+        action: 'create',
+        entityType: 'app_user',
+        entityId: user.id,
+        entityName: user.displayName ?? user.email,
+        details: {'email': user.email, 'isAdmin': user.isAdmin},
+      );
       return true;
     } catch (e) {
       print('Error creating user document: $e');
@@ -127,6 +151,11 @@ class AppUserRepository {
       await _firestore.collection(_collection).doc(userId).update({
         'permissions': permissions.map((p) => p.toMap()).toList(),
       });
+      await OperationLogService.log(
+        action: 'update',
+        entityType: 'app_user_permissions',
+        entityId: userId,
+      );
       return true;
     } catch (e) {
       print('Error updating permissions: $e');
@@ -140,9 +169,38 @@ class AppUserRepository {
       await _firestore.collection(_collection).doc(userId).update({
         'isAdmin': isAdmin,
       });
+      await OperationLogService.log(
+        action: 'update',
+        entityType: 'app_user_admin',
+        entityId: userId,
+        details: {'isAdmin': isAdmin},
+      );
       return true;
     } catch (e) {
       print('Error updating admin status: $e');
+      return false;
+    }
+  }
+
+  // Update user profile fields
+  Future<bool> updateUserProfile(String userId, {String? displayName}) async {
+    try {
+      final updates = <String, dynamic>{};
+      if (displayName != null) {
+        updates['displayName'] = displayName;
+      }
+      if (updates.isEmpty) return true;
+
+      await _firestore.collection(_collection).doc(userId).update(updates);
+      await OperationLogService.log(
+        action: 'update',
+        entityType: 'app_user_profile',
+        entityId: userId,
+        details: updates,
+      );
+      return true;
+    } catch (e) {
+      print('Error updating user profile: $e');
       return false;
     }
   }
@@ -161,11 +219,28 @@ class AppUserRepository {
   // Delete user
   Future<bool> deleteUser(String userId) async {
     try {
-      // Delete from Firestore
-      await _firestore.collection(_collection).doc(userId).delete();
+      final docRef = _firestore.collection(_collection).doc(userId);
+      final snapshot = await docRef.get();
+      if (!snapshot.exists) {
+        return false;
+      }
 
-      // Note: Deleting Firebase Auth user requires admin SDK or the user to be signed in
-      // For now, we only delete the Firestore document
+      final user = AppUserModel.fromFirestore(snapshot);
+      if (user.isDeleted) {
+        return true;
+      }
+
+      await docRef.update({
+        'isDeleted': true,
+        'deletedAt': FieldValue.serverTimestamp(),
+      });
+      await OperationLogService.log(
+        action: 'delete',
+        entityType: 'app_user',
+        entityId: userId,
+        entityName: user.displayName ?? user.email,
+        details: {'softDelete': true},
+      );
 
       return true;
     } catch (e) {
@@ -199,7 +274,12 @@ class AppUserRepository {
       final userId = userCredential.user!.uid;
 
       // Get or create user document
-      var user = await getUserById(userId);
+      var user = await getUserById(userId, includeDeleted: true);
+
+      if (user?.isDeleted == true) {
+        await _auth.signOut();
+        return null;
+      }
 
       if (user == null) {
         // Create user document if it doesn't exist (for first admin)
@@ -207,6 +287,7 @@ class AppUserRepository {
           id: userId,
           email: email,
           isAdmin: true, // First user is admin
+          isDeleted: false,
           permissions: AppPages.getAllPagesDefault()
               .map((p) => p.copyWith(canAccess: true, canAddDelete: true))
               .toList(),

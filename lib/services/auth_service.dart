@@ -31,11 +31,17 @@ class AuthService extends ChangeNotifier {
 
     final firebaseUser = FirebaseAuth.instance.currentUser;
     if (firebaseUser != null) {
-      // Try to get existing user document
-      _currentUser = await _userRepository.getUserById(firebaseUser.uid);
+      final existingUser = await _userRepository.getUserById(
+        firebaseUser.uid,
+        includeDeleted: true,
+      );
 
-      // If user document doesn't exist, create it
-      if (_currentUser == null) {
+      if (existingUser?.isDeleted == true) {
+        await _userRepository.signOut();
+        _currentUser = null;
+      } else if (existingUser != null) {
+        _currentUser = existingUser;
+      } else {
         await _createUserDocument(firebaseUser);
         _currentUser = await _userRepository.getUserById(firebaseUser.uid);
       }
@@ -96,7 +102,15 @@ class AuthService extends ChangeNotifier {
   // Refresh current user data
   Future<void> refreshUser() async {
     if (_currentUser != null) {
-      _currentUser = await _userRepository.getUserById(_currentUser!.id);
+      final refreshedUser = await _userRepository.getUserById(
+        _currentUser!.id,
+        includeDeleted: true,
+      );
+      if (refreshedUser?.isDeleted == true) {
+        await signOut();
+        return;
+      }
+      _currentUser = refreshedUser;
       notifyListeners();
     }
   }

@@ -50,6 +50,7 @@ class _EditEventScreenState extends State<EditEventScreen> {
   bool get _isQafla => widget.event.type == 'قافلة';
   bool get _isOnline => widget.event.meetingPlace == 'أونلاين';
   bool get _isMeeting => widget.event.type == FirebaseConstants.typeMeeting;
+  bool get _needsLocation => !_isMeeting || !_isOnline;
 
   double get _volunteerTableWidth {
     var width = 40 + 20 + 100 + 20 + 140 + 20;
@@ -705,9 +706,9 @@ class _EditEventScreenState extends State<EditEventScreen> {
       type: widget.event.type,
       date: _dateController.text,
       description: _descriptionController.text,
-      location: _locationController.text.isEmpty
-          ? null
-          : _locationController.text,
+      location: _needsLocation && _locationController.text.isNotEmpty
+          ? _locationController.text
+          : null,
       meetingPlace: widget.event.meetingPlace,
       administrativeType: widget.event.administrativeType,
       committeeId: widget.event.committeeId,
@@ -831,13 +832,15 @@ class _EditEventScreenState extends State<EditEventScreen> {
                       suffixIcon: Icons.calendar_today,
                     ),
                   ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: _buildTextField(
-                      controller: _locationController,
-                      label: 'المكان',
+                  if (_needsLocation) ...[
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: _buildTextField(
+                        controller: _locationController,
+                        label: 'المكان',
+                      ),
                     ),
-                  ),
+                  ],
                 ],
               ),
             ),

@@ -6,6 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../models/volunteer_model.dart';
 import '../../core/constants/firebase_constants.dart';
+import '../../services/operation_log_service.dart';
 
 class VolunteerRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -37,6 +38,25 @@ class VolunteerRepository {
       return null;
     } catch (e) {
       print('Error getting volunteer: $e');
+      return null;
+    }
+  }
+
+  // Get volunteer by email
+  Future<VolunteerModel?> getVolunteerByEmail(String email) async {
+    try {
+      final snapshot = await _firestore
+          .collection(FirebaseConstants.volunteersCollection)
+          .where('email', isEqualTo: email)
+          .limit(1)
+          .get();
+
+      if (snapshot.docs.isNotEmpty) {
+        return VolunteerModel.fromFirestore(snapshot.docs.first);
+      }
+      return null;
+    } catch (e) {
+      print('Error getting volunteer by email: $e');
       return null;
     }
   }
@@ -75,6 +95,17 @@ class VolunteerRepository {
       final docRef = await _firestore
           .collection(FirebaseConstants.volunteersCollection)
           .add(volunteer.toFirestore());
+      await OperationLogService.log(
+        action: 'create',
+        entityType: 'volunteer',
+        entityId: docRef.id,
+        entityName: volunteer.name,
+        details: {
+          'phone': volunteer.phone,
+          'committeeId': volunteer.committeeId,
+          'educationalLevel': volunteer.educationalLevel,
+        },
+      );
       return docRef.id;
     } catch (e) {
       print('Error creating volunteer: $e');
@@ -89,6 +120,17 @@ class VolunteerRepository {
           .collection(FirebaseConstants.volunteersCollection)
           .doc(id)
           .update(volunteer.toFirestore());
+      await OperationLogService.log(
+        action: 'update',
+        entityType: 'volunteer',
+        entityId: id,
+        entityName: volunteer.name,
+        details: {
+          'phone': volunteer.phone,
+          'committeeId': volunteer.committeeId,
+          'educationalLevel': volunteer.educationalLevel,
+        },
+      );
       return true;
     } catch (e) {
       print('Error updating volunteer: $e');
@@ -103,6 +145,11 @@ class VolunteerRepository {
           .collection(FirebaseConstants.volunteersCollection)
           .doc(id)
           .delete();
+      await OperationLogService.log(
+        action: 'delete',
+        entityType: 'volunteer',
+        entityId: id,
+      );
       return true;
     } catch (e) {
       print('Error deleting volunteer: $e');
@@ -120,6 +167,12 @@ class VolunteerRepository {
             'educationalLevel': newLevel,
             'updatedAt': FieldValue.serverTimestamp(),
           });
+      await OperationLogService.log(
+        action: 'update',
+        entityType: 'volunteer_level',
+        entityId: volunteerId,
+        details: {'educationalLevel': newLevel},
+      );
       return true;
     } catch (e) {
       debugPrint('Error updating volunteer level: $e');

@@ -6,6 +6,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:resala/data/models/interview_model.dart';
 import 'package:resala/core/constants/firebase_constants.dart';
+import '../../services/operation_log_service.dart';
 
 class InterviewRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -82,6 +83,14 @@ class InterviewRepository {
           .collection(FirebaseConstants.interviewsCollection)
           .add(interview.toFirestore());
 
+      await OperationLogService.log(
+        action: 'create',
+        entityType: 'interview',
+        entityId: docRef.id,
+        entityName: interview.volunteerName,
+        details: {'volunteerId': interview.volunteerId},
+      );
+
       print('✅ Created new interview for volunteer ${interview.volunteerId}');
       return docRef.id;
     } catch (e) {
@@ -97,6 +106,13 @@ class InterviewRepository {
           .collection(FirebaseConstants.interviewsCollection)
           .doc(id)
           .update(interview.toFirestore());
+      await OperationLogService.log(
+        action: 'update',
+        entityType: 'interview',
+        entityId: id,
+        entityName: interview.volunteerName,
+        details: {'status': interview.status},
+      );
       return true;
     } catch (e) {
       print('Error updating interview: $e');
@@ -133,6 +149,15 @@ class InterviewRepository {
             'status': status,
             'updatedAt': FieldValue.serverTimestamp(),
           });
+      await OperationLogService.log(
+        action: 'update',
+        entityType: 'interview_answers',
+        entityId: interviewId,
+        details: {
+          if (passed != null) 'passed': passed,
+          if (totalGrade != null) 'totalGrade': totalGrade,
+        },
+      );
       return true;
     } catch (e) {
       print('Error updating interview answers: $e');
@@ -147,6 +172,11 @@ class InterviewRepository {
           .collection(FirebaseConstants.interviewsCollection)
           .doc(id)
           .delete();
+      await OperationLogService.log(
+        action: 'delete',
+        entityType: 'interview',
+        entityId: id,
+      );
       return true;
     } catch (e) {
       print('Error deleting interview: $e');

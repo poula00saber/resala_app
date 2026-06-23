@@ -66,6 +66,10 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
   }
 
   bool _needsLocation() {
+    if (_selectedType == FirebaseConstants.typeMeeting &&
+        _selectedMeetingPlace == FirebaseConstants.meetingOnline) {
+      return false;
+    }
     return true;
   }
 
@@ -111,7 +115,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
   Future<void> _createEvent() async {
     if (!_formKey.currentState!.validate()) return;
 
-    if (_locationController.text.isEmpty) {
+    if (_needsLocation() && _locationController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('يرجى إدخال المكان'),
@@ -183,7 +187,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       type: finalEventType,
       date: _dateController.text,
       description: _descriptionController.text,
-      location: _locationController.text,
+      location: _needsLocation() ? _locationController.text : null,
       meetingPlace: _needsMeetingPlace() ? _selectedMeetingPlace : null,
       administrativeType: administrativeType,
       committeeId: committeeId,
@@ -301,19 +305,21 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                         const SizedBox(height: 16),
                       ],
 
-                      // Location Field (ALWAYS VISIBLE)
-                      TextFormField(
-                        controller: _locationController,
-                        decoration: const InputDecoration(
-                          labelText: 'المكان',
-                          hintText: 'أدخل مكان الحدث',
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.location_on),
+                      // Location Field (hide for online meetings)
+                      if (_needsLocation()) ...[
+                        TextFormField(
+                          controller: _locationController,
+                          decoration: const InputDecoration(
+                            labelText: 'المكان',
+                            hintText: 'أدخل مكان الحدث',
+                            border: OutlineInputBorder(),
+                            prefixIcon: Icon(Icons.location_on),
+                          ),
+                          validator: (value) =>
+                              Validators.validateRequired(value, 'المكان'),
                         ),
-                        validator: (value) =>
-                            Validators.validateRequired(value, 'المكان'),
-                      ),
-                      const SizedBox(height: 16),
+                        const SizedBox(height: 16),
+                      ],
 
                       // Meeting Place (for نوع الاجتماع)
                       if (_needsMeetingPlace()) ...[

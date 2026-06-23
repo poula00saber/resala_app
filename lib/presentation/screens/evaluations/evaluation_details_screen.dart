@@ -9,6 +9,7 @@ import '../../providers/evaluation_provider.dart';
 import '../../themes/app_theme.dart';
 import '../../widgets/whale_loading.dart';
 import 'add_evaluation_screen.dart';
+import '../../../data/models/evaluation_model.dart';
 
 class VolunteerEvaluationDetailsScreen extends StatefulWidget {
   final dynamic volunteer;
@@ -82,6 +83,35 @@ class _VolunteerEvaluationDetailsScreenState
 
             const SizedBox(height: 24),
 
+            FutureBuilder<double>(
+              future: Provider.of<EvaluationProvider>(
+                context,
+                listen: false,
+              ).getAverageRating(widget.volunteer.id),
+              builder: (context, snapshot) {
+                final avg = snapshot.data ?? 0.0;
+                return Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    'متوسط التقييم: ${avg.toStringAsFixed(1)}/10',
+                    style: const TextStyle(
+                      fontFamily: 'Cairo',
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.primary,
+                    ),
+                  ),
+                );
+              },
+            ),
+
             // Name and Basic Info
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 40),
@@ -145,7 +175,7 @@ class _VolunteerEvaluationDetailsScreenState
                         child: SingleChildScrollView(
                           scrollDirection: Axis.horizontal,
                           child: SizedBox(
-                            width: 600,
+                            width: 800,
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [_buildEvaluationsContent()],
@@ -220,7 +250,7 @@ class _VolunteerEvaluationDetailsScreenState
   }
 
   Widget _buildEvaluationsContent() {
-    return StreamBuilder<List<dynamic>>(
+    return StreamBuilder<List<EvaluationModel>>(
       stream: Provider.of<EvaluationProvider>(
         context,
       ).getEvaluationsForVolunteer(widget.volunteer.id),
@@ -274,28 +304,13 @@ class _VolunteerEvaluationDetailsScreenState
         }
 
         // Safely cast the data
-        try {
-          final evaluations = snapshot.data as List<dynamic>;
-          return _buildEvaluationsTable(evaluations);
-        } catch (e) {
-          return Padding(
-            padding: const EdgeInsets.all(40),
-            child: Center(
-              child: Text(
-                'خطأ في تحميل البيانات',
-                style: const TextStyle(
-                  fontFamily: 'Cairo',
-                  color: AppTheme.secondary,
-                ),
-              ),
-            ),
-          );
-        }
+        final evaluations = snapshot.data ?? [];
+        return _buildEvaluationsTable(evaluations);
       },
     );
   }
 
-  Widget _buildEvaluationsTable(List<dynamic> evaluations) {
+  Widget _buildEvaluationsTable(List<EvaluationModel> evaluations) {
     return Column(
       children: [
         // Table Header
@@ -306,7 +321,11 @@ class _VolunteerEvaluationDetailsScreenState
           ),
           child: Row(
             children: [
+              SizedBox(width: 40, child: _buildTableHeader('#')),
+              const SizedBox(width: 20),
               SizedBox(width: 100, child: _buildTableHeader('الاسم')),
+              const SizedBox(width: 20),
+              SizedBox(width: 120, child: _buildTableHeader('اسم التقييم')),
               const SizedBox(width: 20),
               SizedBox(width: 80, child: _buildTableHeader('التقييم')),
               const SizedBox(width: 20),
@@ -327,29 +346,64 @@ class _VolunteerEvaluationDetailsScreenState
             ),
           )
         else
-          ...evaluations.map((evaluation) {
+          ...evaluations.asMap().entries.map((entry) {
+            final index = entry.key;
+            final evaluation = entry.value;
             try {
               final notes = evaluation.notes?.toString() ?? '-';
               final rating = evaluation.rating?.toString() ?? '0';
-              final evaluatorName =
-                  evaluation.evaluatorName?.toString() ?? 'غير معروف';
+              final evaluatorName = evaluation.evaluatorName.toString().isEmpty
+                  ? 'غير معروف'
+                  : evaluation.evaluatorName.toString();
               final month = evaluation.month?.toString() ?? '-';
+              final evaluationName =
+                  evaluation.evaluationName.toString().isEmpty
+                  ? '-'
+                  : evaluation.evaluationName.toString();
 
-              return Container(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                decoration: BoxDecoration(
-                  border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
+              return Dismissible(
+                key: ValueKey(evaluation.id),
+                direction: DismissDirection.endToStart,
+                confirmDismiss: (_) async {
+                  return await _confirmDeleteEvaluation(evaluation);
+                },
+                background: Container(
+                  color: Colors.red.withOpacity(0.1),
+                  alignment: Alignment.centerLeft,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: const Icon(Icons.delete, color: Colors.red),
                 ),
-                child: Row(
-                  children: [
-                    SizedBox(width: 100, child: _buildTableCell(evaluatorName)),
-                    const SizedBox(width: 20),
-                    SizedBox(width: 80, child: _buildTableCell('$rating/10')),
-                    const SizedBox(width: 20),
-                    SizedBox(width: 100, child: _buildTableCell(month)),
-                    const SizedBox(width: 20),
-                    SizedBox(width: 200, child: _buildNotesCell(notes)),
-                  ],
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  decoration: BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(color: Colors.grey[200]!),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 40,
+                        child: _buildTableCell((index + 1).toString()),
+                      ),
+                      const SizedBox(width: 20),
+                      SizedBox(
+                        width: 100,
+                        child: _buildTableCell(evaluatorName),
+                      ),
+                      const SizedBox(width: 20),
+                      SizedBox(
+                        width: 120,
+                        child: _buildTableCell(evaluationName),
+                      ),
+                      const SizedBox(width: 20),
+                      SizedBox(width: 80, child: _buildTableCell('$rating/10')),
+                      const SizedBox(width: 20),
+                      SizedBox(width: 100, child: _buildTableCell(month)),
+                      const SizedBox(width: 20),
+                      SizedBox(width: 200, child: _buildNotesCell(notes)),
+                    ],
+                  ),
                 ),
               );
             } catch (e) {
@@ -367,6 +421,50 @@ class _VolunteerEvaluationDetailsScreenState
           }),
       ],
     );
+  }
+
+  Future<bool> _confirmDeleteEvaluation(EvaluationModel evaluation) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('حذف التقييم', style: TextStyle(fontFamily: 'Cairo')),
+        content: Text(
+          'هل تريد حذف التقييم "${evaluation.evaluationName}"؟',
+          style: const TextStyle(fontFamily: 'Cairo'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('إلغاء', style: TextStyle(fontFamily: 'Cairo')),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text(
+              'حذف',
+              style: TextStyle(fontFamily: 'Cairo', color: Colors.red),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return false;
+
+    final provider = Provider.of<EvaluationProvider>(context, listen: false);
+    final success = await provider.deleteEvaluation(evaluation.id);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            success ? 'تم حذف التقييم' : 'فشل حذف التقييم',
+            style: const TextStyle(fontFamily: 'Cairo'),
+          ),
+          backgroundColor: success ? Colors.green : Colors.red,
+        ),
+      );
+    }
+
+    return success;
   }
 
   Widget _buildTextField({
