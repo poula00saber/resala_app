@@ -1,6 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:resala/presentation/screens/home/add_volunteer_screen.dart';
 import 'package:resala/presentation/themes/app_theme.dart';
+import 'package:resala/presentation/widgets/app_ui_widgets.dart';
 
 class VolunteerManagementScreen extends StatefulWidget {
   final Map<String, dynamic> event;
@@ -154,32 +155,33 @@ class _VolunteerManagementScreenState extends State<VolunteerManagementScreen> {
                 ? const Center(
                     child: Text(
                       'لا يوجد متطوعين مضافين',
-                      style: TextStyle(color: AppTheme.cardBackground, fontSize: 16),
+                      style: TextStyle(
+                        color: AppTheme.cardBackground,
+                        fontSize: 16,
+                      ),
                     ),
                   )
                 : ListView.builder(
                     itemCount: _volunteers.length,
                     itemBuilder: (context, index) {
                       final volunteer = _volunteers[index];
-                      return Card(
+                      return AppCardListTile(
                         margin: const EdgeInsets.only(bottom: 8),
-                        child: ListTile(
-                          leading: CircleAvatar(
-                            backgroundColor: AppTheme.primary,
-                            child: Text(
-                              volunteer['name'][0],
-                              style: const TextStyle(color: AppTheme.textLight),
-                            ),
+                        leading: CircleAvatar(
+                          backgroundColor: AppTheme.primary,
+                          child: Text(
+                            volunteer['name'][0],
+                            style: const TextStyle(color: AppTheme.textLight),
                           ),
-                          title: Text(volunteer['name']),
-                          subtitle: Text(volunteer['phone']),
-                          trailing: IconButton(
-                            icon: const Icon(
-                              Icons.remove_circle,
-                              color: Colors.red,
-                            ),
-                            onPressed: () => _removeVolunteer(volunteer),
+                        ),
+                        title: Text(volunteer['name']),
+                        subtitle: Text(volunteer['phone']),
+                        trailing: IconButton(
+                          icon: const Icon(
+                            Icons.remove_circle,
+                            color: Colors.red,
                           ),
+                          onPressed: () => _removeVolunteer(volunteer),
                         ),
                       );
                     },

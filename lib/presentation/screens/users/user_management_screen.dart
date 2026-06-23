@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import '../../themes/app_theme.dart';
+import '../../widgets/app_ui_widgets.dart';
 import '../../widgets/whale_loading.dart';
 import '../../../data/models/app_user_model.dart';
 import '../../../data/repositories/app_user_repository.dart';
@@ -91,56 +92,51 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   }
 
   Widget _buildUserCard(AppUserModel user) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: ListTile(
-        contentPadding: const EdgeInsets.all(16),
-        leading: CircleAvatar(
-          backgroundColor: user.isAdmin ? AppTheme.primary : Colors.grey,
-          child: Icon(
-            user.isAdmin ? Icons.admin_panel_settings : Icons.person,
-            color: AppTheme.cardBackground,
+    return AppCardListTile(
+      leading: CircleAvatar(
+        backgroundColor: user.isAdmin ? AppTheme.primary : Colors.grey,
+        child: Icon(
+          user.isAdmin ? Icons.admin_panel_settings : Icons.person,
+          color: AppTheme.cardBackground,
+        ),
+      ),
+      title: Text(
+        user.displayName ?? user.email,
+        style: const TextStyle(
+          fontFamily: 'Cairo',
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            user.email,
+            style: const TextStyle(fontFamily: 'Cairo', fontSize: 12),
           ),
-        ),
-        title: Text(
-          user.displayName ?? user.email,
-          style: const TextStyle(
-            fontFamily: 'Cairo',
-            fontWeight: FontWeight.bold,
+          const SizedBox(height: 4),
+          Text(
+            user.isAdmin ? 'مدير النظام' : 'مستخدم عادي',
+            style: TextStyle(
+              fontFamily: 'Cairo',
+              fontSize: 12,
+              color: user.isAdmin ? AppTheme.primary : Colors.grey,
+            ),
           ),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              user.email,
-              style: const TextStyle(fontFamily: 'Cairo', fontSize: 12),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              user.isAdmin ? 'مدير النظام' : 'مستخدم عادي',
-              style: TextStyle(
-                fontFamily: 'Cairo',
-                fontSize: 12,
-                color: user.isAdmin ? AppTheme.primary : Colors.grey,
-              ),
-            ),
-          ],
-        ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            IconButton(
-              icon: const Icon(Icons.edit, color: AppTheme.primary),
-              onPressed: () => _showEditUserDialog(context, user),
-            ),
-            IconButton(
-              icon: const Icon(Icons.delete, color: Colors.red),
-              onPressed: () => _confirmDeleteUser(user),
-            ),
-          ],
-        ),
+        ],
+      ),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            icon: const Icon(Icons.edit, color: AppTheme.primary),
+            onPressed: () => _showEditUserDialog(context, user),
+          ),
+          IconButton(
+            icon: const Icon(Icons.delete, color: Colors.red),
+            onPressed: () => _confirmDeleteUser(user),
+          ),
+        ],
       ),
     );
   }
@@ -541,27 +537,21 @@ class _AddEditUserDialogState extends State<_AddEditUserDialog> {
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: ElevatedButton(
+                    child: AppPrimaryActionButton(
                       onPressed: _isSaving ? null : _handleSave,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primary,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+                      borderRadius: BorderRadius.circular(12),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      label: isEditing ? 'تحديث' : 'إضافة',
+                      textStyle: const TextStyle(
+                        fontFamily: 'Cairo',
+                        color: AppTheme.cardBackground,
                       ),
                       child: _isSaving
                           ? WhaleLoading(
                               size: 20,
                               color: AppTheme.cardBackground,
                             )
-                          : Text(
-                              isEditing ? 'تحديث' : 'إضافة',
-                              style: const TextStyle(
-                                fontFamily: 'Cairo',
-                                color: AppTheme.cardBackground,
-                              ),
-                            ),
+                          : null,
                     ),
                   ),
                 ],
