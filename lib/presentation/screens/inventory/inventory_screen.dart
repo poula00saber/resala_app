@@ -69,8 +69,8 @@ class _InventorySectionView extends StatelessWidget {
           return const Center(child: WhaleLoading());
         }
 
+        final displayEntries = inventoryProvider.getDisplayEntries(sectionId);
         final section = inventoryProvider.getSection(sectionId);
-        final rows = _buildRows(context, section, inventoryProvider);
 
         return Padding(
           padding: const EdgeInsets.all(16),
@@ -90,7 +90,7 @@ class _InventorySectionView extends StatelessWidget {
                         children: [
                           Expanded(
                             child: Text(
-                              section.name,
+                              sectionId == 'كلي' ? 'كلي' : section.name,
                               style: const TextStyle(
                                 fontFamily: 'Cairo',
                                 fontSize: 20,
@@ -100,7 +100,9 @@ class _InventorySectionView extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            '${section.subcategories.length} فئة فرعية',
+                            sectionId == 'كلي'
+                                ? '${inventoryProvider.sections.where((entry) => entry.id != 'كلي').fold<int>(0, (sum, current) => sum + current.subcategories.length)} فئة فرعية'
+                                : '${section.subcategories.length} فئة فرعية',
                             style: const TextStyle(
                               fontFamily: 'Cairo',
                               color: AppTheme.secondary,
@@ -155,7 +157,7 @@ class _InventorySectionView extends StatelessWidget {
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(18),
-                    child: rows.isEmpty
+                    child: displayEntries.isEmpty
                         ? const Center(
                             child: Text(
                               'لا توجد بيانات بعد',
@@ -165,26 +167,10 @@ class _InventorySectionView extends StatelessWidget {
                               ),
                             ),
                           )
-                        : SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: SingleChildScrollView(
-                              child: DataTable(
-                                headingRowColor: WidgetStatePropertyAll(
-                                  AppTheme.primary.withOpacity(0.12),
-                                ),
-                                columns: const [
-                                  DataColumn(label: Text('القسم')),
-                                  DataColumn(label: Text('الصنف')),
-                                  DataColumn(label: Text('الوحدة')),
-                                  DataColumn(label: Text('الكمية')),
-                                  DataColumn(label: Text('إضافة')),
-                                  DataColumn(label: Text('خصم')),
-                                  DataColumn(label: Text('جرد')),
-                                  DataColumn(label: Text('السجل')),
-                                ],
-                                rows: rows,
-                              ),
-                            ),
+                        : _buildCustomTable(
+                            context,
+                            displayEntries,
+                            inventoryProvider,
                           ),
                   ),
                 ),
@@ -196,121 +182,263 @@ class _InventorySectionView extends StatelessWidget {
     );
   }
 
-  List<DataRow> _buildRows(
+  Widget _buildCustomTable(
     BuildContext context,
-    InventorySectionModel section,
+    List<InventoryDisplayEntry> displayEntries,
     InventoryProvider provider,
   ) {
-    final result = <DataRow>[];
+    const columnLabels = [
+      'القسم',
+      'الصنف',
+      'الوحدة',
+      'الكمية',
+      'إضافة',
+      'خصم',
+      'جرد',
+      'السجل',
+    ];
+    const columnWidths = [60.0, 140.0, 60.0, 70.0, 50.0, 50.0, 50.0, 50.0];
 
-    for (final subcategory in section.subcategories) {
-      for (final item in subcategory.items) {
-        final latestHistory = item.history.isNotEmpty
-            ? item.history.last
-            : null;
-        result.add(
-          DataRow(
-            color: WidgetStatePropertyAll(
-              item.history.length == 1
-                  ? AppTheme.primary.withOpacity(0.06)
-                  : Colors.transparent,
-            ),
-            cells: [
-              DataCell(Text(subcategory.name)),
-              DataCell(
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(item.name),
-                    if (latestHistory != null)
-                      Text(
-                        '${latestHistory.action}: ${latestHistory.quantity} ${latestHistory.unit}',
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: SizedBox(
+        height: double.infinity,
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header row
+              Container(
+                color: AppTheme.primary.withValues(alpha: 0.12),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 12,
+                  horizontal: 8,
+                ),
+                child: Row(
+                  children: List.generate(columnLabels.length, (i) {
+                    return SizedBox(
+                      width: columnWidths[i],
+                      child: Text(
+                        columnLabels[i],
                         style: const TextStyle(
                           fontFamily: 'Cairo',
-                          fontSize: 11,
-                          color: AppTheme.secondary,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    );
+                  }),
+                ),
+              ),
+              // Data rows
+              ...List.generate(displayEntries.length, (index) {
+                final entry = displayEntries[index];
+                final item = entry.item;
+                final latestHistory = item.history.isNotEmpty
+                    ? item.history.last
+                    : null;
+                final isNew = item.history.length == 1;
+
+                return Container(
+                  decoration: BoxDecoration(
+                    color: isNew
+                        ? AppTheme.primary.withValues(alpha: 0.06)
+                        : Colors.transparent,
+                    border: Border(
+                      bottom: BorderSide(
+                        color: Colors.grey.withValues(alpha: 0.15),
+                        width: 0.5,
+                      ),
+                    ),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 8,
+                    horizontal: 8,
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // القسم
+                      SizedBox(
+                        width: columnWidths[0],
+                        child: Text(
+                          entry.sectionName,
+                          style: const TextStyle(
+                            fontFamily: 'Cairo',
+                            fontSize: 12,
+                          ),
+                          textAlign: TextAlign.center,
                         ),
                       ),
-                  ],
-                ),
-              ),
-              DataCell(Text(item.unit)),
-              DataCell(
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      item.quantity.toString(),
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    Text(
-                      'سجل ${item.history.length}',
-                      style: const TextStyle(
-                        fontFamily: 'Cairo',
-                        fontSize: 11,
-                        color: AppTheme.secondary,
+                      // الصنف
+                      SizedBox(
+                        width: columnWidths[1],
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              entry.subcategoryName,
+                              style: const TextStyle(
+                                fontFamily: 'Cairo',
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            Text(
+                              item.name,
+                              style: const TextStyle(
+                                fontFamily: 'Cairo',
+                                fontSize: 12,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            if (latestHistory != null)
+                              Text(
+                                '${latestHistory.action}: ${latestHistory.quantity} ${latestHistory.unit}',
+                                style: const TextStyle(
+                                  fontFamily: 'Cairo',
+                                  fontSize: 10,
+                                  color: AppTheme.secondary,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-              DataCell(
-                IconButton(
-                  tooltip: 'إضافة',
-                  icon: const Icon(Icons.add_circle, color: Colors.green),
-                  onPressed: () => _showItemActionDialog(
-                    context,
-                    provider,
-                    section.id,
-                    subcategory.id,
-                    item,
-                    'إضافة',
+                      // الوحدة
+                      SizedBox(
+                        width: columnWidths[2],
+                        child: Text(
+                          item.unit,
+                          style: const TextStyle(
+                            fontFamily: 'Cairo',
+                            fontSize: 12,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                      // الكمية
+                      SizedBox(
+                        width: columnWidths[3],
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              item.quantity.toString(),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            Text(
+                              'سجل ${item.history.length}',
+                              style: const TextStyle(
+                                fontFamily: 'Cairo',
+                                fontSize: 10,
+                                color: AppTheme.secondary,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                      ),
+                      // إضافة
+                      SizedBox(
+                        width: columnWidths[4],
+                        child: _buildActionIcon(
+                          Icons.add_circle,
+                          Colors.green,
+                          () => _showItemActionDialog(
+                            context,
+                            provider,
+                            entry.sectionId,
+                            entry.subcategoryId,
+                            item,
+                            'إضافة',
+                          ),
+                        ),
+                      ),
+                      // خصم
+                      SizedBox(
+                        width: columnWidths[5],
+                        child: _buildActionIcon(
+                          Icons.remove_circle,
+                          Colors.red,
+                          () => _showItemActionDialog(
+                            context,
+                            provider,
+                            entry.sectionId,
+                            entry.subcategoryId,
+                            item,
+                            'خصم',
+                          ),
+                        ),
+                      ),
+                      // جرد
+                      SizedBox(
+                        width: columnWidths[6],
+                        child: _buildActionIcon(
+                          Icons.fact_check,
+                          AppTheme.primary,
+                          () => _showItemActionDialog(
+                            context,
+                            provider,
+                            entry.sectionId,
+                            entry.subcategoryId,
+                            item,
+                            'جرد',
+                          ),
+                        ),
+                      ),
+                      // السجل
+                      SizedBox(
+                        width: columnWidths[7],
+                        child: _buildActionIcon(
+                          Icons.history,
+                          AppTheme.secondary,
+                          () => _showItemHistoryDialog(context, item),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ),
-              DataCell(
-                IconButton(
-                  tooltip: 'خصم',
-                  icon: const Icon(Icons.remove_circle, color: Colors.red),
-                  onPressed: () => _showItemActionDialog(
-                    context,
-                    provider,
-                    section.id,
-                    subcategory.id,
-                    item,
-                    'خصم',
-                  ),
-                ),
-              ),
-              DataCell(
-                IconButton(
-                  tooltip: 'جرد',
-                  icon: const Icon(Icons.fact_check, color: AppTheme.primary),
-                  onPressed: () => _showItemActionDialog(
-                    context,
-                    provider,
-                    section.id,
-                    subcategory.id,
-                    item,
-                    'جرد',
-                  ),
-                ),
-              ),
-              DataCell(
-                IconButton(
-                  tooltip: 'عرض السجل',
-                  icon: const Icon(Icons.history, color: AppTheme.secondary),
-                  onPressed: () => _showItemHistoryDialog(context, item),
-                ),
-              ),
+                );
+              }),
             ],
           ),
-        );
-      }
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionIcon(IconData icon, Color color, VoidCallback onPressed) {
+    return Center(
+      child: IconButton(
+        icon: Icon(icon, color: color, size: 22),
+        onPressed: onPressed,
+        padding: EdgeInsets.zero,
+        constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+      ),
+    );
+  }
+
+  String _resolveTargetSectionId(
+    String requestedSectionId,
+    InventoryProvider provider,
+  ) {
+    if (requestedSectionId != 'كلي') {
+      return requestedSectionId;
     }
 
-    return result;
+    return provider.sections
+        .firstWhere(
+          (section) => section.id != 'كلي',
+          orElse: () => provider.sections.first,
+        )
+        .id;
   }
 
   Future<void> _showAddSubcategoryDialog(
@@ -340,7 +468,10 @@ class _InventorySectionView extends StatelessWidget {
             onPressed: () {
               final name = controller.text.trim();
               if (name.isEmpty) return;
-              provider.addSubcategory(sectionId, name);
+              provider.addSubcategory(
+                _resolveTargetSectionId(sectionId, provider),
+                name,
+              );
               Navigator.pop(dialogContext);
             },
             child: const Text('إضافة', style: TextStyle(fontFamily: 'Cairo')),
@@ -354,14 +485,15 @@ class _InventorySectionView extends StatelessWidget {
     BuildContext context,
     InventoryProvider provider,
   ) async {
-    if (provider.getSection(sectionId).subcategories.isEmpty) {
-      provider.addSubcategory(sectionId, 'عام');
+    final targetSectionId = _resolveTargetSectionId(sectionId, provider);
+    if (provider.getSection(targetSectionId).subcategories.isEmpty) {
+      provider.addSubcategory(targetSectionId, 'عام');
     }
 
     final nameController = TextEditingController();
     final quantityController = TextEditingController(text: '1');
     String selectedSubcategoryId = provider
-        .getSection(sectionId)
+        .getSection(targetSectionId)
         .subcategories
         .first
         .id;
@@ -381,12 +513,12 @@ class _InventorySectionView extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   DropdownButtonFormField<String>(
-                    value: selectedSubcategoryId,
+                    initialValue: selectedSubcategoryId,
                     decoration: const InputDecoration(
                       labelText: 'القسم الفرعي',
                     ),
                     items: provider
-                        .getSection(sectionId)
+                        .getSection(targetSectionId)
                         .subcategories
                         .map(
                           (subcategory) => DropdownMenuItem(
@@ -415,7 +547,7 @@ class _InventorySectionView extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
-                    value: selectedUnit,
+                    initialValue: selectedUnit,
                     decoration: const InputDecoration(labelText: 'الوحدة'),
                     items: InventoryProvider.availableUnits
                         .map(
@@ -447,7 +579,7 @@ class _InventorySectionView extends StatelessWidget {
                   if (name.isEmpty || quantity <= 0) return;
 
                   provider.addItem(
-                    sectionId: sectionId,
+                    sectionId: targetSectionId,
                     subcategoryId: selectedSubcategoryId,
                     name: name,
                     unit: selectedUnit,
@@ -496,7 +628,7 @@ class _InventorySectionView extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
-              value: selectedUnit,
+              initialValue: selectedUnit,
               decoration: const InputDecoration(labelText: 'الوحدة'),
               items: InventoryProvider.availableUnits
                   .map(
@@ -556,10 +688,30 @@ class _InventorySectionView extends StatelessWidget {
     );
   }
 
+  List<InventoryHistoryEntry> _getVisibleHistory(InventoryItemModel item) {
+    final now = DateTime.now();
+    final cutoff = DateTime(now.year, now.month - 4, now.day);
+    final recentEntries = item.history
+        .where((entry) => !entry.createdAt.isBefore(cutoff))
+        .toList();
+
+    if (recentEntries.isNotEmpty) {
+      return recentEntries;
+    }
+
+    if (item.history.length <= 4) {
+      return item.history;
+    }
+
+    return item.history.sublist(item.history.length - 4);
+  }
+
   Future<void> _showItemHistoryDialog(
     BuildContext context,
     InventoryItemModel item,
   ) async {
+    final visibleHistory = _getVisibleHistory(item);
+
     await showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -569,21 +721,21 @@ class _InventorySectionView extends StatelessWidget {
         ),
         content: SizedBox(
           width: 380,
-          child: item.history.isEmpty
+          child: visibleHistory.isEmpty
               ? const Text(
                   'لا يوجد سجل بعد',
                   style: TextStyle(fontFamily: 'Cairo'),
                 )
               : ListView.separated(
                   shrinkWrap: true,
-                  itemCount: item.history.length,
+                  itemCount: visibleHistory.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 8),
                   itemBuilder: (context, index) {
-                    final entry = item.history[index];
+                    final entry = visibleHistory[index];
                     return Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: AppTheme.primary.withOpacity(0.05),
+                        color: AppTheme.primary.withValues(alpha: 0.05),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Column(

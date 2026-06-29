@@ -202,7 +202,18 @@ class ReportRepository {
         }
       }
 
-      return reportDataMap.values.toList();
+      return reportDataMap.values
+          .where(
+            (data) =>
+                data.familyDayCount > 0 ||
+                data.cubsEventCount > 0 ||
+                data.eventsCount > 0 ||
+                data.committeeMeetingCount > 0 ||
+                data.teamMeetingCount > 0 ||
+                data.leadersMeetingCount > 0 ||
+                data.monthsParticipated.isNotEmpty,
+          )
+          .toList();
     } catch (e) {
       print('Error generating comprehensive report: $e');
       return [];
@@ -270,7 +281,9 @@ class ReportRepository {
         }
       }
 
-      return reportDataMap.values.toList();
+      return reportDataMap.values
+          .where((data) => data.familyDayCount > 0)
+          .toList();
     } catch (e) {
       print('Error generating family day report: $e');
       return [];
@@ -413,7 +426,9 @@ class ReportRepository {
         }
       }
 
-      return reportDataMap.values.toList();
+      return reportDataMap.values
+          .where((data) => data.totalMeetings > 0)
+          .toList();
     } catch (e) {
       print('Error generating meetings report: $e');
       return [];

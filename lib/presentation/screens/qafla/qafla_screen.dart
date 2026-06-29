@@ -11,8 +11,16 @@ import '../../providers/volunteer_provider.dart';
 import '../../../data/models/event_model.dart';
 import '../events/create_event_screen.dart';
 
-class QaflaScreen extends StatelessWidget {
+class QaflaScreen extends StatefulWidget {
   const QaflaScreen({super.key});
+
+  @override
+  State<QaflaScreen> createState() => _QaflaScreenState();
+}
+
+class _QaflaScreenState extends State<QaflaScreen> {
+  int _currentPage = 0;
+  final int _pageSize = 6;
 
   @override
   Widget build(BuildContext context) {
@@ -36,21 +44,24 @@ class QaflaScreen extends StatelessWidget {
             onPressed: () => Navigator.pop(context),
           ),
         ),
-        floatingActionButton: FloatingActionButton.extended(
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const CreateEventScreen(),
-              ),
-            );
-          },
-          backgroundColor: AppTheme.primary,
-          foregroundColor: AppTheme.textLight,
-          icon: const Icon(Icons.add),
-          label: const Text(
-            'إضافة قافلة',
-            style: TextStyle(fontFamily: 'Cairo'),
+        floatingActionButton: Padding(
+          padding: const EdgeInsets.only(bottom: 30.0),
+          child: FloatingActionButton.extended(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const CreateEventScreen(),
+                ),
+              );
+            },
+            backgroundColor: AppTheme.primary,
+            foregroundColor: AppTheme.textLight,
+            icon: const Icon(Icons.add),
+            label: const Text(
+              'إضافة قافلة',
+              style: TextStyle(fontFamily: 'Cairo'),
+            ),
           ),
         ),
         body: Consumer<EventProvider>(
@@ -73,14 +84,61 @@ class QaflaScreen extends StatelessWidget {
               );
             }
 
-            return ListView.separated(
-              padding: const EdgeInsets.all(16),
-              itemCount: qaflaEvents.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
-              itemBuilder: (context, index) {
-                final event = qaflaEvents[index];
-                return _QaflaEventCard(event: event);
-              },
+            final totalPages = (qaflaEvents.length / _pageSize).ceil();
+            final currentPage = totalPages == 0
+                ? 0
+                : _currentPage.clamp(0, totalPages - 1);
+            final pageItems = qaflaEvents
+                .skip(currentPage * _pageSize)
+                .take(_pageSize)
+                .toList();
+
+            return Column(
+              children: [
+                Expanded(
+                  child: ListView.separated(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: pageItems.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    itemBuilder: (context, index) {
+                      final event = pageItems[index];
+                      return _QaflaEventCard(event: event);
+                    },
+                  ),
+                ),
+                if (totalPages > 1)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        TextButton(
+                          onPressed: currentPage == 0
+                              ? null
+                              : () => setState(
+                                  () => _currentPage = currentPage - 1,
+                                ),
+                          child: const Text('السابق'),
+                        ),
+                        Text(
+                          'صفحة ${currentPage + 1} من $totalPages',
+                          style: const TextStyle(fontFamily: 'Cairo'),
+                        ),
+                        TextButton(
+                          onPressed: currentPage + 1 >= totalPages
+                              ? null
+                              : () => setState(
+                                  () => _currentPage = currentPage + 1,
+                                ),
+                          child: const Text('التالي'),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
             );
           },
         ),
@@ -146,7 +204,7 @@ class _QaflaEventCard extends StatelessWidget {
                   children: [
                     _InfoRow(
                       label: 'عدد المتطوعين',
-                      value: event.volunteerIds.length.toString(),
+                      value: _countDistributedVolunteers(event).toString(),
                     ),
                     _InfoRow(label: 'التيشرتات', value: shirtCount.toString()),
                   ],
@@ -181,6 +239,10 @@ class _QaflaEventCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  int _countDistributedVolunteers(EventModel event) {
+    return event.qaflaDistribution.values.where((value) => value).length;
   }
 
   Future<int> _countTshirts(
@@ -417,6 +479,10 @@ class _QaflaDetailsSheetState extends State<_QaflaDetailsSheet> {
     );
   }
 
+  int _countDistributedVolunteers(EventModel event) {
+    return event.qaflaDistribution.values.where((value) => value).length;
+  }
+
   @override
   Widget build(BuildContext context) {
     return DraggableScrollableSheet(
@@ -464,7 +530,7 @@ class _QaflaDetailsSheetState extends State<_QaflaDetailsSheet> {
                   ),
                   _InfoRow(
                     label: 'عدد المتطوعين',
-                    value: widget.event.volunteerIds.length.toString(),
+                    value: _countDistributedVolunteers(widget.event).toString(),
                   ),
                   const SizedBox(height: 16),
                   TextField(

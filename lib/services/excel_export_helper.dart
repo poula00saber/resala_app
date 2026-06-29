@@ -1034,6 +1034,81 @@ class ExcelExportHelper {
   // REPORT EXPORT FUNCTIONS
   // ============================================
 
+  static Future<void> exportQaflaReport({
+    required List<List<String>> rows,
+  }) async {
+    try {
+      var excel = Excel.createExcel();
+      Sheet sheet = excel['تقرير القوافل'];
+      _setSheetToRTL(sheet);
+
+      sheet.merge(CellIndex.indexByString('A1'), CellIndex.indexByString('J1'));
+      var titleCell = sheet.cell(CellIndex.indexByString('A1'));
+      titleCell.value = TextCellValue('تقرير القوافل');
+      titleCell.cellStyle = CellStyle(
+        bold: true,
+        fontSize: 16,
+        horizontalAlign: HorizontalAlign.Center,
+        verticalAlign: VerticalAlign.Center,
+      );
+
+      final headers = [
+        'العنوان',
+        'التاريخ',
+        'المكان',
+        'عدد المتطوعين',
+        'الموزعين',
+        'التيشرتات',
+        'عدد العربيات',
+        'تفاصيل الوجبات',
+        'تفاصيل العربيات',
+      ];
+
+      for (var i = 0; i < headers.length; i++) {
+        final cell = sheet.cell(
+          CellIndex.indexByColumnRow(columnIndex: i, rowIndex: 2),
+        );
+        cell.value = TextCellValue(headers[i]);
+        cell.cellStyle = CellStyle(
+          bold: true,
+          backgroundColorHex: ExcelColor.fromHexString('#8A3A4A'),
+          fontColorHex: ExcelColor.white,
+          horizontalAlign: HorizontalAlign.Center,
+          verticalAlign: VerticalAlign.Center,
+        );
+      }
+
+      for (var i = 0; i < rows.length; i++) {
+        final rowIndex = i + 3;
+        final rowData = rows[i];
+        for (var j = 0; j < headers.length; j++) {
+          final cell = sheet.cell(
+            CellIndex.indexByColumnRow(columnIndex: j, rowIndex: rowIndex),
+          );
+          cell.value = TextCellValue(rowData[j]);
+          cell.cellStyle = CellStyle(
+            horizontalAlign: j == 0 || j == 1 || j == 2
+                ? HorizontalAlign.Right
+                : HorizontalAlign.Center,
+            verticalAlign: VerticalAlign.Center,
+          );
+        }
+      }
+
+      for (var i = 0; i < headers.length; i++) {
+        sheet.setColumnWidth(i, i < 3 ? 20 : 15);
+      }
+
+      await _saveAndShareExcel(
+        excel,
+        'تقرير_القوافل_${DateTime.now().millisecondsSinceEpoch}',
+      );
+    } catch (e) {
+      print('Error exporting qafla report: $e');
+      rethrow;
+    }
+  }
+
   // Export Comprehensive Report (الكلي)
   static Future<void> exportComprehensiveReport({
     required List<VolunteerReportData> reportData,

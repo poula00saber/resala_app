@@ -8,6 +8,7 @@ import '../reports/widgets/report_table_widget.dart';
 import '../../providers/event_provider.dart';
 import '../../providers/volunteer_provider.dart';
 import '../../../data/models/event_model.dart';
+import '../../../services/excel_export_helper.dart';
 
 class QaflaReportScreen extends StatefulWidget {
   const QaflaReportScreen({super.key});
@@ -38,6 +39,35 @@ class _QaflaReportScreenState extends State<QaflaReportScreen> {
             icon: const Icon(Icons.arrow_forward, color: AppTheme.textDark),
             onPressed: () => Navigator.pop(context),
           ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.file_download, color: AppTheme.primary),
+              onPressed: () async {
+                final eventProvider = Provider.of<EventProvider>(
+                  context,
+                  listen: false,
+                );
+                final volunteerProvider = Provider.of<VolunteerProvider>(
+                  context,
+                  listen: false,
+                );
+                final rows = await _buildRows(
+                  eventProvider.getQaflaEvents(),
+                  volunteerProvider,
+                );
+                await ExcelExportHelper.exportQaflaReport(rows: rows);
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('تم تصدير تقرير القوافل بنجاح'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                }
+              },
+              tooltip: 'تصدير إلى Excel',
+            ),
+          ],
         ),
         body: Column(
           children: [
@@ -85,11 +115,15 @@ class _QaflaReportScreenState extends State<QaflaReportScreen> {
                       final builtRows = snapshot.data ?? rows;
                       return ReportTableWidget(
                         headers: const [
+                          'العنوان',
                           'التاريخ',
                           'المكان',
                           'عدد المتطوعين',
+                          'الموزعين',
                           'التيشرتات',
+                          'عدد العربيات',
                           'تفاصيل الوجبات',
+                          'تفاصيل العربيات',
                         ],
                         rows: builtRows,
                         isLoading: false,
@@ -119,17 +153,60 @@ class _QaflaReportScreenState extends State<QaflaReportScreen> {
           .where((volunteer) => volunteer.hasTshirt)
           .length;
       final details = _extractMealDetails(event.additionalDetails);
+      final carCount = _extractCarCount(event.additionalDetails);
+      final carDetails = _extractCarDetails(event.additionalDetails);
+      final distributedCount = event.qaflaDistribution.values
+          .where((value) => value)
+          .length;
 
       rows.add([
+        event.title,
         event.date,
         event.location ?? '-',
         event.volunteerIds.length.toString(),
+        distributedCount.toString(),
         tshirtCount.toString(),
+        carCount.toString(),
         details,
+        carDetails,
       ]);
     }
 
     return rows;
+  }
+
+  int _extractCarCount(String? additionalDetails) {
+    if (additionalDetails == null || additionalDetails.isEmpty) return 0;
+
+    try {
+      final decoded = jsonDecode(additionalDetails) as Map<String, dynamic>;
+      final carCount = decoded['carCount'];
+      if (carCount is num) {
+        return carCount.toInt();
+      }
+    } catch (_) {}
+
+    return 0;
+  }
+
+  String _extractCarDetails(String? additionalDetails) {
+    if (additionalDetails == null || additionalDetails.isEmpty) return '-';
+
+    try {
+      final decoded = jsonDecode(additionalDetails) as Map<String, dynamic>;
+      final cars = decoded['cars'];
+      if (cars is List && cars.isNotEmpty) {
+        return cars
+            .whereType<Map>()
+            .map(
+              (car) =>
+                  '${car['vehicleType'] ?? ''} / ${car['driverName'] ?? ''} / ${car['carNumber'] ?? ''}',
+            )
+            .join(' • ');
+      }
+    } catch (_) {}
+
+    return '-';
   }
 
   String _extractMealDetails(String? additionalDetails) {

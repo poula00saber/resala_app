@@ -34,6 +34,41 @@ class InventoryProvider extends ChangeNotifier {
 
   List<InventorySectionModel> get sections => List.unmodifiable(_sections);
 
+  List<InventoryDisplayEntry> getDisplayEntries(String sectionId) {
+    if (sectionId == 'كلي') {
+      final entries = <InventoryDisplayEntry>[];
+      for (final section in _sections.where((entry) => entry.id != 'كلي')) {
+        for (final subcategory in section.subcategories) {
+          for (final item in subcategory.items) {
+            entries.add(
+              InventoryDisplayEntry(
+                sectionId: section.id,
+                sectionName: section.name,
+                subcategoryId: subcategory.id,
+                subcategoryName: subcategory.name,
+                item: item,
+              ),
+            );
+          }
+        }
+      }
+      return entries;
+    }
+
+    final section = getSection(sectionId);
+    return section.subcategories.expand((subcategory) {
+      return subcategory.items.map(
+        (item) => InventoryDisplayEntry(
+          sectionId: section.id,
+          sectionName: section.name,
+          subcategoryId: subcategory.id,
+          subcategoryName: subcategory.name,
+          item: item,
+        ),
+      );
+    }).toList();
+  }
+
   InventorySectionModel getSection(String sectionId) {
     return _sections.firstWhere((section) => section.id == sectionId);
   }

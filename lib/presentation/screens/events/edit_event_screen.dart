@@ -53,9 +53,9 @@ class _EditEventScreenState extends State<EditEventScreen> {
   bool get _needsLocation => !_isMeeting || !_isOnline;
 
   double get _volunteerTableWidth {
-    var width = 40 + 20 + 100 + 20 + 140 + 20;
+    var width = 44 + 20 + 40 + 20 + 100 + 20 + 140 + 20;
     if (!_isOnline) {
-      width += 60;
+      width += 60 + 20;
     }
     if (_isQafla) {
       width += 60 + 20 + 60 + 20 + 60;
@@ -583,37 +583,6 @@ class _EditEventScreenState extends State<EditEventScreen> {
     }
   }
 
-  void _addVolunteer() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        decoration: const BoxDecoration(
-          color: AppTheme.cardBackground,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
-        ),
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _buildAddButton('إضافة متطوع', Icons.add_circle_outline, () {
-              Navigator.pop(context);
-              _selectExistingVolunteer();
-            }),
-            if (_canCreateNewVolunteer()) ...[
-              const SizedBox(height: 12),
-              _buildAddButton('متطوع جديد', Icons.add, () {
-                Navigator.pop(context);
-                _createNewVolunteer();
-              }),
-            ],
-            const SizedBox(height: 24),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildAddButton(String text, IconData icon, VoidCallback onPressed) {
     return ElevatedButton(
       onPressed: onPressed,
@@ -905,6 +874,8 @@ class _EditEventScreenState extends State<EditEventScreen> {
                         ),
                         child: Row(
                           children: [
+                            SizedBox(width: 44, child: _buildTableHeader('')),
+                            const SizedBox(width: 20),
                             SizedBox(width: 40, child: _buildTableHeader('#')),
                             const SizedBox(width: 20),
                             SizedBox(
@@ -989,212 +960,208 @@ class _EditEventScreenState extends State<EditEventScreen> {
                                 final index = entry.key;
                                 final volunteer = entry.value;
 
-                                return Dismissible(
-                                  key: Key(volunteer.id),
-                                  direction: DismissDirection.endToStart,
-                                  background: Container(
-                                    alignment: Alignment.centerLeft,
-                                    padding: const EdgeInsets.only(left: 20),
-                                    color: Colors.red,
-                                    child: const Icon(
-                                      Icons.delete,
-                                      color: AppTheme.cardBackground,
+                                return Container(
+                                  decoration: BoxDecoration(
+                                    border: Border(
+                                      bottom: BorderSide(
+                                        color: Colors.grey[200]!,
+                                      ),
                                     ),
                                   ),
-                                  confirmDismiss: (direction) async {
-                                    return await showDialog<bool>(
-                                          context: context,
-                                          builder: (context) => Directionality(
-                                            textDirection: TextDirection.rtl,
-                                            child: AlertDialog(
-                                              title: const Text(
-                                                'حذف متطوع',
-                                                style: TextStyle(
-                                                  fontFamily: 'Cairo',
-                                                ),
-                                              ),
-                                              content: Text(
-                                                'هل أنت متأكد من حذف ${volunteer.name} من هذا الحدث؟',
-                                                style: const TextStyle(
-                                                  fontFamily: 'Cairo',
-                                                ),
-                                              ),
-                                              actions: [
-                                                TextButton(
-                                                  onPressed: () =>
-                                                      Navigator.pop(
-                                                        context,
-                                                        false,
-                                                      ),
-                                                  child: const Text(
-                                                    'إلغاء',
-                                                    style: TextStyle(
-                                                      fontFamily: 'Cairo',
-                                                    ),
-                                                  ),
-                                                ),
-                                                TextButton(
-                                                  onPressed: () =>
-                                                      Navigator.pop(
-                                                        context,
-                                                        true,
-                                                      ),
-                                                  child: const Text(
-                                                    'حذف',
-                                                    style: TextStyle(
-                                                      fontFamily: 'Cairo',
-                                                      color: Colors.red,
-                                                    ),
-                                                  ),
-                                                ),
-                                              ],
+                                  child: Row(
+                                    children: [
+                                      SizedBox(
+                                        width: 44,
+                                        child: Center(
+                                          child: IconButton(
+                                            icon: const Icon(
+                                              Icons.delete_outline,
+                                              color: Colors.red,
                                             ),
+                                            tooltip: 'حذف المتطوع',
+                                            onPressed: () async {
+                                              final confirm = await showDialog<bool>(
+                                                context: context,
+                                                builder: (dialogContext) =>
+                                                    Directionality(
+                                                      textDirection:
+                                                          TextDirection.rtl,
+                                                      child: AlertDialog(
+                                                        title: const Text(
+                                                          'حذف متطوع',
+                                                          style: TextStyle(
+                                                            fontFamily: 'Cairo',
+                                                          ),
+                                                        ),
+                                                        content: Text(
+                                                          'هل أنت متأكد من حذف ${volunteer.name} من هذا الحدث؟',
+                                                          style:
+                                                              const TextStyle(
+                                                                fontFamily:
+                                                                    'Cairo',
+                                                              ),
+                                                        ),
+                                                        actions: [
+                                                          TextButton(
+                                                            onPressed: () =>
+                                                                Navigator.pop(
+                                                                  dialogContext,
+                                                                  false,
+                                                                ),
+                                                            child: const Text(
+                                                              'إلغاء',
+                                                              style: TextStyle(
+                                                                fontFamily:
+                                                                    'Cairo',
+                                                              ),
+                                                            ),
+                                                          ),
+                                                          TextButton(
+                                                            onPressed: () =>
+                                                                Navigator.pop(
+                                                                  dialogContext,
+                                                                  true,
+                                                                ),
+                                                            child: const Text(
+                                                              'حذف',
+                                                              style: TextStyle(
+                                                                fontFamily:
+                                                                    'Cairo',
+                                                                color:
+                                                                    Colors.red,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                              );
+
+                                              if (confirm == true && mounted) {
+                                                setState(() {
+                                                  _volunteerIds.remove(
+                                                    volunteer.id,
+                                                  );
+                                                  _volunteerTshirtStatus.remove(
+                                                    volunteer.id,
+                                                  );
+                                                });
+                                                ScaffoldMessenger.of(
+                                                  context,
+                                                ).showSnackBar(
+                                                  SnackBar(
+                                                    content: Text(
+                                                      'تم حذف ${volunteer.name} من الحدث',
+                                                      style: const TextStyle(
+                                                        fontFamily: 'Cairo',
+                                                      ),
+                                                    ),
+                                                    backgroundColor:
+                                                        Colors.orange,
+                                                  ),
+                                                );
+                                              }
+                                            },
                                           ),
-                                        ) ??
-                                        false;
-                                  },
-                                  onDismissed: (direction) {
-                                    setState(() {
-                                      _volunteerIds.remove(volunteer.id);
-                                      _volunteerTshirtStatus.remove(
-                                        volunteer.id,
-                                      );
-                                    });
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          'تم حذف ${volunteer.name} من الحدث',
-                                          style: const TextStyle(
-                                            fontFamily: 'Cairo',
-                                          ),
-                                        ),
-                                        backgroundColor: Colors.orange,
-                                        action: SnackBarAction(
-                                          label: 'تراجع',
-                                          textColor: AppTheme.textLight,
-                                          onPressed: () {
-                                            setState(() {
-                                              _volunteerIds.add(volunteer.id);
-                                            });
-                                          },
                                         ),
                                       ),
-                                    );
-                                  },
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      border: Border(
-                                        bottom: BorderSide(
-                                          color: Colors.grey[200]!,
+                                      SizedBox(
+                                        width: 40,
+                                        child: _buildTableCell(
+                                          (index + 1).toString(),
                                         ),
                                       ),
-                                    ),
-                                    child: Row(
-                                      children: [
+                                      const SizedBox(width: 20),
+                                      SizedBox(
+                                        width: 100,
+                                        child: _buildTableCell(volunteer.name),
+                                      ),
+                                      const SizedBox(width: 20),
+                                      SizedBox(
+                                        width: 140,
+                                        child: _buildTableCell(volunteer.phone),
+                                      ),
+                                      const SizedBox(width: 20),
+                                      if (!_isOnline)
                                         SizedBox(
-                                          width: 40,
-                                          child: _buildTableCell(
-                                            (index + 1).toString(),
+                                          width: 60,
+                                          child: Center(
+                                            child: Checkbox(
+                                              value:
+                                                  _volunteerTshirtStatus[volunteer
+                                                      .id] ??
+                                                  false,
+                                              onChanged: (value) {
+                                                setState(() {
+                                                  _volunteerTshirtStatus[volunteer
+                                                          .id] =
+                                                      value ?? false;
+                                                });
+                                              },
+                                              activeColor: AppTheme.primary,
+                                            ),
+                                          ),
+                                        ),
+                                      if (_isQafla) ...[
+                                        SizedBox(
+                                          width: 60,
+                                          child: Center(
+                                            child: Checkbox(
+                                              value:
+                                                  _qaflaPreparation[volunteer
+                                                      .id] ??
+                                                  false,
+                                              onChanged: (value) {
+                                                setState(() {
+                                                  _qaflaPreparation[volunteer
+                                                          .id] =
+                                                      value ?? false;
+                                                });
+                                              },
+                                              activeColor: AppTheme.primary,
+                                            ),
                                           ),
                                         ),
                                         const SizedBox(width: 20),
                                         SizedBox(
-                                          width: 100,
-                                          child: _buildTableCell(
-                                            volunteer.name,
+                                          width: 60,
+                                          child: Center(
+                                            child: Checkbox(
+                                              value:
+                                                  _qaflaFilling[volunteer.id] ??
+                                                  false,
+                                              onChanged: (value) {
+                                                setState(() {
+                                                  _qaflaFilling[volunteer.id] =
+                                                      value ?? false;
+                                                });
+                                              },
+                                              activeColor: AppTheme.primary,
+                                            ),
                                           ),
                                         ),
                                         const SizedBox(width: 20),
                                         SizedBox(
-                                          width: 140,
-                                          child: _buildTableCell(
-                                            volunteer.phone,
+                                          width: 60,
+                                          child: Center(
+                                            child: Checkbox(
+                                              value:
+                                                  _qaflaDistribution[volunteer
+                                                      .id] ??
+                                                  false,
+                                              onChanged: (value) {
+                                                setState(() {
+                                                  _qaflaDistribution[volunteer
+                                                          .id] =
+                                                      value ?? false;
+                                                });
+                                              },
+                                              activeColor: AppTheme.primary,
+                                            ),
                                           ),
                                         ),
-                                        const SizedBox(width: 20),
-                                        if (!_isOnline)
-                                          SizedBox(
-                                            width: 60,
-                                            child: Center(
-                                              child: Checkbox(
-                                                value:
-                                                    _volunteerTshirtStatus[volunteer
-                                                        .id] ??
-                                                    false,
-                                                onChanged: (value) {
-                                                  setState(() {
-                                                    _volunteerTshirtStatus[volunteer
-                                                            .id] =
-                                                        value ?? false;
-                                                  });
-                                                },
-                                                activeColor: AppTheme.primary,
-                                              ),
-                                            ),
-                                          ),
-                                        if (_isQafla) ...[
-                                          SizedBox(
-                                            width: 60,
-                                            child: Center(
-                                              child: Checkbox(
-                                                value:
-                                                    _qaflaPreparation[volunteer
-                                                        .id] ??
-                                                    false,
-                                                onChanged: (value) {
-                                                  setState(() {
-                                                    _qaflaPreparation[volunteer
-                                                            .id] =
-                                                        value ?? false;
-                                                  });
-                                                },
-                                                activeColor: AppTheme.primary,
-                                              ),
-                                            ),
-                                          ),
-                                          const SizedBox(width: 20),
-                                          SizedBox(
-                                            width: 60,
-                                            child: Center(
-                                              child: Checkbox(
-                                                value:
-                                                    _qaflaFilling[volunteer
-                                                        .id] ??
-                                                    false,
-                                                onChanged: (value) {
-                                                  setState(() {
-                                                    _qaflaFilling[volunteer
-                                                            .id] =
-                                                        value ?? false;
-                                                  });
-                                                },
-                                                activeColor: AppTheme.primary,
-                                              ),
-                                            ),
-                                          ),
-                                          const SizedBox(width: 20),
-                                          SizedBox(
-                                            width: 60,
-                                            child: Center(
-                                              child: Checkbox(
-                                                value:
-                                                    _qaflaDistribution[volunteer
-                                                        .id] ??
-                                                    false,
-                                                onChanged: (value) {
-                                                  setState(() {
-                                                    _qaflaDistribution[volunteer
-                                                            .id] =
-                                                        value ?? false;
-                                                  });
-                                                },
-                                                activeColor: AppTheme.primary,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
                                       ],
-                                    ),
+                                    ],
                                   ),
                                 );
                               }).toList(),

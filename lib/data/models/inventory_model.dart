@@ -141,6 +141,22 @@ class InventorySubcategoryModel {
   }
 }
 
+class InventoryDisplayEntry {
+  final String sectionId;
+  final String sectionName;
+  final String subcategoryId;
+  final String subcategoryName;
+  final InventoryItemModel item;
+
+  InventoryDisplayEntry({
+    required this.sectionId,
+    required this.sectionName,
+    required this.subcategoryId,
+    required this.subcategoryName,
+    required this.item,
+  });
+}
+
 class InventorySectionModel {
   final String id;
   final String name;
