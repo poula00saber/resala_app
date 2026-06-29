@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -6,6 +7,7 @@ import '../../widgets/app_ui_widgets.dart';
 import '../../widgets/whale_loading.dart';
 import '../../providers/inventory_provider.dart';
 import '../../../data/models/inventory_model.dart';
+import '../../../services/excel_export_helper.dart';
 
 class InventoryScreen extends StatelessWidget {
   const InventoryScreen({super.key});
@@ -20,7 +22,7 @@ class InventoryScreen extends StatelessWidget {
         length: _tabs.length,
         child: Scaffold(
           backgroundColor: AppTheme.background,
-          appBar: AppBar(
+            appBar: AppBar(
             backgroundColor: AppTheme.background,
             elevation: 0,
             title: const Text(
@@ -35,6 +37,24 @@ class InventoryScreen extends StatelessWidget {
               icon: const Icon(Icons.arrow_back_ios, color: AppTheme.textDark),
               onPressed: () => Navigator.pop(context),
             ),
+            actions: [
+              Consumer<InventoryProvider>(
+                builder: (context, inventoryProvider, _) {
+                  return IconButton(
+                    icon: const Icon(Icons.file_download, color: AppTheme.primary),
+                    tooltip: 'تصدير إلى Excel',
+                    onPressed: () {
+                      final entries = inventoryProvider.getDisplayEntries('كلي');
+                      if (entries.isEmpty) return;
+                      ExcelExportHelper.exportInventoryToExcel(
+                        displayEntries: entries,
+                        sections: inventoryProvider.sections,
+                      );
+                    },
+                  );
+                },
+              ),
+            ],
             bottom: const TabBar(
               isScrollable: true,
               tabs: [

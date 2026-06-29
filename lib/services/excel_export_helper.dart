@@ -11,6 +11,7 @@ import 'package:share_plus/share_plus.dart';
 import '../data/models/volunteer_model.dart';
 import '../data/models/committee_model.dart';
 import '../data/models/event_model.dart';
+import '../data/models/inventory_model.dart';
 
 class ExcelExportHelper {
   // Export committee with its volunteers
@@ -1634,6 +1635,133 @@ class ExcelExportHelper {
       );
     } catch (e) {
       print('Error exporting fund report: $e');
+      rethrow;
+    }
+  }
+
+  static Future<void> exportInventoryToExcel({
+    required List<InventoryDisplayEntry> displayEntries,
+    required List<InventorySectionModel> sections,
+  }) async {
+    try {
+      var excel = Excel.createExcel();
+      Sheet sheet = excel['جرد المخازن'];
+      _setSheetToRTL(sheet);
+
+      // Title
+      sheet.merge(CellIndex.indexByString('A1'), CellIndex.indexByString('H1'));
+      var titleCell = sheet.cell(CellIndex.indexByString('A1'));
+      titleCell.value = TextCellValue('جرد المخازن');
+      titleCell.cellStyle = CellStyle(
+        bold: true,
+        fontSize: 16,
+        horizontalAlign: HorizontalAlign.Center,
+        verticalAlign: VerticalAlign.Center,
+      );
+
+      // Summary section
+      int totalSubcategories = 0;
+      int totalItems = 0;
+      for (final section in sections.where((s) => s.id != 'كلي')) {
+        totalSubcategories += section.subcategories.length;
+        for (final sub in section.subcategories) {
+          totalItems += sub.items.length;
+        }
+      }
+
+      sheet.cell(CellIndex.indexByString('A2')).value = TextCellValue(
+        'إجمالي الأقسام الفرعية: $totalSubcategories',
+      );
+      sheet.cell(CellIndex.indexByString('A2')).cellStyle = CellStyle(
+        horizontalAlign: HorizontalAlign.Right,
+        verticalAlign: VerticalAlign.Center,
+      );
+      sheet.cell(CellIndex.indexByString('A3')).value = TextCellValue(
+        'إجمالي الأصناف: $totalItems',
+      );
+      sheet.cell(CellIndex.indexByString('A3')).cellStyle = CellStyle(
+        horizontalAlign: HorizontalAlign.Right,
+        verticalAlign: VerticalAlign.Center,
+      );
+
+      // Column headers
+      var headers = [
+        'القسم',
+        'القسم الفرعي',
+        'الصنف',
+        'الوحدة',
+        'الكمية',
+        'آخر حركة',
+        'عدد السجلات',
+        '#',
+      ];
+
+      for (var i = 0; i < headers.length; i++) {
+        var cell = sheet.cell(
+          CellIndex.indexByColumnRow(columnIndex: i, rowIndex: 5),
+        );
+        cell.value = TextCellValue(headers[i]);
+        cell.cellStyle = CellStyle(
+          bold: true,
+          backgroundColorHex: ExcelColor.fromHexString('#8A3A4A'),
+          fontColorHex: ExcelColor.white,
+          horizontalAlign: HorizontalAlign.Center,
+          verticalAlign: VerticalAlign.Center,
+        );
+      }
+
+      // Data rows
+      for (var i = 0; i < displayEntries.length; i++) {
+        final entry = displayEntries[i];
+        final item = entry.item;
+        final latestHistory = item.history.isNotEmpty
+            ? item.history.last
+            : null;
+        final rowIndex = i + 6;
+
+        var rowData = [
+          entry.sectionName,
+          entry.subcategoryName,
+          item.name,
+          item.unit,
+          item.quantity.toString(),
+          latestHistory != null
+              ? '${latestHistory.action}: ${latestHistory.quantity} ${latestHistory.unit}'
+              : '-',
+          item.history.length.toString(),
+          (i + 1).toString(),
+        ];
+
+        for (var j = 0; j < rowData.length; j++) {
+          var cell = sheet.cell(
+            CellIndex.indexByColumnRow(columnIndex: j, rowIndex: rowIndex),
+          );
+          cell.value = TextCellValue(rowData[j]);
+          cell.cellStyle = CellStyle(
+            horizontalAlign: (j == 0 || j == 1 || j == 2)
+                ? HorizontalAlign.Center
+                : HorizontalAlign.Center,
+            verticalAlign: VerticalAlign.Center,
+          );
+        }
+      }
+
+      // Set column widths
+      sheet.setColumnWidth(0, 12);
+      sheet.setColumnWidth(1, 18);
+      sheet.setColumnWidth(2, 20);
+      sheet.setColumnWidth(3, 10);
+      sheet.setColumnWidth(4, 10);
+      sheet.setColumnWidth(5, 25);
+      sheet.setColumnWidth(6, 12);
+      sheet.setColumnWidth(7, 8);
+
+      await _saveAndShareExcel(
+        excel,
+        'جرد_المخازن_${DateTime.now().millisecondsSinceEpoch}',
+      );
+    } catch (e) {
+      print('Error exporting inventory to Excel: $e');
       rethrow;
     }
   }
