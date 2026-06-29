@@ -5,6 +5,7 @@
 import 'package:flutter/foundation.dart';
 import '../../data/models/event_model.dart';
 import '../../data/repositories/event_repository.dart';
+import '../../core/constants/firebase_constants.dart';
 
 enum EventFilter { last7Days, lastMonth, all }
 
@@ -60,6 +61,18 @@ class EventProvider with ChangeNotifier {
       case EventFilter.all:
         return _events;
     }
+  }
+
+  // Get qafla events only
+  List<EventModel> getQaflaEvents() {
+    return _events
+        .where((event) => event.type == FirebaseConstants.typeQafela)
+        .toList();
+  }
+
+  // Get events by exact type
+  List<EventModel> getEventsByType(String type) {
+    return _events.where((event) => event.type == type).toList();
   }
 
   // Group events by date

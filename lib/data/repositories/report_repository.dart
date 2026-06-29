@@ -12,6 +12,13 @@ import '../../core/constants/firebase_constants.dart';
 class ReportRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
+  static const List<String> _coreFundReportLevels = [
+    'مسئول',
+    'مشروع مسئول',
+    'تحت التدريب',
+    'شبل مميز',
+  ];
+
   // Arabic month names
   static const List<String> arabicMonths = [
     'يناير',
@@ -354,6 +361,9 @@ class ReportRepository {
 
       // Filter volunteers
       for (var volunteer in volunteers) {
+        if (!_coreFundReportLevels.contains(volunteer.educationalLevel)) {
+          continue;
+        }
         if (filter?.volunteerName != null &&
             !volunteer.name.contains(filter!.volunteerName!)) {
           continue;
@@ -420,6 +430,9 @@ class ReportRepository {
       Map<String, VolunteerReportData> reportDataMap = {};
 
       for (var volunteer in volunteers) {
+        if (!_coreFundReportLevels.contains(volunteer.educationalLevel)) {
+          continue;
+        }
         if (filter?.volunteerName != null &&
             !volunteer.name.contains(filter!.volunteerName!)) {
           continue;
@@ -427,11 +440,6 @@ class ReportRepository {
         if (filter?.educationalLevels != null &&
             filter!.educationalLevels!.isNotEmpty &&
             !filter.educationalLevels!.contains(volunteer.educationalLevel)) {
-          continue;
-        }
-        // Exclude جدد and شبل from fund report
-        if (volunteer.educationalLevel == 'جدد' ||
-            volunteer.educationalLevel == 'شبل') {
           continue;
         }
 
@@ -480,10 +488,7 @@ class ReportRepository {
         print('No funds collection or error: $e');
       }
 
-      // Filter out volunteers with no fund activity
-      return reportDataMap.values
-          .where((data) => data.fundCount > 0 || data.fundAmount != 0)
-          .toList();
+      return reportDataMap.values.toList();
     } catch (e) {
       print('Error generating fund report: $e');
       return [];
@@ -500,6 +505,9 @@ class ReportRepository {
       Map<String, VolunteerReportData> reportDataMap = {};
 
       for (var volunteer in volunteers) {
+        if (!_coreFundReportLevels.contains(volunteer.educationalLevel)) {
+          continue;
+        }
         if (filter?.volunteerName != null &&
             !volunteer.name.contains(filter!.volunteerName!)) {
           continue;
@@ -507,11 +515,6 @@ class ReportRepository {
         if (filter?.educationalLevels != null &&
             filter!.educationalLevels!.isNotEmpty &&
             !filter.educationalLevels!.contains(volunteer.educationalLevel)) {
-          continue;
-        }
-        // Exclude جدد and شبل from marketing report
-        if (volunteer.educationalLevel == 'جدد' ||
-            volunteer.educationalLevel == 'شبل') {
           continue;
         }
 
@@ -555,8 +558,7 @@ class ReportRepository {
         print('No marketing collection or error: $e');
       }
 
-      // Filter out volunteers with no marketing activity
-      return reportDataMap.values.where((data) => data.storyCount > 0).toList();
+      return reportDataMap.values.toList();
     } catch (e) {
       print('Error generating marketing report: $e');
       return [];
@@ -658,7 +660,7 @@ class ReportRepository {
                 .where((v) => v.id == volunteerId)
                 .firstOrNull;
             if (volunteer == null) continue;
-            final hasTshirt = (volunteer as VolunteerModel).hasTshirt;
+            final hasTshirt = volunteer.hasTshirt;
             if (!hasTshirt) continue;
 
             if (isQafla) {
@@ -731,12 +733,12 @@ class ReportRepository {
 
       final masoolNonParticipants = masoolVolunteers
           .where((v) => !masoolParticipantIds.contains(v.id))
-          .map((v) => _toReportData(v as VolunteerModel))
+          .map((v) => _toReportData(v))
           .toList();
 
       final mashroNonParticipants = mashroVolunteers
           .where((v) => !mashroParticipantIds.contains(v.id))
-          .map((v) => _toReportData(v as VolunteerModel))
+          .map((v) => _toReportData(v))
           .toList();
 
       return MonthlyReportStats(

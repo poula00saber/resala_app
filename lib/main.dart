@@ -10,8 +10,8 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:resala/presentation/providers/committee_provider.dart';
 import 'package:resala/presentation/providers/evaluation_provider.dart';
 import 'package:resala/presentation/providers/interview_provider.dart';
+import 'package:resala/presentation/providers/inventory_provider.dart';
 import 'package:resala/presentation/providers/promotion_provider.dart'; // ADD THIS
-import 'package:resala/presentation/screens/login/login_screen.dart';
 import 'package:resala/presentation/screens/splash_screen.dart';
 import 'package:resala/services/auth_service.dart';
 import 'firebase_options.dart';
@@ -42,6 +42,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(
           create: (_) => CommitteeProvider()..initCommittees(),
         ),
+        ChangeNotifierProvider(create: (_) => InventoryProvider()),
         ChangeNotifierProvider(
           create: (_) => InterviewProvider()..initInterviews(),
         ),

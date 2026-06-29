@@ -173,7 +173,7 @@ class ExcelExportHelper {
               CellIndex.indexByColumnRow(columnIndex: 3, rowIndex: rowIndex),
             )
             .value = TextCellValue(
-          volunteer.address ?? 'غير محدد',
+          volunteer.address,
         );
         sheet
             .cell(
@@ -939,6 +939,10 @@ class ExcelExportHelper {
   // Helper method to save and share Excel file
   static Future<void> _saveAndShareExcel(Excel excel, String fileName) async {
     try {
+      if (excel.sheets.containsKey('Sheet1')) {
+        excel.delete('Sheet1');
+      }
+
       // Encode Excel to bytes
       var fileBytes = excel.save();
       if (fileBytes == null) {
@@ -1002,8 +1006,6 @@ class ExcelExportHelper {
 
           // Determine alignment based on content type
           bool isNumeric = double.tryParse(value) != null;
-          bool isArabic = _containsArabic(value);
-
           cell.cellStyle = CellStyle(
             horizontalAlign: isNumeric || value.isEmpty
                 ? HorizontalAlign.Center
@@ -1026,12 +1028,6 @@ class ExcelExportHelper {
       print('Error in exportWithBetterRTLSupport: $e');
       rethrow;
     }
-  }
-
-  // Helper to check if text contains Arabic characters
-  static bool _containsArabic(String text) {
-    final arabicRegex = RegExp(r'[\u0600-\u06FF]');
-    return arabicRegex.hasMatch(text);
   }
 
   // ============================================

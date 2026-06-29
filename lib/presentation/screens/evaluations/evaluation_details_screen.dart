@@ -171,15 +171,12 @@ class _VolunteerEvaluationDetailsScreenState
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(20),
                       child: SingleChildScrollView(
-                        scrollDirection: Axis.vertical,
-                        child: SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: SizedBox(
-                            width: 800,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [_buildEvaluationsContent()],
-                            ),
+                        scrollDirection: Axis.horizontal,
+                        child: SizedBox(
+                          width: 820,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [_buildEvaluationsContent()],
                           ),
                         ),
                       ),
@@ -313,7 +310,7 @@ class _VolunteerEvaluationDetailsScreenState
   Widget _buildEvaluationsTable(List<EvaluationModel> evaluations) {
     return Column(
       children: [
-        // Table Header
+        // Table Header - Order: #, name, month, rating, notes, evaluator name, delete
         Container(
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
@@ -321,17 +318,26 @@ class _VolunteerEvaluationDetailsScreenState
           ),
           child: Row(
             children: [
+              // # column
               SizedBox(width: 40, child: _buildTableHeader('#')),
               const SizedBox(width: 20),
+              // Name column
               SizedBox(width: 100, child: _buildTableHeader('الاسم')),
               const SizedBox(width: 20),
-              SizedBox(width: 120, child: _buildTableHeader('اسم التقييم')),
+              // Month column
+              SizedBox(width: 80, child: _buildTableHeader('الشهر')),
               const SizedBox(width: 20),
+              // Rating column
               SizedBox(width: 80, child: _buildTableHeader('التقييم')),
               const SizedBox(width: 20),
-              SizedBox(width: 100, child: _buildTableHeader('الشهر')),
+              // Notes column
+              SizedBox(width: 180, child: _buildTableHeader('ملاحظات')),
               const SizedBox(width: 20),
-              SizedBox(width: 200, child: _buildTableHeader('ملاحظات')),
+              // Evaluator Name column
+              SizedBox(width: 100, child: _buildTableHeader('اسم المقيم')),
+              const SizedBox(width: 20),
+              // Delete button column
+              SizedBox(width: 60, child: _buildTableHeader('حذف')),
             ],
           ),
         ),
@@ -351,59 +357,62 @@ class _VolunteerEvaluationDetailsScreenState
             final evaluation = entry.value;
             try {
               final notes = evaluation.notes?.toString() ?? '-';
-              final rating = evaluation.rating?.toString() ?? '0';
+              final rating = evaluation.rating.toString();
               final evaluatorName = evaluation.evaluatorName.toString().isEmpty
                   ? 'غير معروف'
                   : evaluation.evaluatorName.toString();
-              final month = evaluation.month?.toString() ?? '-';
+              final month = evaluation.month.toString();
               final evaluationName =
                   evaluation.evaluationName.toString().isEmpty
                   ? '-'
                   : evaluation.evaluationName.toString();
 
-              return Dismissible(
+              return Container(
                 key: ValueKey(evaluation.id),
-                direction: DismissDirection.endToStart,
-                confirmDismiss: (_) async {
-                  return await _confirmDeleteEvaluation(evaluation);
-                },
-                background: Container(
-                  color: Colors.red.withOpacity(0.1),
-                  alignment: Alignment.centerLeft,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: const Icon(Icons.delete, color: Colors.red),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
                 ),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  decoration: BoxDecoration(
-                    border: Border(
-                      bottom: BorderSide(color: Colors.grey[200]!),
+                child: Row(
+                  children: [
+                    // # column
+                    SizedBox(
+                      width: 40,
+                      child: _buildTableCell((index + 1).toString()),
                     ),
-                  ),
-                  child: Row(
-                    children: [
-                      SizedBox(
-                        width: 40,
-                        child: _buildTableCell((index + 1).toString()),
+                    const SizedBox(width: 20),
+                    // Name column
+                    SizedBox(
+                      width: 100,
+                      child: _buildTableCell(evaluationName),
+                    ),
+                    const SizedBox(width: 20),
+                    // Month column
+                    SizedBox(width: 80, child: _buildTableCell(month)),
+                    const SizedBox(width: 20),
+                    // Rating column
+                    SizedBox(width: 80, child: _buildTableCell('$rating/10')),
+                    const SizedBox(width: 20),
+                    // Notes column (with wrapping)
+                    SizedBox(width: 180, child: _buildNotesCell(notes)),
+                    const SizedBox(width: 20),
+                    // Evaluator Name column
+                    SizedBox(width: 100, child: _buildTableCell(evaluatorName)),
+                    const SizedBox(width: 20),
+                    // Delete button column
+                    SizedBox(
+                      width: 60,
+                      child: IconButton(
+                        tooltip: 'حذف التقييم',
+                        icon: const Icon(Icons.delete, color: Colors.red),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        onPressed: () async {
+                          await _confirmDeleteEvaluation(evaluation);
+                        },
                       ),
-                      const SizedBox(width: 20),
-                      SizedBox(
-                        width: 100,
-                        child: _buildTableCell(evaluatorName),
-                      ),
-                      const SizedBox(width: 20),
-                      SizedBox(
-                        width: 120,
-                        child: _buildTableCell(evaluationName),
-                      ),
-                      const SizedBox(width: 20),
-                      SizedBox(width: 80, child: _buildTableCell('$rating/10')),
-                      const SizedBox(width: 20),
-                      SizedBox(width: 100, child: _buildTableCell(month)),
-                      const SizedBox(width: 20),
-                      SizedBox(width: 200, child: _buildNotesCell(notes)),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               );
             } catch (e) {

@@ -241,6 +241,8 @@ class AppPages {
   static const String promotions = 'promotions';
   static const String committees = 'committees';
   static const String administrative = 'administrative';
+  static const String inventory = 'inventory';
+  static const String qafla = 'qafla';
 
   // Reports sub-pages
   static const String reportComprehensive = 'report_comprehensive';
@@ -250,6 +252,7 @@ class AppPages {
   static const String reportFund = 'report_fund';
   static const String reportMarketing = 'report_marketing';
   static const String reportMonthly = 'report_monthly';
+  static const String reportQafla = 'report_qafla';
 
   // Administrative sub-pages
   static const String adminFund = 'admin_fund';
@@ -291,6 +294,11 @@ class AppPages {
       SubPermission(
         subPageId: reportMonthly,
         subPageName: 'الشهري',
+        canAccess: false,
+      ),
+      SubPermission(
+        subPageId: reportQafla,
+        subPageName: 'القوافل',
         canAccess: false,
       ),
     ];
@@ -369,6 +377,18 @@ class AppPages {
         canAccess: false,
         canAddDelete: false,
         subPermissions: getAdministrativeSubPermissions(),
+      ),
+      PagePermission(
+        pageId: inventory,
+        pageName: 'جرد',
+        canAccess: false,
+        canAddDelete: false,
+      ),
+      PagePermission(
+        pageId: qafla,
+        pageName: 'قوافل',
+        canAccess: false,
+        canAddDelete: false,
       ),
     ];
   }

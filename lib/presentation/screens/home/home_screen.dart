@@ -4,6 +4,8 @@ import 'package:resala/presentation/screens/promotions/promotions_screen.dart';
 import 'package:resala/presentation/screens/committees/committees_management_screen.dart';
 import 'package:resala/presentation/screens/login/login_screen.dart';
 import 'package:resala/presentation/themes/app_theme.dart';
+import 'package:resala/presentation/screens/inventory/inventory_screen.dart';
+import 'package:resala/presentation/screens/qafla/qafla_screen.dart';
 import '../profiles/profiles_screen.dart';
 import '../events/events_screen.dart';
 import '../evaluations/evaluations_screen.dart';
@@ -413,6 +415,29 @@ class _HomeScreenState extends State<HomeScreen> {
             MaterialPageRoute(
               builder: (context) => const AdministrativeScreen(),
             ),
+          );
+        }),
+      );
+    }
+
+    if (_authService.isAdmin ||
+        _authService.canAccessPage(AppPages.inventory)) {
+      buttons.add(
+        _menuButton("جرد", Icons.inventory_2_outlined, () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const InventoryScreen()),
+          );
+        }),
+      );
+    }
+
+    if (_authService.isAdmin || _authService.canAccessPage(AppPages.qafla)) {
+      buttons.add(
+        _menuButton("قوافل", Icons.local_shipping_outlined, () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const QaflaScreen()),
           );
         }),
       );

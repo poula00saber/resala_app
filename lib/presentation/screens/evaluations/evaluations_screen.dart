@@ -23,6 +23,7 @@ class _EvaluationsScreenState extends State<EvaluationsScreen> {
   final AuthService _authService = AuthService();
   String _searchQuery = '';
   String? _evaluatorCommitteeId;
+  String? _evaluatorCommitteeName;
   bool _loadingCommittee = true;
 
   @override
@@ -56,6 +57,7 @@ class _EvaluationsScreenState extends State<EvaluationsScreen> {
     if (mounted) {
       setState(() {
         _evaluatorCommitteeId = volunteer?.committeeId;
+        _evaluatorCommitteeName = volunteer?.committeeName;
         _loadingCommittee = false;
       });
     }
@@ -65,7 +67,12 @@ class _EvaluationsScreenState extends State<EvaluationsScreen> {
     if (_authService.isAdmin) return volunteers;
     if (_evaluatorCommitteeId == null) return [];
     return volunteers
-        .where((v) => v.committeeId == _evaluatorCommitteeId)
+        .where(
+          (v) =>
+              v.committeeId == _evaluatorCommitteeId ||
+              (_evaluatorCommitteeName != null &&
+                  v.committeeName == _evaluatorCommitteeName),
+        )
         .toList();
   }
 
@@ -177,6 +184,32 @@ class _EvaluationsScreenState extends State<EvaluationsScreen> {
                   );
                 }
 
+                if (!_authService.isAdmin && volunteers.isNotEmpty) {
+                  return Column(
+                    children: [
+                      if (_evaluatorCommitteeName != null)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 4,
+                          ),
+                          child: Align(
+                            alignment: Alignment.centerRight,
+                            child: Text(
+                              'لجنتك: ${_evaluatorCommitteeName!}',
+                              style: const TextStyle(
+                                fontFamily: 'Cairo',
+                                color: AppTheme.secondary,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                        ),
+                      Expanded(child: _buildVolunteerList(volunteers)),
+                    ],
+                  );
+                }
+
                 if (volunteers.isEmpty) {
                   return const Center(
                     child: Text(
@@ -190,19 +223,23 @@ class _EvaluationsScreenState extends State<EvaluationsScreen> {
                   );
                 }
 
-                return ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: volunteers.length,
-                  itemBuilder: (context, index) {
-                    final volunteer = volunteers[index];
-                    return _buildVolunteerCard(volunteer);
-                  },
-                );
+                return _buildVolunteerList(volunteers);
               },
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildVolunteerList(List<dynamic> volunteers) {
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      itemCount: volunteers.length,
+      itemBuilder: (context, index) {
+        final volunteer = volunteers[index];
+        return _buildVolunteerCard(volunteer);
+      },
     );
   }
 

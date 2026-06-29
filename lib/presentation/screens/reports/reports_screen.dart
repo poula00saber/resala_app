@@ -15,6 +15,7 @@ import 'meetings_report_screen.dart';
 import 'fund_report_screen.dart';
 import 'marketing_report_screen.dart';
 import 'monthly_report_screen.dart';
+import 'qafla_report_screen.dart';
 
 class ReportsScreen extends StatelessWidget {
   const ReportsScreen({super.key});
@@ -157,6 +158,22 @@ class ReportsScreen extends StatelessWidget {
                       context,
                       MaterialPageRoute(
                         builder: (context) => const MonthlyReportScreen(),
+                      ),
+                    ),
+                  ),
+                ],
+                if (authService.canAccessSubPage(
+                  AppPages.reports,
+                  AppPages.reportQafla,
+                )) ...[
+                  const SizedBox(height: 16),
+                  _buildReportButton(
+                    context,
+                    title: 'القوافل',
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const QaflaReportScreen(),
                       ),
                     ),
                   ),
