@@ -91,6 +91,14 @@ class FirebaseConstants {
     'مسئول مستقيل', // Resigned responsible
   ];
 
+  // فريق العمل - Team Work Levels (Higher responsible levels)
+  static const List<String> teamWorkLevels = [
+    'مسئول',
+    'مشروع مسئول',
+    'تدريب',
+    'شبل مميز',
+  ];
+
   // NEW: Educational Levels with Order (for sorting - higher value = higher rank)
   static const Map<String, int> educationalLevelsOrder = {
     'مسئول': 9,

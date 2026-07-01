@@ -51,7 +51,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AuthService()..initialize()),
       ],
       child: MaterialApp(
-        title: 'Resala Events',
+        title: 'Et3am Alex',
         theme: AppTheme.lightTheme,
         debugShowCheckedModeBanner: false,
 

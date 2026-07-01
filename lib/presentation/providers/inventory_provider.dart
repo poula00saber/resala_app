@@ -342,6 +342,26 @@ class InventoryProvider extends ChangeNotifier {
     unawaited(_persist());
   }
 
+  void updateItem({
+    required String sectionId,
+    required String subcategoryId,
+    required String itemId,
+    required String newName,
+    required String newUnit,
+  }) {
+    _updateExistingItem(
+      sectionId: sectionId,
+      subcategoryId: subcategoryId,
+      itemId: itemId,
+      updater: (item) {
+        return item.copyWith(
+          name: newName,
+          unit: newUnit,
+        );
+      },
+    );
+  }
+
   void ensureDefaultSubcategories(String sectionId) {
     final section = getSection(sectionId);
     if (section.subcategories.isNotEmpty) return;

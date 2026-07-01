@@ -216,8 +216,9 @@ class _InventorySectionView extends StatelessWidget {
       'خصم',
       'جرد',
       'السجل',
+      'تعديل',
     ];
-    const columnWidths = [60.0, 140.0, 60.0, 70.0, 50.0, 50.0, 50.0, 50.0];
+    const columnWidths = [60.0, 140.0, 60.0, 70.0, 50.0, 50.0, 50.0, 50.0, 50.0];
 
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
@@ -421,6 +422,21 @@ class _InventorySectionView extends StatelessWidget {
                           Icons.history,
                           AppTheme.secondary,
                           () => _showItemHistoryDialog(context, item),
+                        ),
+                      ),
+                      // تعديل
+                      SizedBox(
+                        width: columnWidths[8],
+                        child: _buildActionIcon(
+                          Icons.edit,
+                          Colors.orange,
+                          () => _showEditItemDialog(
+                            context,
+                            provider,
+                            entry.sectionId,
+                            entry.subcategoryId,
+                            item,
+                          ),
                         ),
                       ),
                     ],
@@ -704,6 +720,77 @@ class _InventorySectionView extends StatelessWidget {
             child: Text(action, style: const TextStyle(fontFamily: 'Cairo')),
           ),
         ],
+      ),
+    );
+  }
+
+  Future<void> _showEditItemDialog(
+    BuildContext context,
+    InventoryProvider provider,
+    String sectionId,
+    String subcategoryId,
+    InventoryItemModel item,
+  ) async {
+    final nameController = TextEditingController(text: item.name);
+    String selectedUnit = item.unit;
+
+    await showDialog(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            title: Text(
+              'تعديل ${item.name}',
+              style: const TextStyle(fontFamily: 'Cairo'),
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameController,
+                  textAlign: TextAlign.right,
+                  decoration: const InputDecoration(labelText: 'اسم الصنف'),
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  initialValue: selectedUnit,
+                  decoration: const InputDecoration(labelText: 'الوحدة'),
+                  items: InventoryProvider.availableUnits
+                      .map(
+                        (unit) =>
+                            DropdownMenuItem(value: unit, child: Text(unit)),
+                      )
+                      .toList(),
+                  onChanged: (value) {
+                    if (value == null) return;
+                    setDialogState(() => selectedUnit = value);
+                  },
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: const Text('إلغاء', style: TextStyle(fontFamily: 'Cairo')),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  final newName = nameController.text.trim();
+                  if (newName.isEmpty) return;
+                  provider.updateItem(
+                    sectionId: sectionId,
+                    subcategoryId: subcategoryId,
+                    itemId: item.id,
+                    newName: newName,
+                    newUnit: selectedUnit,
+                  );
+                  Navigator.pop(dialogContext);
+                },
+                child: const Text('حفظ', style: TextStyle(fontFamily: 'Cairo')),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

@@ -63,7 +63,7 @@ class _MarketingEntryScreenState extends State<MarketingEntryScreen> {
       _volunteers = volunteersSnapshot.docs
           .where((doc) {
             final level = doc.data()['educationalLevel'] ?? '';
-            return level != 'جدد' && level != 'شبل';
+            return FirebaseConstants.teamWorkLevels.contains(level);
           })
           .map((doc) {
             return {

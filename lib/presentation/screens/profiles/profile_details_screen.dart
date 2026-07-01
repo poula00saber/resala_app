@@ -36,6 +36,7 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
       _authService.canAddDeleteOnPage(AppPages.profiles);
 
   late TextEditingController _nameController;
+  late TextEditingController _emailController; // ADD THIS
   late TextEditingController _phoneController;
   late TextEditingController _ageController;
   late TextEditingController _addressController;
@@ -61,6 +62,9 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
   @override
   void initState() {
     super.initState();
+    _emailController = TextEditingController(
+      text: widget.volunteer.email ?? '',
+    );
     _nameController = TextEditingController(text: widget.volunteer.name ?? '');
     _phoneController = TextEditingController(
       text: widget.volunteer.phone ?? '',
@@ -200,6 +204,7 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
 
       final updateData = {
         'name': _nameController.text.trim(),
+        'email': _emailController.text.trim(),
         'phone': _phoneController.text.trim(),
         'age': int.tryParse(_ageController.text.trim()),
         'address': _addressController.text.trim(),
@@ -510,6 +515,15 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
                   controller: _nameController,
                   label: 'الاسم',
                   isRequired: true,
+                ),
+
+                const SizedBox(height: 16),
+
+                // Email - البريد الإلكتروني
+                _buildLabeledTextField(
+                  controller: _emailController,
+                  label: 'البريد الإلكتروني',
+                  keyboardType: TextInputType.emailAddress,
                 ),
 
                 const SizedBox(height: 16),
@@ -1211,6 +1225,7 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
   @override
   void dispose() {
     _nameController.dispose();
+    _emailController.dispose();
     _phoneController.dispose();
     _ageController.dispose();
     _addressController.dispose();

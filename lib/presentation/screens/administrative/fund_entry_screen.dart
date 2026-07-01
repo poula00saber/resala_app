@@ -75,7 +75,7 @@ class _FundEntryScreenState extends State<FundEntryScreen> {
       _volunteers = volunteersSnapshot.docs
           .where((doc) {
             final level = doc.data()['educationalLevel'] ?? '';
-            return level != 'جدد' && level != 'شبل';
+            return FirebaseConstants.teamWorkLevels.contains(level);
           })
           .map((doc) {
             return {
