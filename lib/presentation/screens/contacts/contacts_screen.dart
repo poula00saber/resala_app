@@ -23,6 +23,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   final Set<String> _selectedVolunteers = {};
+  Stream<List<dynamic>>? _volunteersStream;
 
   // Allowed degrees for this screen
   static const List<String> _allowedDegrees = ['شبل', 'جدد', 'داخل متابعه'];
@@ -47,6 +48,22 @@ class _ContactsScreenState extends State<ContactsScreen> {
   ];
 
   bool _showFilters = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _volunteersStream ??= Provider.of<VolunteerProvider>(
+      context,
+      listen: false,
+    ).searchVolunteers(_searchQuery);
+  }
+
+  void _refreshVolunteersStream() {
+    _volunteersStream = Provider.of<VolunteerProvider>(
+      context,
+      listen: false,
+    ).searchVolunteers(_searchQuery);
+  }
 
   List<dynamic> _applyFilters(List<dynamic> volunteers) {
     // First: only show allowed degrees
@@ -166,6 +183,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
                 onChanged: (value) {
                   setState(() {
                     _searchQuery = value;
+                    _refreshVolunteersStream();
                   });
                 },
               ),
@@ -175,11 +193,8 @@ class _ContactsScreenState extends State<ContactsScreen> {
             if (_showFilters) _buildFilterSection(),
 
             Expanded(
-              child: StreamBuilder(
-                stream: Provider.of<VolunteerProvider>(
-                  context,
-                  listen: false,
-                ).searchVolunteers(_searchQuery),
+              child: StreamBuilder<List<dynamic>>(
+                stream: _volunteersStream,
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return Center(child: WhaleLoading());
@@ -214,6 +229,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
                   }
 
                   return ListView.builder(
+                    key: const PageStorageKey('contacts-volunteer-list'),
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     itemCount: volunteers.length,
                     itemBuilder: (context, index) {
@@ -611,7 +627,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
         .toList();
 
     final validVolunteers = selectedVolunteers
-        .where((v) => v.phone != null && v.phone!.isNotEmpty)
+        .where((v) => v.phone.isNotEmpty)
         .toList();
 
     if (validVolunteers.isEmpty) {
@@ -640,38 +656,6 @@ class _ContactsScreenState extends State<ContactsScreen> {
         ),
       ),
     );
-  }
-
-  Future<void> _openWhatsApp(String phoneNumber) async {
-    final message = 'مرحباً';
-    final encodedMessage = Uri.encodeComponent(message);
-
-    final cleanNumber = phoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
-    String whatsappUrl;
-
-    if (cleanNumber.startsWith('+')) {
-      whatsappUrl = 'https://wa.me/$cleanNumber?text=$encodedMessage';
-    } else if (cleanNumber.startsWith('0')) {
-      whatsappUrl =
-          'https://wa.me/2${cleanNumber.substring(1)}?text=$encodedMessage';
-    } else {
-      whatsappUrl = 'https://wa.me/2$cleanNumber?text=$encodedMessage';
-    }
-
-    final url = Uri.parse(whatsappUrl);
-    if (await canLaunchUrl(url)) {
-      await launchUrl(url, mode: LaunchMode.externalApplication);
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'لا يمكن فتح تطبيق واتساب',
-            style: TextStyle(fontFamily: 'Cairo'),
-          ),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
   }
 
   Future<void> _makePhoneCall(String phoneNumber) async {

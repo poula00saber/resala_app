@@ -26,6 +26,23 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
   String _searchQuery = '';
   bool _isDeleteMode = false;
   Set<String> _selectedForDelete = {};
+  Stream<List<dynamic>>? _volunteersStream;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _volunteersStream ??= Provider.of<VolunteerProvider>(
+      context,
+      listen: false,
+    ).searchVolunteers(_searchQuery);
+  }
+
+  void _refreshVolunteersStream() {
+    _volunteersStream = Provider.of<VolunteerProvider>(
+      context,
+      listen: false,
+    ).searchVolunteers(_searchQuery);
+  }
 
   bool get _canDelete =>
       _authService.isAdmin ||
@@ -128,6 +145,7 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
               onChanged: (value) {
                 setState(() {
                   _searchQuery = value;
+                  _refreshVolunteersStream();
                 });
               },
             ),
@@ -135,11 +153,8 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
 
           // Volunteers List
           Expanded(
-            child: StreamBuilder(
-              stream: Provider.of<VolunteerProvider>(
-                context,
-                listen: false,
-              ).searchVolunteers(_searchQuery),
+            child: StreamBuilder<List<dynamic>>(
+              stream: _volunteersStream,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return Center(child: WhaleLoading());
@@ -173,11 +188,15 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
                 }
 
                 return ListView.builder(
+                  key: const PageStorageKey('profiles-volunteer-list'),
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   itemCount: volunteers.length,
                   itemBuilder: (context, index) {
                     final volunteer = volunteers[index];
-                    return _buildProfileCard(volunteer);
+                    return _buildProfileCard(
+                      volunteer,
+                      key: ValueKey(volunteer.id),
+                    );
                   },
                 );
               },
@@ -188,10 +207,11 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
     );
   }
 
-  Widget _buildProfileCard(dynamic volunteer) {
+  Widget _buildProfileCard(dynamic volunteer, {Key? key}) {
     final isSelected = _selectedForDelete.contains(volunteer.id);
 
     return Container(
+      key: key,
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: isSelected ? Colors.red.shade400 : AppTheme.primary,

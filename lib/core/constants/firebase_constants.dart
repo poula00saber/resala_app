@@ -11,6 +11,7 @@ class FirebaseConstants {
   static const String evaluationsCollection = 'evaluations';
   static const String interviewsCollection = 'interviews';
   static const String operationLogsCollection = 'operation_logs';
+  static const String inventoryCollection = 'inventory_sections';
 
   // Event Types
   static const String typeQafela = 'قافلة';
@@ -148,6 +149,14 @@ class FirebaseConstants {
     'تدريب': ['انترفيو الاعمدة', 'مشاركة 4 شهور'],
     'مشروع مسئول': ['كامب 48', 'تارجت رسالاوي', 'حفلة التخرج'],
   };
+
+  static const List<String> promotionRequirementFilters = [
+    'انترفيو الاعمدة',
+    'الميني كامب',
+    'كامب 48',
+    'حفلة التخرج',
+    'تارجت رسالاوي',
+  ];
 
   // Meeting Categories
   static const List<String> meetingCategories = [

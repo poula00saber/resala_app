@@ -22,7 +22,7 @@ class InventoryScreen extends StatelessWidget {
         length: _tabs.length,
         child: Scaffold(
           backgroundColor: AppTheme.background,
-            appBar: AppBar(
+          appBar: AppBar(
             backgroundColor: AppTheme.background,
             elevation: 0,
             title: const Text(
@@ -41,10 +41,15 @@ class InventoryScreen extends StatelessWidget {
               Consumer<InventoryProvider>(
                 builder: (context, inventoryProvider, _) {
                   return IconButton(
-                    icon: const Icon(Icons.file_download, color: AppTheme.primary),
+                    icon: const Icon(
+                      Icons.file_download,
+                      color: AppTheme.primary,
+                    ),
                     tooltip: 'تصدير إلى Excel',
                     onPressed: () {
-                      final entries = inventoryProvider.getDisplayEntries('كلي');
+                      final entries = inventoryProvider.getDisplayEntries(
+                        'كلي',
+                      );
                       if (entries.isEmpty) return;
                       ExcelExportHelper.exportInventoryToExcel(
                         displayEntries: entries,
@@ -217,8 +222,20 @@ class _InventorySectionView extends StatelessWidget {
       'جرد',
       'السجل',
       'تعديل',
+      'حذف',
     ];
-    const columnWidths = [60.0, 140.0, 60.0, 70.0, 50.0, 50.0, 50.0, 50.0, 50.0];
+    const columnWidths = [
+      60.0,
+      140.0,
+      60.0,
+      70.0,
+      50.0,
+      50.0,
+      50.0,
+      50.0,
+      50.0,
+      50.0,
+    ];
 
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
@@ -431,6 +448,21 @@ class _InventorySectionView extends StatelessWidget {
                           Icons.edit,
                           Colors.orange,
                           () => _showEditItemDialog(
+                            context,
+                            provider,
+                            entry.sectionId,
+                            entry.subcategoryId,
+                            item,
+                          ),
+                        ),
+                      ),
+                      // حذف
+                      SizedBox(
+                        width: columnWidths[9],
+                        child: _buildActionIcon(
+                          Icons.delete_outline,
+                          Colors.red,
+                          () => _showDeleteItemDialog(
                             context,
                             provider,
                             entry.sectionId,
@@ -771,7 +803,10 @@ class _InventorySectionView extends StatelessWidget {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(dialogContext),
-                child: const Text('إلغاء', style: TextStyle(fontFamily: 'Cairo')),
+                child: const Text(
+                  'إلغاء',
+                  style: TextStyle(fontFamily: 'Cairo'),
+                ),
               ),
               ElevatedButton(
                 onPressed: () {
@@ -793,6 +828,44 @@ class _InventorySectionView extends StatelessWidget {
         },
       ),
     );
+  }
+
+  Future<void> _showDeleteItemDialog(
+    BuildContext context,
+    InventoryProvider provider,
+    String sectionId,
+    String subcategoryId,
+    InventoryItemModel item,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('حذف الصنف', style: TextStyle(fontFamily: 'Cairo')),
+        content: Text(
+          'هل تريد حذف ${item.name} نهائياً؟',
+          style: const TextStyle(fontFamily: 'Cairo'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('إلغاء', style: TextStyle(fontFamily: 'Cairo')),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('حذف', style: TextStyle(fontFamily: 'Cairo')),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      provider.deleteItem(
+        sectionId: sectionId,
+        subcategoryId: subcategoryId,
+        itemId: item.id,
+      );
+    }
   }
 
   List<InventoryHistoryEntry> _getVisibleHistory(InventoryItemModel item) {

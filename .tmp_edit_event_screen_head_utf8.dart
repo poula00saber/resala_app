@@ -53,14 +53,13 @@ class _EditEventScreenState extends State<EditEventScreen> {
   bool get _needsLocation => !_isMeeting || !_isOnline;
 
   double get _volunteerTableWidth {
-    var width = 44 + 20;
+    var width = 44 + 20 + 40 + 20 + 100 + 20 + 140 + 20;
     if (!_isOnline) {
       width += 60 + 20;
     }
     if (_isQafla) {
       width += 60 + 20 + 60 + 20 + 60;
     }
-    width += 40 + 20 + 100 + 20 + 140 + 20;
     return width.toDouble();
   }
 
@@ -785,448 +784,422 @@ class _EditEventScreenState extends State<EditEventScreen> {
           ),
         ],
       ),
-      body: SafeArea(
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-            ),
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 40,
-                  vertical: 16,
-                ),
-                child: Row(
-                  children: [
+      body: Form(
+        key: _formKey,
+        child: ListView(
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _buildTextField(
+                      controller: _dateController,
+                      label: 'التاريخ',
+                      readOnly: true,
+                      onTap: _selectDate,
+                      suffixIcon: Icons.calendar_today,
+                    ),
+                  ),
+                  if (_needsLocation) ...[
+                    const SizedBox(width: 16),
                     Expanded(
                       child: _buildTextField(
-                        controller: _dateController,
-                        label: 'التاريخ',
-                        readOnly: true,
-                        onTap: _selectDate,
-                        suffixIcon: Icons.calendar_today,
+                        controller: _locationController,
+                        label: 'المكان',
                       ),
                     ),
-                    if (_needsLocation) ...[
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: _buildTextField(
-                          controller: _locationController,
-                          label: 'المكان',
-                        ),
-                      ),
-                    ],
                   ],
-                ),
+                ],
               ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 40),
+              child: _buildTextField(
+                controller: _descriptionController,
+                label: 'وصف الحدث',
+              ),
+            ),
+            if (_isMeeting) ..._buildMeetingSections(),
+            const SizedBox(height: 8),
+            if (_allowVolunteerManagement())
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 40),
-                child: _buildTextField(
-                  controller: _descriptionController,
-                  label: 'وصف الحدث',
-                ),
-              ),
-              if (_isMeeting) ..._buildMeetingSections(),
-              const SizedBox(height: 8),
-              if (_allowVolunteerManagement())
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 40),
-                  child: Column(
-                    children: [
-                      _buildAddButton(
-                        'إضافة متطوع',
-                        Icons.add_circle_outline,
-                        _selectExistingVolunteer,
-                      ),
-                      if (_canCreateNewVolunteer()) ...[
-                        const SizedBox(height: 12),
-                        _buildAddButton(
-                          'متطوع جديد',
-                          Icons.add,
-                          _createNewVolunteer,
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              const SizedBox(height: 16),
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 40),
-                decoration: BoxDecoration(
-                  color: AppTheme.cardBackground,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppTheme.primary.withOpacity(0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
+                child: Column(
+                  children: [
+                    _buildAddButton(
+                      'إضافة متطوع',
+                      Icons.add_circle_outline,
+                      _selectExistingVolunteer,
                     ),
+                    if (_canCreateNewVolunteer()) ...[
+                      const SizedBox(height: 12),
+                      _buildAddButton(
+                        'متطوع جديد',
+                        Icons.add,
+                        _createNewVolunteer,
+                      ),
+                    ],
                   ],
                 ),
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: SizedBox(
-                    width: _volunteerTableWidth,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          decoration: BoxDecoration(
-                            color: AppTheme.cardBackground,
-                            border: Border(
-                              bottom: BorderSide(color: Colors.grey[300]!),
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              SizedBox(
-                                width: 40,
-                                child: _buildTableHeader('#'),
-                              ),
-                              const SizedBox(width: 20),
-                              SizedBox(
-                                width: 100,
-                                child: _buildTableHeader('الاسم'),
-                              ),
-                              const SizedBox(width: 20),
-                              SizedBox(
-                                width: 140,
-                                child: _buildTableHeader('رقم التليفون'),
-                              ),
-                              const SizedBox(width: 20),
-                              if (!_isOnline)
-                                SizedBox(
-                                  width: 65,
-                                  child: _buildTableHeader('تيشيرت'),
-                                ),
-                              if (_isQafla) ...[
-                                SizedBox(
-                                  width: 60,
-                                  child: _buildTableHeader('تجهيز'),
-                                ),
-                                const SizedBox(width: 20),
-                                SizedBox(
-                                  width: 60,
-                                  child: _buildTableHeader('تعبئة'),
-                                ),
-                                const SizedBox(width: 20),
-                                SizedBox(
-                                  width: 60,
-                                  child: _buildTableHeader('توزيع'),
-                                ),
-                              ],
-                              const SizedBox(width: 20),
-                              SizedBox(width: 44, child: _buildTableHeader('')),
-                            ],
+              ),
+            const SizedBox(height: 16),
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 40),
+              decoration: BoxDecoration(
+                color: AppTheme.cardBackground,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppTheme.primary.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: SizedBox(
+                  width: _volunteerTableWidth,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
+                          color: AppTheme.cardBackground,
+                          border: Border(
+                            bottom: BorderSide(color: Colors.grey[300]!),
                           ),
                         ),
-                        SizedBox(
-                          height: 320,
-                          child: FutureBuilder<List<VolunteerModel>>(
-                            future: Provider.of<VolunteerProvider>(
-                              context,
-                              listen: false,
-                            ).getVolunteersByIds(_volunteerIds),
-                            builder: (context, snapshot) {
-                              if (snapshot.connectionState ==
-                                  ConnectionState.waiting) {
-                                return Center(child: WhaleLoading());
-                              }
+                        child: Row(
+                          children: [
+                            SizedBox(width: 44, child: _buildTableHeader('')),
+                            const SizedBox(width: 20),
+                            SizedBox(width: 40, child: _buildTableHeader('#')),
+                            const SizedBox(width: 20),
+                            SizedBox(
+                              width: 100,
+                              child: _buildTableHeader('الاسم'),
+                            ),
+                            const SizedBox(width: 20),
+                            SizedBox(
+                              width: 140,
+                              child: _buildTableHeader('رقم التليفون'),
+                            ),
+                            const SizedBox(width: 20),
+                            if (!_isOnline)
+                              SizedBox(
+                                width: 60,
+                                child: _buildTableHeader('تيشيرت'),
+                              ),
+                            if (_isQafla) ...[
+                              SizedBox(
+                                width: 60,
+                                child: _buildTableHeader('تجهيز'),
+                              ),
+                              const SizedBox(width: 20),
+                              SizedBox(
+                                width: 60,
+                                child: _buildTableHeader('تعبئة'),
+                              ),
+                              const SizedBox(width: 20),
+                              SizedBox(
+                                width: 60,
+                                child: _buildTableHeader('توزيع'),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      SizedBox(
+                        height: 320,
+                        child: FutureBuilder<List<VolunteerModel>>(
+                          future: Provider.of<VolunteerProvider>(
+                            context,
+                            listen: false,
+                          ).getVolunteersByIds(_volunteerIds),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return Center(child: WhaleLoading());
+                            }
 
-                              final volunteers = snapshot.data ?? [];
-                              volunteers.sort(
-                                (a, b) =>
-                                    FirebaseConstants.compareByDegreeAndName(
-                                      a.educationalLevel ?? '',
-                                      a.name,
-                                      b.educationalLevel ?? '',
-                                      b.name,
-                                    ),
-                              );
-
-                              for (final volunteer in volunteers) {
-                                _volunteerTshirtStatus.putIfAbsent(
-                                  volunteer.id,
-                                  () => volunteer.hasTshirt,
-                                );
-                              }
-
-                              if (volunteers.isEmpty) {
-                                return const Center(
-                                  child: Text(
-                                    'لا يوجد متطوعون',
-                                    style: TextStyle(
-                                      fontFamily: 'Cairo',
-                                      color: AppTheme.secondary,
-                                    ),
+                            final volunteers = snapshot.data ?? [];
+                            volunteers.sort(
+                              (a, b) =>
+                                  FirebaseConstants.compareByDegreeAndName(
+                                    a.educationalLevel ?? '',
+                                    a.name,
+                                    b.educationalLevel ?? '',
+                                    b.name,
                                   ),
-                                );
-                              }
+                            );
 
-                              return ListView(
-                                children: volunteers.asMap().entries.map((
-                                  entry,
-                                ) {
-                                  final index = entry.key;
-                                  final volunteer = entry.value;
+                            for (final volunteer in volunteers) {
+                              _volunteerTshirtStatus.putIfAbsent(
+                                volunteer.id,
+                                () => volunteer.hasTshirt,
+                              );
+                            }
 
-                                  return Container(
-                                    decoration: BoxDecoration(
-                                      border: Border(
-                                        bottom: BorderSide(
-                                          color: Colors.grey[200]!,
-                                        ),
+                            if (volunteers.isEmpty) {
+                              return const Center(
+                                child: Text(
+                                  'لا يوجد متطوعون',
+                                  style: TextStyle(
+                                    fontFamily: 'Cairo',
+                                    color: AppTheme.secondary,
+                                  ),
+                                ),
+                              );
+                            }
+
+                            return ListView(
+                              children: volunteers.asMap().entries.map((entry) {
+                                final index = entry.key;
+                                final volunteer = entry.value;
+
+                                return Container(
+                                  decoration: BoxDecoration(
+                                    border: Border(
+                                      bottom: BorderSide(
+                                        color: Colors.grey[200]!,
                                       ),
                                     ),
-                                    child: Row(
-                                      children: [
-                                        SizedBox(
-                                          width: 40,
-                                          child: _buildTableCell(
-                                            (index + 1).toString(),
-                                          ),
-                                        ),
-                                        const SizedBox(width: 20),
-                                        SizedBox(
-                                          width: 100,
-                                          child: _buildTableCell(
-                                            volunteer.name,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 20),
-                                        SizedBox(
-                                          width: 140,
-                                          child: _buildTableCell(
-                                            volunteer.phone,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 20),
-                                        if (!_isOnline)
-                                          SizedBox(
-                                            width: 60,
-                                            child: Center(
-                                              child: Checkbox(
-                                                value:
-                                                    _volunteerTshirtStatus[volunteer
-                                                        .id] ??
-                                                    false,
-                                                onChanged: (value) {
-                                                  setState(() {
-                                                    _volunteerTshirtStatus[volunteer
-                                                            .id] =
-                                                        value ?? false;
-                                                  });
-                                                },
-                                                activeColor: AppTheme.primary,
-                                              ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      SizedBox(
+                                        width: 44,
+                                        child: Center(
+                                          child: IconButton(
+                                            icon: const Icon(
+                                              Icons.delete_outline,
+                                              color: Colors.red,
                                             ),
-                                          ),
-                                        if (!_isOnline)
-                                          const SizedBox(width: 20),
-                                        if (_isQafla) ...[
-                                          SizedBox(
-                                            width: 60,
-                                            child: Center(
-                                              child: Checkbox(
-                                                value:
-                                                    _qaflaPreparation[volunteer
-                                                        .id] ??
-                                                    false,
-                                                onChanged: (value) {
-                                                  setState(() {
-                                                    _qaflaPreparation[volunteer
-                                                            .id] =
-                                                        value ?? false;
-                                                  });
-                                                },
-                                                activeColor: AppTheme.primary,
-                                              ),
-                                            ),
-                                          ),
-                                          const SizedBox(width: 20),
-                                          SizedBox(
-                                            width: 60,
-                                            child: Center(
-                                              child: Checkbox(
-                                                value:
-                                                    _qaflaFilling[volunteer
-                                                        .id] ??
-                                                    false,
-                                                onChanged: (value) {
-                                                  setState(() {
-                                                    _qaflaFilling[volunteer
-                                                            .id] =
-                                                        value ?? false;
-                                                  });
-                                                },
-                                                activeColor: AppTheme.primary,
-                                              ),
-                                            ),
-                                          ),
-                                          const SizedBox(width: 20),
-                                          SizedBox(
-                                            width: 60,
-                                            child: Center(
-                                              child: Checkbox(
-                                                value:
-                                                    _qaflaDistribution[volunteer
-                                                        .id] ??
-                                                    false,
-                                                onChanged: (value) {
-                                                  setState(() {
-                                                    _qaflaDistribution[volunteer
-                                                            .id] =
-                                                        value ?? false;
-                                                  });
-                                                },
-                                                activeColor: AppTheme.primary,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                        const SizedBox(width: 20),
-                                        SizedBox(
-                                          width: 44,
-                                          child: Center(
-                                            child: IconButton(
-                                              icon: const Icon(
-                                                Icons.delete_outline,
-                                                color: Colors.red,
-                                              ),
-                                              tooltip: 'حذف المتطوع',
-                                              onPressed: () async {
-                                                final confirm = await showDialog<bool>(
-                                                  context: context,
-                                                  builder: (dialogContext) =>
-                                                      Directionality(
-                                                        textDirection:
-                                                            TextDirection.rtl,
-                                                        child: AlertDialog(
-                                                          title: const Text(
-                                                            'حذف متطوع',
-                                                            style: TextStyle(
-                                                              fontFamily:
-                                                                  'Cairo',
-                                                            ),
+                                            tooltip: 'حذف المتطوع',
+                                            onPressed: () async {
+                                              final confirm = await showDialog<bool>(
+                                                context: context,
+                                                builder: (dialogContext) =>
+                                                    Directionality(
+                                                      textDirection:
+                                                          TextDirection.rtl,
+                                                      child: AlertDialog(
+                                                        title: const Text(
+                                                          'حذف متطوع',
+                                                          style: TextStyle(
+                                                            fontFamily: 'Cairo',
                                                           ),
-                                                          content: Text(
-                                                            'هل أنت متأكد من حذف ${volunteer.name} من هذا الحدث؟',
-                                                            style:
-                                                                const TextStyle(
-                                                                  fontFamily:
-                                                                      'Cairo',
+                                                        ),
+                                                        content: Text(
+                                                          'هل أنت متأكد من حذف ${volunteer.name} من هذا الحدث؟',
+                                                          style:
+                                                              const TextStyle(
+                                                                fontFamily:
+                                                                    'Cairo',
+                                                              ),
+                                                        ),
+                                                        actions: [
+                                                          TextButton(
+                                                            onPressed: () =>
+                                                                Navigator.pop(
+                                                                  dialogContext,
+                                                                  false,
                                                                 ),
-                                                          ),
-                                                          actions: [
-                                                            TextButton(
-                                                              onPressed: () =>
-                                                                  Navigator.pop(
-                                                                    dialogContext,
-                                                                    false,
-                                                                  ),
-                                                              child: const Text(
-                                                                'إلغاء',
-                                                                style: TextStyle(
-                                                                  fontFamily:
-                                                                      'Cairo',
-                                                                ),
+                                                            child: const Text(
+                                                              'إلغاء',
+                                                              style: TextStyle(
+                                                                fontFamily:
+                                                                    'Cairo',
                                                               ),
                                                             ),
-                                                            TextButton(
-                                                              onPressed: () =>
-                                                                  Navigator.pop(
-                                                                    dialogContext,
-                                                                    true,
-                                                                  ),
-                                                              child: const Text(
-                                                                'حذف',
-                                                                style: TextStyle(
-                                                                  fontFamily:
-                                                                      'Cairo',
-                                                                  color: Colors
-                                                                      .red,
+                                                          ),
+                                                          TextButton(
+                                                            onPressed: () =>
+                                                                Navigator.pop(
+                                                                  dialogContext,
+                                                                  true,
                                                                 ),
+                                                            child: const Text(
+                                                              'حذف',
+                                                              style: TextStyle(
+                                                                fontFamily:
+                                                                    'Cairo',
+                                                                color:
+                                                                    Colors.red,
                                                               ),
                                                             ),
-                                                          ],
-                                                        ),
+                                                          ),
+                                                        ],
                                                       ),
-                                                );
-
-                                                if (confirm == true &&
-                                                    mounted) {
-                                                  setState(() {
-                                                    _volunteerIds.remove(
-                                                      volunteer.id,
-                                                    );
-                                                    _volunteerTshirtStatus
-                                                        .remove(volunteer.id);
-                                                  });
-                                                  ScaffoldMessenger.of(
-                                                    context,
-                                                  ).showSnackBar(
-                                                    SnackBar(
-                                                      content: Text(
-                                                        'تم حذف ${volunteer.name} من الحدث',
-                                                        style: const TextStyle(
-                                                          fontFamily: 'Cairo',
-                                                        ),
-                                                      ),
-                                                      backgroundColor:
-                                                          Colors.orange,
                                                     ),
+                                              );
+
+                                              if (confirm == true && mounted) {
+                                                setState(() {
+                                                  _volunteerIds.remove(
+                                                    volunteer.id,
                                                   );
-                                                }
+                                                  _volunteerTshirtStatus.remove(
+                                                    volunteer.id,
+                                                  );
+                                                });
+                                                ScaffoldMessenger.of(
+                                                  context,
+                                                ).showSnackBar(
+                                                  SnackBar(
+                                                    content: Text(
+                                                      'تم حذف ${volunteer.name} من الحدث',
+                                                      style: const TextStyle(
+                                                        fontFamily: 'Cairo',
+                                                      ),
+                                                    ),
+                                                    backgroundColor:
+                                                        Colors.orange,
+                                                  ),
+                                                );
+                                              }
+                                            },
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(
+                                        width: 40,
+                                        child: _buildTableCell(
+                                          (index + 1).toString(),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 20),
+                                      SizedBox(
+                                        width: 100,
+                                        child: _buildTableCell(volunteer.name),
+                                      ),
+                                      const SizedBox(width: 20),
+                                      SizedBox(
+                                        width: 140,
+                                        child: _buildTableCell(volunteer.phone),
+                                      ),
+                                      const SizedBox(width: 20),
+                                      if (!_isOnline)
+                                        SizedBox(
+                                          width: 60,
+                                          child: Center(
+                                            child: Checkbox(
+                                              value:
+                                                  _volunteerTshirtStatus[volunteer
+                                                      .id] ??
+                                                  false,
+                                              onChanged: (value) {
+                                                setState(() {
+                                                  _volunteerTshirtStatus[volunteer
+                                                          .id] =
+                                                      value ?? false;
+                                                });
                                               },
+                                              activeColor: AppTheme.primary,
+                                            ),
+                                          ),
+                                        ),
+                                      if (_isQafla) ...[
+                                        SizedBox(
+                                          width: 60,
+                                          child: Center(
+                                            child: Checkbox(
+                                              value:
+                                                  _qaflaPreparation[volunteer
+                                                      .id] ??
+                                                  false,
+                                              onChanged: (value) {
+                                                setState(() {
+                                                  _qaflaPreparation[volunteer
+                                                          .id] =
+                                                      value ?? false;
+                                                });
+                                              },
+                                              activeColor: AppTheme.primary,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 20),
+                                        SizedBox(
+                                          width: 60,
+                                          child: Center(
+                                            child: Checkbox(
+                                              value:
+                                                  _qaflaFilling[volunteer.id] ??
+                                                  false,
+                                              onChanged: (value) {
+                                                setState(() {
+                                                  _qaflaFilling[volunteer.id] =
+                                                      value ?? false;
+                                                });
+                                              },
+                                              activeColor: AppTheme.primary,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 20),
+                                        SizedBox(
+                                          width: 60,
+                                          child: Center(
+                                            child: Checkbox(
+                                              value:
+                                                  _qaflaDistribution[volunteer
+                                                      .id] ??
+                                                  false,
+                                              onChanged: (value) {
+                                                setState(() {
+                                                  _qaflaDistribution[volunteer
+                                                          .id] =
+                                                      value ?? false;
+                                                });
+                                              },
+                                              activeColor: AppTheme.primary,
                                             ),
                                           ),
                                         ),
                                       ],
-                                    ),
-                                  );
-                                }).toList(),
-                              );
-                            },
-                          ),
+                                    ],
+                                  ),
+                                );
+                              }).toList(),
+                            );
+                          },
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 40,
-                  vertical: 16,
-                ),
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _saveEvent,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primary,
-                    foregroundColor: AppTheme.textLight,
-                    minimumSize: const Size(double.infinity, 50),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(25),
-                    ),
+            ),
+            const SizedBox(height: 16),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+              child: ElevatedButton(
+                onPressed: _isLoading ? null : _saveEvent,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primary,
+                  foregroundColor: AppTheme.textLight,
+                  minimumSize: const Size(double.infinity, 50),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(25),
                   ),
-                  child: _isLoading
-                      ? WhaleLoading(size: 20, color: AppTheme.cardBackground)
-                      : const Text(
-                          'حفظ',
-                          style: TextStyle(
-                            fontFamily: 'Cairo',
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
                 ),
+                child: _isLoading
+                    ? WhaleLoading(size: 20, color: AppTheme.cardBackground)
+                    : const Text(
+                        'حفظ',
+                        style: TextStyle(
+                          fontFamily: 'Cairo',
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

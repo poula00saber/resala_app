@@ -23,6 +23,23 @@ class _SelectVolunteerScreenState extends State<SelectVolunteerScreen> {
   String _searchQuery = '';
   bool _isMultiSelectMode = false;
   final Set<String> _selectedIds = {};
+  Stream<List<dynamic>>? _volunteersStream;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _volunteersStream ??= Provider.of<VolunteerProvider>(
+      context,
+      listen: false,
+    ).searchVolunteers(_searchQuery);
+  }
+
+  void _updateVolunteersStream() {
+    _volunteersStream = Provider.of<VolunteerProvider>(
+      context,
+      listen: false,
+    ).searchVolunteers(_searchQuery);
+  }
 
   void _toggleMultiSelect(String volunteerId) {
     setState(() {
@@ -166,17 +183,15 @@ class _SelectVolunteerScreenState extends State<SelectVolunteerScreen> {
                       onChanged: (value) {
                         setState(() {
                           _searchQuery = value;
+                          _updateVolunteersStream();
                         });
                       },
                     ),
                   ),
                   const SizedBox(height: 16),
                   Expanded(
-                    child: StreamBuilder(
-                      stream: Provider.of<VolunteerProvider>(
-                        context,
-                        listen: false,
-                      ).searchVolunteers(_searchQuery),
+                    child: StreamBuilder<List<dynamic>>(
+                      stream: _volunteersStream,
                       builder: (context, snapshot) {
                         if (snapshot.connectionState ==
                             ConnectionState.waiting) {
@@ -217,6 +232,7 @@ class _SelectVolunteerScreenState extends State<SelectVolunteerScreen> {
                         }
 
                         return ListView.builder(
+                          key: const PageStorageKey('select-volunteer-list'),
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                           itemCount: volunteers.length,
                           itemBuilder: (context, index) {
@@ -226,6 +242,7 @@ class _SelectVolunteerScreenState extends State<SelectVolunteerScreen> {
                             );
 
                             return Container(
+                              key: ValueKey(volunteer.id),
                               margin: const EdgeInsets.only(bottom: 12),
                               child: ElevatedButton(
                                 onPressed: () {

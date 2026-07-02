@@ -1,13 +1,18 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../core/constants/firebase_constants.dart';
 import '../../data/models/inventory_model.dart';
 
 class InventoryProvider extends ChangeNotifier {
   static const String _storageKey = 'inventory_sections_v1';
+  static const String _firestoreDocId = 'default';
+
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   List<InventorySectionModel> _sections = [
     InventorySectionModel(id: 'كلي', name: 'كلي'),
@@ -88,6 +93,12 @@ class InventoryProvider extends ChangeNotifier {
 
   Future<void> _loadFromStorage() async {
     try {
+      final firestoreSections = await _loadFromFirestore();
+      if (firestoreSections != null && firestoreSections.isNotEmpty) {
+        _sections = firestoreSections;
+        return;
+      }
+
       final prefs = await SharedPreferences.getInstance();
       final storedValue = prefs.getString(_storageKey);
       if (storedValue != null && storedValue.isNotEmpty) {
@@ -109,13 +120,47 @@ class InventoryProvider extends ChangeNotifier {
     }
   }
 
+  Future<List<InventorySectionModel>?> _loadFromFirestore() async {
+    try {
+      final doc = await _firestore
+          .collection(FirebaseConstants.inventoryCollection)
+          .doc(_firestoreDocId)
+          .get();
+
+      final data = doc.data();
+      if (data == null) return null;
+
+      final sectionsJson = data['sections'] as List<dynamic>?;
+      if (sectionsJson == null || sectionsJson.isEmpty) return null;
+
+      return sectionsJson
+          .whereType<Map>()
+          .map(
+            (section) => InventorySectionModel.fromJson(
+              Map<String, dynamic>.from(section),
+            ),
+          )
+          .toList();
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<void> _persist() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(
-        _storageKey,
-        jsonEncode(_sections.map((section) => section.toJson()).toList()),
+      final encodedSections = jsonEncode(
+        _sections.map((section) => section.toJson()).toList(),
       );
+
+      await prefs.setString(_storageKey, encodedSections);
+      await _firestore
+          .collection(FirebaseConstants.inventoryCollection)
+          .doc(_firestoreDocId)
+          .set({
+            'sections': _sections.map((section) => section.toJson()).toList(),
+            'updatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
     } catch (_) {
       // Persistence should never block the UI.
     }
@@ -354,12 +399,38 @@ class InventoryProvider extends ChangeNotifier {
       subcategoryId: subcategoryId,
       itemId: itemId,
       updater: (item) {
-        return item.copyWith(
-          name: newName,
-          unit: newUnit,
-        );
+        return item.copyWith(name: newName, unit: newUnit);
       },
     );
+  }
+
+  Future<void> deleteItem({
+    required String sectionId,
+    required String subcategoryId,
+    required String itemId,
+  }) async {
+    final sectionIndex = _sections.indexWhere(
+      (section) => section.id == sectionId,
+    );
+    if (sectionIndex == -1) return;
+
+    final section = _sections[sectionIndex];
+    final subIndex = section.subcategories.indexWhere(
+      (sub) => sub.id == subcategoryId,
+    );
+    if (subIndex == -1) return;
+
+    final subcategory = section.subcategories[subIndex];
+    final updatedItems = subcategory.items
+        .where((item) => item.id != itemId)
+        .toList();
+    final updatedSubcategories = [...section.subcategories];
+    updatedSubcategories[subIndex] = subcategory.copyWith(items: updatedItems);
+    _sections[sectionIndex] = section.copyWith(
+      subcategories: updatedSubcategories,
+    );
+    notifyListeners();
+    await _persist();
   }
 
   void ensureDefaultSubcategories(String sectionId) {

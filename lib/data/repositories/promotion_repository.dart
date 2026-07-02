@@ -12,6 +12,17 @@ import '../../services/operation_log_service.dart';
 class PromotionRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
+  Stream<List<PromotionRequirement>> watchAllPromotionRequirements() {
+    return _firestore
+        .collection(FirebaseConstants.promotionRequirementsCollection)
+        .snapshots()
+        .map(
+          (snapshot) => snapshot.docs
+              .map((doc) => PromotionRequirement.fromMap(doc.data(), doc.id))
+              .toList(),
+        );
+  }
+
   // Get or create promotion requirements for a volunteer at current level
   Future<PromotionRequirement?> getPromotionRequirements(
     String volunteerId,

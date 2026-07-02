@@ -6,6 +6,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:resala/core/constants/firebase_constants.dart';
+import 'package:resala/data/models/promotion_model.dart';
+import 'package:resala/data/models/volunteer_model.dart';
+import 'package:resala/data/repositories/promotion_repository.dart';
 import '../../providers/volunteer_provider.dart';
 import '../../themes/app_theme.dart';
 import '../../widgets/whale_loading.dart';
@@ -20,7 +23,28 @@ class PromotionsScreen extends StatefulWidget {
 
 class _PromotionsScreenState extends State<PromotionsScreen> {
   final TextEditingController _searchController = TextEditingController();
+  final PromotionRepository _promotionRepository = PromotionRepository();
   String _searchQuery = '';
+  String _selectedRequirementFilter = 'الكل';
+
+  bool _matchesRequirementFilter(
+    VolunteerModel volunteer,
+    Map<String, PromotionRequirement> requirementByVolunteerId,
+  ) {
+    if (_selectedRequirementFilter == 'الكل') {
+      return true;
+    }
+
+    final requirement = requirementByVolunteerId[volunteer.id];
+    if (requirement == null) {
+      return false;
+    }
+
+    return requirement.requirements.any(
+      (item) =>
+          item.description == _selectedRequirementFilter && !item.isCompleted,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,63 +70,109 @@ class _PromotionsScreenState extends State<PromotionsScreen> {
       ),
       body: Column(
         children: [
-          // Search Bar
           Padding(
-            padding: const EdgeInsets.all(16),
-            child: TextField(
-              controller: _searchController,
-              textAlign: TextAlign.right,
-              style: const TextStyle(fontFamily: 'Cairo'),
-              decoration: InputDecoration(
-                hintText: 'بحث باسم المتطوع',
-                hintStyle: const TextStyle(
-                  fontFamily: 'Cairo',
-                  color: AppTheme.secondary,
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+            child: Column(
+              children: [
+                TextField(
+                  controller: _searchController,
+                  textAlign: TextAlign.right,
+                  style: const TextStyle(fontFamily: 'Cairo'),
+                  decoration: InputDecoration(
+                    hintText: 'بحث باسم المتطوع',
+                    hintStyle: const TextStyle(
+                      fontFamily: 'Cairo',
+                      color: AppTheme.secondary,
+                    ),
+                    prefixIcon: const Icon(
+                      Icons.search,
+                      color: AppTheme.secondary,
+                    ),
+                    filled: true,
+                    fillColor: AppTheme.cardBackground,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 16,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(30),
+                      borderSide: BorderSide(color: AppTheme.primary),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(30),
+                      borderSide: BorderSide(color: AppTheme.primary),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(30),
+                      borderSide: BorderSide(color: AppTheme.primary, width: 2),
+                    ),
+                  ),
+                  onChanged: (value) {
+                    setState(() {
+                      _searchQuery = value;
+                    });
+                  },
                 ),
-                prefixIcon: const Icon(Icons.search, color: AppTheme.secondary),
-                filled: true,
-                fillColor: AppTheme.cardBackground,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 16,
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  value: _selectedRequirementFilter,
+                  isExpanded: true,
+                  decoration: InputDecoration(
+                    hintText: 'فلترة متطلبات الترقي',
+                    hintStyle: const TextStyle(fontFamily: 'Cairo'),
+                    filled: true,
+                    fillColor: AppTheme.cardBackground,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(30),
+                      borderSide: BorderSide(color: AppTheme.primary),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(30),
+                      borderSide: BorderSide(color: AppTheme.primary),
+                    ),
+                  ),
+                  items: [
+                    const DropdownMenuItem(
+                      value: 'الكل',
+                      child: Text(
+                        'الكل',
+                        style: TextStyle(fontFamily: 'Cairo'),
+                      ),
+                    ),
+                    ...FirebaseConstants.promotionRequirementFilters.map(
+                      (filter) => DropdownMenuItem(
+                        value: filter,
+                        child: Text(
+                          filter,
+                          style: const TextStyle(fontFamily: 'Cairo'),
+                        ),
+                      ),
+                    ),
+                  ],
+                  onChanged: (value) {
+                    if (value == null) return;
+                    setState(() {
+                      _selectedRequirementFilter = value;
+                    });
+                  },
                 ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(30),
-                  borderSide: BorderSide(color: AppTheme.primary),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(30),
-                  borderSide: BorderSide(color: AppTheme.primary),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(30),
-                  borderSide: BorderSide(color: AppTheme.primary, width: 2),
-                ),
-              ),
-              onChanged: (value) {
-                setState(() {
-                  _searchQuery = value;
-                });
-              },
+              ],
             ),
           ),
 
-          // Volunteers List
           Expanded(
-            child: StreamBuilder(
-              stream: Provider.of<VolunteerProvider>(
-                context,
-                listen: false,
-              ).searchVolunteers(_searchQuery),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
+            child: StreamBuilder<List<PromotionRequirement>>(
+              stream: _promotionRepository.watchAllPromotionRequirements(),
+              builder: (context, promotionSnapshot) {
+                if (promotionSnapshot.connectionState ==
+                    ConnectionState.waiting) {
                   return Center(child: WhaleLoading());
                 }
 
-                if (snapshot.hasError) {
+                if (promotionSnapshot.hasError) {
                   return Center(
                     child: Text(
-                      'حدث خطأ: ${snapshot.error}',
+                      'حدث خطأ: ${promotionSnapshot.error}',
                       style: const TextStyle(
                         fontFamily: 'Cairo',
                         color: Colors.red,
@@ -111,30 +181,65 @@ class _PromotionsScreenState extends State<PromotionsScreen> {
                   );
                 }
 
-                final volunteers = snapshot.data ?? [];
+                final Map<String, PromotionRequirement>
+                requirementByVolunteerId = {
+                  for (final requirement in promotionSnapshot.data ?? [])
+                    requirement.volunteerId: requirement,
+                };
 
-                if (volunteers.isEmpty) {
-                  return const Center(
-                    child: Text(
-                      'لا يوجد متطوعين',
-                      style: TextStyle(
-                        fontFamily: 'Cairo',
-                        color: AppTheme.secondary,
-                        fontSize: 16,
-                      ),
-                    ),
-                  );
-                }
+                return StreamBuilder<List<VolunteerModel>>(
+                  stream: Provider.of<VolunteerProvider>(
+                    context,
+                    listen: false,
+                  ).searchVolunteers(_searchQuery),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return Center(child: WhaleLoading());
+                    }
 
-                // Sort volunteers by educational level
-                final sortedVolunteers = _sortVolunteersByLevel(volunteers);
+                    if (snapshot.hasError) {
+                      return Center(
+                        child: Text(
+                          'حدث خطأ: ${snapshot.error}',
+                          style: const TextStyle(
+                            fontFamily: 'Cairo',
+                            color: Colors.red,
+                          ),
+                        ),
+                      );
+                    }
 
-                return ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: sortedVolunteers.length,
-                  itemBuilder: (context, index) {
-                    final volunteer = sortedVolunteers[index];
-                    return _buildVolunteerCard(volunteer);
+                    final volunteers = snapshot.data ?? [];
+                    final filteredVolunteers = _sortVolunteersByLevel(
+                      volunteers.where((volunteer) {
+                        return _matchesRequirementFilter(
+                          volunteer,
+                          requirementByVolunteerId,
+                        );
+                      }).toList(),
+                    );
+
+                    if (filteredVolunteers.isEmpty) {
+                      return const Center(
+                        child: Text(
+                          'لا يوجد متطوعين مطابقين للفلتر',
+                          style: TextStyle(
+                            fontFamily: 'Cairo',
+                            color: AppTheme.secondary,
+                            fontSize: 16,
+                          ),
+                        ),
+                      );
+                    }
+
+                    return ListView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: filteredVolunteers.length,
+                      itemBuilder: (context, index) {
+                        final volunteer = filteredVolunteers[index];
+                        return _buildVolunteerCard(volunteer);
+                      },
+                    );
                   },
                 );
               },
