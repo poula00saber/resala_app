@@ -54,6 +54,8 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
   bool _hasTshirt = false;
   String? _selectedCommitteeId;
   String? _selectedCommitteeName;
+  String? _selectedSecondaryCommitteeId;
+  String? _selectedSecondaryCommitteeName;
   String? _selectedGender;
   bool _committeesLoaded = false;
   final List<String> _genders = FirebaseConstants.genders;
@@ -94,6 +96,8 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
     // Initialize with volunteer's current data
     _selectedCommitteeId = widget.volunteer.committeeId;
     _selectedCommitteeName = widget.volunteer.committeeName;
+    _selectedSecondaryCommitteeId = widget.volunteer.secondaryCommitteeId;
+    _selectedSecondaryCommitteeName = widget.volunteer.secondaryCommitteeName;
     _hasTshirt = widget.volunteer.hasTshirt ?? false;
     _selectedGender = widget.volunteer.gender;
     _imageUrl = widget.volunteer.profileImage; // Initialize with existing image
@@ -212,6 +216,8 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
         'birthDate': _birthDateController.text.trim(),
         'committeeId': _selectedCommitteeId,
         'committeeName': _selectedCommitteeName,
+        'secondaryCommitteeId': _selectedSecondaryCommitteeId,
+        'secondaryCommitteeName': _selectedSecondaryCommitteeName,
         'gender': _selectedGender,
         'hasTshirt': _hasTshirt,
         // Educational level is managed from promotions screen - not included here
@@ -728,6 +734,112 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
                         label: 'تاريخ الميلاد',
                         enabled: false,
                       ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 16),
+
+                // Secondary Committee Dropdown - اللجنة الثانوية
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.only(bottom: 8, right: 4),
+                      child: Text(
+                        'لجنة ثانوية',
+                        style: TextStyle(
+                          fontFamily: 'Cairo',
+                          fontSize: 14,
+                          color: AppTheme.primary,
+                        ),
+                      ),
+                    ),
+                    StreamBuilder(
+                      stream: Provider.of<CommitteeProvider>(
+                        context,
+                        listen: false,
+                      ).getActiveCommittees(),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return _buildLoadingDropdown();
+                        }
+
+                        if (snapshot.hasError) {
+                          return _buildErrorDropdown();
+                        }
+
+                        if (!snapshot.hasData || snapshot.data == null) {
+                          return _buildEmptyDropdown();
+                        }
+
+                        final committees = snapshot.data ?? [];
+
+                        if (committees.isEmpty) {
+                          return _buildEmptyDropdown();
+                        }
+
+                        return Container(
+                          decoration: BoxDecoration(
+                            color: AppTheme.cardBackground,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: AppTheme.primary,
+                              width: 1.5,
+                            ),
+                          ),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              value: _selectedSecondaryCommitteeId,
+                              isExpanded: true,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                              ),
+                              style: const TextStyle(
+                                fontFamily: 'Cairo',
+                                fontSize: 14,
+                                color: AppTheme.textDark,
+                              ),
+                              items: [
+                                const DropdownMenuItem(
+                                  value: null,
+                                  child: Text(
+                                    'بدون لجنة ثانوية',
+                                    style: TextStyle(
+                                      fontFamily: 'Cairo',
+                                      color: AppTheme.secondary,
+                                    ),
+                                  ),
+                                ),
+                                ...committees.map(
+                                  (committee) => DropdownMenuItem(
+                                    value: committee.id,
+                                    child: Text(
+                                      committee.name,
+                                      style: const TextStyle(
+                                        fontFamily: 'Cairo',
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                              onChanged: (value) {
+                                setState(() {
+                                  _selectedSecondaryCommitteeId = value;
+                                  _selectedSecondaryCommitteeName = value != null
+                                      ? committees
+                                            .firstWhere(
+                                              (c) => c.id == value,
+                                            )
+                                            .name
+                                      : null;
+                                });
+                              },
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ),

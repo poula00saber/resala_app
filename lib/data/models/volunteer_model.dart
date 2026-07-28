@@ -17,14 +17,16 @@ class VolunteerModel extends Volunteer {
     super.age,
     super.committeeId,
     super.committeeName,
+    super.secondaryCommitteeId,
+    super.secondaryCommitteeName,
     required super.hasInterview,
     required super.createdAt,
-    super.birthDate, // ADD THIS
-    super.gender, // ADD THIS
-    super.educationalLevel, // ADD THIS - from redesign
-    super.university, // ADD THIS - from redesign
-    super.profileImage, // ADD THIS - from redesign
-    super.hasTshirt = false, // Moved to super
+    super.birthDate,
+    super.gender,
+    super.educationalLevel,
+    super.university,
+    super.profileImage,
+    super.hasTshirt = false,
   });
 
   // From Firestore
@@ -40,14 +42,16 @@ class VolunteerModel extends Volunteer {
       age: data['age'],
       committeeId: data['committeeId'],
       committeeName: data['committeeName'],
+      secondaryCommitteeId: data['secondaryCommitteeId'],
+      secondaryCommitteeName: data['secondaryCommitteeName'],
       hasInterview: data['hasInterview'] ?? false,
-      hasTshirt: data['hasTshirt'] ?? false, // Changed to super
+      hasTshirt: data['hasTshirt'] ?? false,
       createdAt: (data['createdAt'] as Timestamp).toDate(),
-      birthDate: data['birthDate'], // ADD THIS
-      gender: data['gender'], // ADD THIS
-      educationalLevel: data['educationalLevel'], // ADD THIS
-      university: data['university'], // ADD THIS
-      profileImage: data['profileImage'], // ADD THIS
+      birthDate: data['birthDate'],
+      gender: data['gender'],
+      educationalLevel: data['educationalLevel'],
+      university: data['university'],
+      profileImage: data['profileImage'],
     );
   }
 
@@ -62,13 +66,15 @@ class VolunteerModel extends Volunteer {
       'age': age,
       'committeeId': committeeId,
       'committeeName': committeeName,
+      'secondaryCommitteeId': secondaryCommitteeId,
+      'secondaryCommitteeName': secondaryCommitteeName,
       'hasInterview': hasInterview,
-      'hasTshirt': hasTshirt ?? false, // Updated
-      'birthDate': birthDate, // ADD THIS
-      'gender': gender, // ADD THIS
-      'educationalLevel': educationalLevel, // ADD THIS
-      'university': university, // ADD THIS
-      'profileImage': profileImage, // ADD THIS
+      'hasTshirt': hasTshirt ?? false,
+      'birthDate': birthDate,
+      'gender': gender,
+      'educationalLevel': educationalLevel,
+      'university': university,
+      'profileImage': profileImage,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.now(),
     };
@@ -86,16 +92,18 @@ class VolunteerModel extends Volunteer {
       age: map['age'],
       committeeId: map['committeeId'],
       committeeName: map['committeeName'],
+      secondaryCommitteeId: map['secondaryCommitteeId'],
+      secondaryCommitteeName: map['secondaryCommitteeName'],
       hasInterview: map['hasInterview'] ?? false,
       hasTshirt: map['hasTshirt'] ?? false,
       createdAt: map['createdAt'] is Timestamp
           ? (map['createdAt'] as Timestamp).toDate()
           : DateTime.now(),
-      birthDate: map['birthDate'], // ADD THIS
-      gender: map['gender'], // ADD THIS
-      educationalLevel: map['educationalLevel'], // ADD THIS
-      university: map['university'], // ADD THIS
-      profileImage: map['profileImage'], // ADD THIS
+      birthDate: map['birthDate'],
+      gender: map['gender'],
+      educationalLevel: map['educationalLevel'],
+      university: map['university'],
+      profileImage: map['profileImage'],
     );
   }
 
@@ -111,13 +119,15 @@ class VolunteerModel extends Volunteer {
       'age': age,
       'committeeId': committeeId,
       'committeeName': committeeName,
+      'secondaryCommitteeId': secondaryCommitteeId,
+      'secondaryCommitteeName': secondaryCommitteeName,
       'hasInterview': hasInterview,
       'hasTshirt': hasTshirt,
-      'birthDate': birthDate, // ADD THIS
-      'gender': gender, // ADD THIS
-      'educationalLevel': educationalLevel, // ADD THIS
-      'university': university, // ADD THIS
-      'profileImage': profileImage, // ADD THIS
+      'birthDate': birthDate,
+      'gender': gender,
+      'educationalLevel': educationalLevel,
+      'university': university,
+      'profileImage': profileImage,
       'createdAt': createdAt,
     };
   }
@@ -133,14 +143,16 @@ class VolunteerModel extends Volunteer {
     int? age,
     String? committeeId,
     String? committeeName,
+    String? secondaryCommitteeId,
+    String? secondaryCommitteeName,
     bool? hasInterview,
     bool? hasTshirt,
     DateTime? createdAt,
-    String? birthDate, // ADD THIS
-    String? gender, // ADD THIS
-    String? educationalLevel, // ADD THIS
-    String? university, // ADD THIS
-    String? profileImage, // ADD THIS
+    String? birthDate,
+    String? gender,
+    String? educationalLevel,
+    String? university,
+    String? profileImage,
   }) {
     return VolunteerModel(
       id: id ?? this.id,
@@ -152,14 +164,16 @@ class VolunteerModel extends Volunteer {
       age: age ?? this.age,
       committeeId: committeeId ?? this.committeeId,
       committeeName: committeeName ?? this.committeeName,
+      secondaryCommitteeId: secondaryCommitteeId ?? this.secondaryCommitteeId,
+      secondaryCommitteeName: secondaryCommitteeName ?? this.secondaryCommitteeName,
       hasInterview: hasInterview ?? this.hasInterview,
       hasTshirt: hasTshirt ?? this.hasTshirt,
       createdAt: createdAt ?? this.createdAt,
-      birthDate: birthDate ?? this.birthDate, // ADD THIS
-      gender: gender ?? this.gender, // ADD THIS
-      educationalLevel: educationalLevel ?? this.educationalLevel, // ADD THIS
-      university: university ?? this.university, // ADD THIS
-      profileImage: profileImage ?? this.profileImage, // ADD THIS
+      birthDate: birthDate ?? this.birthDate,
+      gender: gender ?? this.gender,
+      educationalLevel: educationalLevel ?? this.educationalLevel,
+      university: university ?? this.university,
+      profileImage: profileImage ?? this.profileImage,
     );
   }
 }

@@ -473,6 +473,128 @@ class _VolunteerPromotionScreenState extends State<VolunteerPromotionScreen> {
                       ),
                     ),
                   ],
+
+                  // Downgrade from تدريب to داخل متابعه
+                  if (_currentLevel == 'تدريب') ...[
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () async {
+                          final confirmed = await showDialog<bool>(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              title: const Text(
+                                'تأكيد التغييز',
+                                style: TextStyle(
+                                  fontFamily: 'Cairo',
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              content: Text(
+                                'هل تريد خفض ${widget.volunteer.name} من تدريب إلى داخل متابعه؟',
+                                style: const TextStyle(fontFamily: 'Cairo'),
+                                textAlign: TextAlign.center,
+                              ),
+                              actionsAlignment: MainAxisAlignment.center,
+                              actions: [
+                                TextButton(
+                                  onPressed: () =>
+                                      Navigator.pop(context, false),
+                                  child: const Text(
+                                    'إلغاء',
+                                    style: TextStyle(fontFamily: 'Cairo'),
+                                  ),
+                                ),
+                                ElevatedButton(
+                                  onPressed: () => Navigator.pop(context, true),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.orange[800],
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(15),
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    'تأكيد',
+                                    style: TextStyle(
+                                      fontFamily: 'Cairo',
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+
+                          if (confirmed != true) return;
+
+                          // Perform downgrade
+                          await Provider.of<VolunteerProvider>(
+                            context,
+                            listen: false,
+                          ).updateVolunteerLevel(
+                            widget.volunteer.id,
+                            'داخل متابعه',
+                          );
+
+                          setState(() {
+                            _currentLevel = 'داخل متابعه';
+                          });
+
+                          // Load promotion requirements for the downgraded level
+                          final nextLevel = FirebaseConstants.getNextLevel(
+                            _currentLevel,
+                            age: widget.volunteer.age,
+                          );
+                          if (nextLevel != null) {
+                            await promotionProvider.loadPromotionRequirements(
+                              volunteerId: widget.volunteer.id,
+                              currentLevel: _currentLevel,
+                              nextLevel: nextLevel,
+                            );
+                          } else {
+                            await promotionProvider
+                                .deleteCurrentPromotionRequirements();
+                          }
+
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  'تم خفض ${widget.volunteer.name} إلى داخل متابعه',
+                                  style: const TextStyle(fontFamily: 'Cairo'),
+                                  textAlign: TextAlign.center,
+                                ),
+                                backgroundColor: Colors.orange[800],
+                              ),
+                            );
+                          }
+                        },
+                        icon: const Icon(Icons.arrow_downward),
+                        label: const Text(
+                          'خفض إلى داخل متابعه',
+                          style: TextStyle(
+                            fontFamily: 'Cairo',
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.orange[800],
+                          foregroundColor: AppTheme.textLight,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(25),
+                          ),
+                          elevation: 0,
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),

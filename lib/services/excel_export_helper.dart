@@ -970,6 +970,146 @@ class ExcelExportHelper {
     }
   }
 
+  // Export all committees to a single Excel file
+  static Future<void> exportAllCommitteesToExcel({
+    required List<CommitteeModel> committees,
+    required Future<List<VolunteerModel>> Function(String committeeId) getVolunteersByCommittee,
+  }) async {
+    try {
+      var excel = Excel.createExcel();
+
+      for (var committeeIndex = 0; committeeIndex < committees.length; committeeIndex++) {
+        final committee = committees[committeeIndex];
+        final volunteers = await getVolunteersByCommittee(committee.id);
+
+        String sheetName = committee.name;
+        if (sheetName.length > 31) {
+          sheetName = sheetName.substring(0, 31);
+        }
+
+        Sheet sheet = excel[sheetName];
+        _setSheetToRTL(sheet);
+
+        // Committee info header
+        sheet.merge(
+          CellIndex.indexByString('A1'),
+          CellIndex.indexByString('H1'),
+        );
+        var headerCell = sheet.cell(CellIndex.indexByString('A1'));
+        headerCell.value = TextCellValue('${committee.name} - ${committee.isActive ? 'نشط' : 'غير نشط'}');
+        headerCell.cellStyle = CellStyle(
+          bold: true,
+          fontSize: 16,
+          horizontalAlign: HorizontalAlign.Center,
+          verticalAlign: VerticalAlign.Center,
+        );
+
+        // Leader and Co-leader info
+        if (committee.leaderName != null) {
+          sheet.cell(CellIndex.indexByString('A2')).value = TextCellValue('الليدر:');
+          sheet.cell(CellIndex.indexByString('B2')).value = TextCellValue(committee.leaderName!);
+        }
+        if (committee.coLeaderName != null) {
+          sheet.cell(CellIndex.indexByString('A3')).value = TextCellValue('نائب الليدر:');
+          sheet.cell(CellIndex.indexByString('B3')).value = TextCellValue(committee.coLeaderName!);
+        }
+
+        // Column headers
+        var headers = [
+          'اللجنة الثانوية',
+          'المستوى التطوعي',
+          'اللجنة',
+          'العمر',
+          'العنوان',
+          'الهاتف',
+          'الاسم',
+          '#',
+        ];
+
+        for (var i = 0; i < headers.length; i++) {
+          var cell = sheet.cell(
+            CellIndex.indexByColumnRow(columnIndex: i, rowIndex: 5),
+          );
+          cell.value = TextCellValue(headers[i]);
+          cell.cellStyle = CellStyle(
+            bold: true,
+            backgroundColorHex: ExcelColor.blue,
+            fontColorHex: ExcelColor.white,
+            horizontalAlign: HorizontalAlign.Center,
+            verticalAlign: VerticalAlign.Center,
+          );
+        }
+
+        // Add volunteers data
+        for (var i = 0; i < volunteers.length; i++) {
+          var volunteer = volunteers[i];
+          var rowIndex = i + 6;
+
+          // Column 0: Secondary committee
+          sheet.cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: rowIndex))
+            .value = TextCellValue(volunteer.secondaryCommitteeName ?? '');
+          sheet.cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: rowIndex))
+            .cellStyle = CellStyle(horizontalAlign: HorizontalAlign.Right, verticalAlign: VerticalAlign.Center);
+
+          // Column 1: Educational level
+          sheet.cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: rowIndex))
+            .value = TextCellValue(volunteer.educationalLevel ?? 'غير محدد');
+          sheet.cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: rowIndex))
+            .cellStyle = CellStyle(horizontalAlign: HorizontalAlign.Right, verticalAlign: VerticalAlign.Center);
+
+          // Column 2: Committee name
+          sheet.cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: rowIndex))
+            .value = TextCellValue(volunteer.committeeName ?? 'غير محدد');
+          sheet.cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: rowIndex))
+            .cellStyle = CellStyle(horizontalAlign: HorizontalAlign.Right, verticalAlign: VerticalAlign.Center);
+
+          // Column 3: Age
+          sheet.cell(CellIndex.indexByColumnRow(columnIndex: 3, rowIndex: rowIndex))
+            .value = TextCellValue(volunteer.age?.toString() ?? 'غير محدد');
+          sheet.cell(CellIndex.indexByColumnRow(columnIndex: 3, rowIndex: rowIndex))
+            .cellStyle = CellStyle(horizontalAlign: HorizontalAlign.Center, verticalAlign: VerticalAlign.Center);
+
+          // Column 4: Address
+          sheet.cell(CellIndex.indexByColumnRow(columnIndex: 4, rowIndex: rowIndex))
+            .value = TextCellValue(volunteer.address);
+          sheet.cell(CellIndex.indexByColumnRow(columnIndex: 4, rowIndex: rowIndex))
+            .cellStyle = CellStyle(horizontalAlign: HorizontalAlign.Right, verticalAlign: VerticalAlign.Center);
+
+          // Column 5: Phone
+          sheet.cell(CellIndex.indexByColumnRow(columnIndex: 5, rowIndex: rowIndex))
+            .value = TextCellValue(volunteer.phone);
+          sheet.cell(CellIndex.indexByColumnRow(columnIndex: 5, rowIndex: rowIndex))
+            .cellStyle = CellStyle(horizontalAlign: HorizontalAlign.Right, verticalAlign: VerticalAlign.Center);
+
+          // Column 6: Name
+          sheet.cell(CellIndex.indexByColumnRow(columnIndex: 6, rowIndex: rowIndex))
+            .value = TextCellValue(volunteer.name);
+          sheet.cell(CellIndex.indexByColumnRow(columnIndex: 6, rowIndex: rowIndex))
+            .cellStyle = CellStyle(horizontalAlign: HorizontalAlign.Right, verticalAlign: VerticalAlign.Center);
+
+          // Column 7: Row number
+          sheet.cell(CellIndex.indexByColumnRow(columnIndex: 7, rowIndex: rowIndex))
+            .value = TextCellValue((i + 1).toString());
+          sheet.cell(CellIndex.indexByColumnRow(columnIndex: 7, rowIndex: rowIndex))
+            .cellStyle = CellStyle(horizontalAlign: HorizontalAlign.Center, verticalAlign: VerticalAlign.Center);
+        }
+
+        // Set column widths
+        for (var i = 0; i < headers.length; i++) {
+          sheet.setColumnWidth(i, 16);
+        }
+      }
+
+      await _saveAndShareExcel(
+        excel,
+        'كل_اللجان_${DateTime.now().millisecondsSinceEpoch}',
+      );
+    } catch (e) {
+      print('Error exporting all committees to Excel: $e');
+      rethrow;
+    }
+  }
+
   // Alternative: Create a more RTL-friendly Excel using cell formatting
   static Future<void> exportWithBetterRTLSupport({
     required String sheetName,

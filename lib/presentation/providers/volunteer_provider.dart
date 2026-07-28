@@ -347,6 +347,8 @@ class VolunteerProvider with ChangeNotifier {
         age: updates['age'],
         committeeId: updates['committeeId'],
         committeeName: updates['committeeName'],
+        secondaryCommitteeId: updates['secondaryCommitteeId'],
+        secondaryCommitteeName: updates['secondaryCommitteeName'],
         hasInterview: updates['hasInterview'],
         hasTshirt: updates['hasTshirt'],
         birthDate: updates['birthDate'],

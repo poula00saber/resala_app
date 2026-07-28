@@ -15,12 +15,14 @@ class Volunteer {
   final int? age;
   final String? committeeId;
   final String? committeeName;
+  final String? secondaryCommitteeId;
+  final String? secondaryCommitteeName;
   final String? birthDate;
   final String? gender;
   final String? educationalLevel;
   final String? university;
   final String? profileImage;
-  final bool hasTshirt; // ADD THIS - IMPORTANT!
+  final bool hasTshirt;
 
   Volunteer({
     required this.id,
@@ -34,11 +36,13 @@ class Volunteer {
     this.age,
     this.committeeId,
     this.committeeName,
+    this.secondaryCommitteeId,
+    this.secondaryCommitteeName,
     this.birthDate,
     this.gender,
     this.educationalLevel,
     this.university,
     this.profileImage,
-    this.hasTshirt = false, // ADD THIS
+    this.hasTshirt = false,
   });
 }

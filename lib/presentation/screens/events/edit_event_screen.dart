@@ -669,6 +669,14 @@ class _EditEventScreenState extends State<EditEventScreen> {
       }
     }
 
+    // Auto-promote خارج متابعة volunteers to داخل متابعه when they participate in an event
+    for (final volunteerId in _volunteerIds) {
+      final volunteer = await volunteerProvider.getVolunteerById(volunteerId);
+      if (volunteer != null && volunteer.educationalLevel == 'خارج متابعة') {
+        await volunteerProvider.updateVolunteerLevel(volunteerId, 'داخل متابعه');
+      }
+    }
+
     final eventProvider = Provider.of<EventProvider>(context, listen: false);
     final updatedEvent = EventModel(
       id: widget.event.id,
