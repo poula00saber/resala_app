@@ -64,9 +64,8 @@ class PromotionRepository {
           .doc(volunteerId)
           .get();
 
-      final miniCampCompleted = volunteerSnapshot.data()?[
-            FirebaseConstants.miniCampCompletedField
-          ] ??
+      final miniCampCompleted =
+          volunteerSnapshot.data()?[FirebaseConstants.miniCampCompletedField] ??
           false;
 
       final updatedRequirements = promotionRequirement.requirements.map((req) {

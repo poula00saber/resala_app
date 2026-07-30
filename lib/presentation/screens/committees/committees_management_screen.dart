@@ -29,6 +29,16 @@ class _CommitteesManagementScreenState
     extends State<CommitteesManagementScreen> {
   final AuthService _authService = AuthService();
   final Set<String> _expandedCommittees = {};
+  late Stream<List<CommitteeModel>> _committeesStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _committeesStream = Provider.of<CommitteeProvider>(
+      context,
+      listen: false,
+    ).getAllCommittees();
+  }
 
   bool get _canAddDelete =>
       _authService.isAdmin ||
@@ -104,10 +114,7 @@ class _CommitteesManagementScreenState
         ],
       ),
       body: StreamBuilder(
-        stream: Provider.of<CommitteeProvider>(
-          context,
-          listen: false,
-        ).getAllCommittees(),
+        stream: _committeesStream,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(child: WhaleLoading());

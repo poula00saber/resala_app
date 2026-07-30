@@ -24,8 +24,21 @@ class PromotionsScreen extends StatefulWidget {
 class _PromotionsScreenState extends State<PromotionsScreen> {
   final TextEditingController _searchController = TextEditingController();
   final PromotionRepository _promotionRepository = PromotionRepository();
+  late Stream<List<PromotionRequirement>> _promotionRequirementsStream;
+  late Stream<List<VolunteerModel>> _volunteerStream;
   String _searchQuery = '';
   String _selectedRequirementFilter = 'الكل';
+
+  @override
+  void initState() {
+    super.initState();
+    _promotionRequirementsStream = _promotionRepository
+        .watchAllPromotionRequirements();
+    _volunteerStream = Provider.of<VolunteerProvider>(
+      context,
+      listen: false,
+    ).searchVolunteers(_searchQuery);
+  }
 
   bool _matchesRequirementFilter(
     VolunteerModel volunteer,
@@ -110,6 +123,10 @@ class _PromotionsScreenState extends State<PromotionsScreen> {
                   onChanged: (value) {
                     setState(() {
                       _searchQuery = value;
+                      _volunteerStream = Provider.of<VolunteerProvider>(
+                        context,
+                        listen: false,
+                      ).searchVolunteers(_searchQuery);
                     });
                   },
                 ),
@@ -162,7 +179,7 @@ class _PromotionsScreenState extends State<PromotionsScreen> {
 
           Expanded(
             child: StreamBuilder<List<PromotionRequirement>>(
-              stream: _promotionRepository.watchAllPromotionRequirements(),
+              stream: _promotionRequirementsStream,
               builder: (context, promotionSnapshot) {
                 if (promotionSnapshot.connectionState ==
                     ConnectionState.waiting) {
@@ -188,10 +205,7 @@ class _PromotionsScreenState extends State<PromotionsScreen> {
                 };
 
                 return StreamBuilder<List<VolunteerModel>>(
-                  stream: Provider.of<VolunteerProvider>(
-                    context,
-                    listen: false,
-                  ).searchVolunteers(_searchQuery),
+                  stream: _volunteerStream,
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return Center(child: WhaleLoading());

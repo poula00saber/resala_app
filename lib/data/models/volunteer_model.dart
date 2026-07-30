@@ -54,7 +54,8 @@ class VolunteerModel extends Volunteer {
       educationalLevel: data['educationalLevel'],
       university: data['university'],
       profileImage: data['profileImage'],
-      miniCampCompleted: data[FirebaseConstants.miniCampCompletedField] ?? false,
+      miniCampCompleted:
+          data[FirebaseConstants.miniCampCompletedField] ?? false,
     );
   }
 
@@ -172,7 +173,8 @@ class VolunteerModel extends Volunteer {
       committeeId: committeeId ?? this.committeeId,
       committeeName: committeeName ?? this.committeeName,
       secondaryCommitteeId: secondaryCommitteeId ?? this.secondaryCommitteeId,
-      secondaryCommitteeName: secondaryCommitteeName ?? this.secondaryCommitteeName,
+      secondaryCommitteeName:
+          secondaryCommitteeName ?? this.secondaryCommitteeName,
       hasInterview: hasInterview ?? this.hasInterview,
       hasTshirt: hasTshirt ?? this.hasTshirt,
       createdAt: createdAt ?? this.createdAt,

@@ -5,8 +5,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:resala/core/constants/firebase_constants.dart';
 import 'package:resala/data/models/interview_model.dart';
+import 'package:resala/data/models/volunteer_model.dart';
 import 'package:resala/presentation/providers/interview_provider.dart';
 import 'package:resala/presentation/providers/volunteer_provider.dart';
 import 'package:resala/presentation/screens/interviews/interview_details_screen.dart';
@@ -22,8 +22,18 @@ class InterviewsScreen extends StatefulWidget {
 
 class _InterviewsScreenState extends State<InterviewsScreen> {
   final TextEditingController _searchController = TextEditingController();
+  late Stream<List<VolunteerModel>> _volunteerStream;
   String _searchQuery = '';
   List<String> _selectedFilters = ['لم تتم مقابلتهم'];
+
+  @override
+  void initState() {
+    super.initState();
+    _volunteerStream = Provider.of<VolunteerProvider>(
+      context,
+      listen: false,
+    ).searchVolunteers(_searchQuery);
+  }
 
   final List<String> _filterOptions = ['لم تتم مقابلتهم', 'مقبولين', 'مرفوضين'];
 
@@ -78,6 +88,10 @@ class _InterviewsScreenState extends State<InterviewsScreen> {
               onChanged: (value) {
                 setState(() {
                   _searchQuery = value;
+                  _volunteerStream = Provider.of<VolunteerProvider>(
+                    context,
+                    listen: false,
+                  ).searchVolunteers(_searchQuery);
                 });
               },
             ),
@@ -215,10 +229,7 @@ class _InterviewsScreenState extends State<InterviewsScreen> {
 
     // Multiple filters: combine results
     return StreamBuilder(
-      stream: Provider.of<VolunteerProvider>(
-        context,
-        listen: false,
-      ).searchVolunteers(_searchQuery),
+      stream: _volunteerStream,
       builder: (context, volunteerSnapshot) {
         if (volunteerSnapshot.connectionState == ConnectionState.waiting) {
           return Center(child: WhaleLoading());
@@ -322,10 +333,7 @@ class _InterviewsScreenState extends State<InterviewsScreen> {
 
   Widget _buildAllVolunteers() {
     return StreamBuilder(
-      stream: Provider.of<VolunteerProvider>(
-        context,
-        listen: false,
-      ).searchVolunteers(_searchQuery),
+      stream: _volunteerStream,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Center(child: WhaleLoading());
@@ -436,10 +444,7 @@ class _InterviewsScreenState extends State<InterviewsScreen> {
 
   Widget _buildVolunteersWithoutInterviews() {
     return StreamBuilder(
-      stream: Provider.of<VolunteerProvider>(
-        context,
-        listen: false,
-      ).searchVolunteers(_searchQuery),
+      stream: _volunteerStream,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Center(child: WhaleLoading());
@@ -882,9 +887,9 @@ class _InterviewsScreenState extends State<InterviewsScreen> {
           ),
         );
 
-        // Refresh the screen when coming back
+        // Keep the current screen state and let the providers update in place.
         if (result == true || result == null) {
-          setState(() {});
+          // no-op
         }
       } else {
         print('❌ Interview is null - cannot navigate');

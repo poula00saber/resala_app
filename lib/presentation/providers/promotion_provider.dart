@@ -44,6 +44,27 @@ class PromotionProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  void updateRequirementStatusLocally({
+    required String requirementId,
+    required bool isCompleted,
+  }) {
+    if (_currentPromotionRequirement == null) return;
+
+    final updatedRequirements = _currentPromotionRequirement!.requirements.map((
+      req,
+    ) {
+      if (req.id == requirementId) {
+        return req.copyWith(isCompleted: isCompleted);
+      }
+      return req;
+    }).toList();
+
+    _currentPromotionRequirement = _currentPromotionRequirement!.copyWith(
+      requirements: updatedRequirements,
+    );
+    notifyListeners();
+  }
+
   // Toggle requirement status
   Future<bool> toggleRequirementStatus({
     required String requirementId,
@@ -51,8 +72,14 @@ class PromotionProvider with ChangeNotifier {
   }) async {
     if (_currentPromotionRequirement == null) return false;
 
-    _isLoading = true;
-    notifyListeners();
+    final previousValue = _currentPromotionRequirement!.requirements
+        .firstWhere((req) => req.id == requirementId)
+        .isCompleted;
+
+    updateRequirementStatusLocally(
+      requirementId: requirementId,
+      isCompleted: isCompleted,
+    );
 
     try {
       final success = await _repository.updateRequirementStatus(
@@ -61,21 +88,24 @@ class PromotionProvider with ChangeNotifier {
         isCompleted,
       );
 
-      if (success) {
-        // Reload requirements to get updated data
-        await loadPromotionRequirements(
-          volunteerId: _currentPromotionRequirement!.volunteerId,
-          currentLevel: _currentPromotionRequirement!.currentLevel,
-          nextLevel: _currentPromotionRequirement!.nextLevel,
+      if (!success) {
+        updateRequirementStatusLocally(
+          requirementId: requirementId,
+          isCompleted: previousValue,
         );
+        _error = 'Failed to update requirement status';
+      } else {
+        _error = null;
       }
 
-      _isLoading = false;
       notifyListeners();
       return success;
     } catch (e) {
       _error = e.toString();
-      _isLoading = false;
+      updateRequirementStatusLocally(
+        requirementId: requirementId,
+        isCompleted: previousValue,
+      );
       notifyListeners();
       return false;
     }
