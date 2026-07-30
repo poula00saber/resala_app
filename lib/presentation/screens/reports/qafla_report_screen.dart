@@ -145,10 +145,16 @@ class _QaflaReportScreenState extends State<QaflaReportScreen> {
   ) async {
     final rows = <List<String>>[];
 
+    final allVolunteers = await volunteerProvider.getActiveVolunteersOnce();
+    final volunteerMap = {
+      for (final volunteer in allVolunteers) volunteer.id: volunteer,
+    };
+
     for (final event in qaflaEvents) {
-      final volunteers = await volunteerProvider.getVolunteersByIds(
-        event.volunteerIds,
-      );
+      final volunteers = event.volunteerIds
+          .where((volunteerId) => volunteerMap.containsKey(volunteerId))
+          .map((volunteerId) => volunteerMap[volunteerId]!)
+          .toList();
       final tshirtCount = volunteers
           .where((volunteer) => volunteer.hasTshirt)
           .length;

@@ -965,7 +965,8 @@ class _InventorySectionView extends StatelessWidget {
               : ListView.separated(
                   shrinkWrap: true,
                   itemCount: visibleHistory.length,
-                  separatorBuilder: (context, index) => const SizedBox(height: 8),
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(height: 8),
                   itemBuilder: (context, index) {
                     final entry = visibleHistory[index];
                     return Container(

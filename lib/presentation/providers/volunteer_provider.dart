@@ -154,6 +154,32 @@ class VolunteerProvider with ChangeNotifier {
     });
   }
 
+  List<VolunteerModel> _filterActiveVolunteers(
+    List<VolunteerModel> volunteers,
+  ) {
+    return volunteers
+        .where(
+          (volunteer) => !FirebaseConstants.isResignedLevel(
+            volunteer.educationalLevel ?? '',
+          ),
+        )
+        .toList();
+  }
+
+  Future<List<VolunteerModel>> getActiveVolunteersOnce() async {
+    final volunteers = await _repository.getAllVolunteers().first;
+    final activeVolunteers = _filterActiveVolunteers(volunteers);
+    activeVolunteers.sort(
+      (a, b) => FirebaseConstants.compareByDegreeAndName(
+        a.educationalLevel ?? '',
+        a.name,
+        b.educationalLevel ?? '',
+        b.name,
+      ),
+    );
+    return activeVolunteers;
+  }
+
   // Create volunteer - UPDATED: age is now required
   Future<String?> createVolunteer({
     required String name,
@@ -429,14 +455,29 @@ class VolunteerProvider with ChangeNotifier {
     });
   }
 
+  Stream<List<VolunteerModel>> searchActiveVolunteers(String query) {
+    return _repository.searchVolunteers(query).map((volunteers) {
+      final activeVolunteers = _filterActiveVolunteers(volunteers);
+      activeVolunteers.sort(
+        (a, b) => FirebaseConstants.compareByDegreeAndName(
+          a.educationalLevel ?? '',
+          a.name,
+          b.educationalLevel ?? '',
+          b.name,
+        ),
+      );
+      return activeVolunteers;
+    });
+  }
+
   // Get volunteers by committee
   Future<List<VolunteerModel>> getVolunteersByCommittee(
     String committeeId,
   ) async {
     final allVolunteers = await _repository.getAllVolunteers().first;
-    final filtered = allVolunteers
-        .where((v) => v.committeeId == committeeId)
-        .toList();
+    final filtered = _filterActiveVolunteers(
+      allVolunteers.where((v) => v.committeeId == committeeId).toList(),
+    );
     filtered.sort(
       (a, b) => FirebaseConstants.compareByDegreeAndName(
         a.educationalLevel ?? '',

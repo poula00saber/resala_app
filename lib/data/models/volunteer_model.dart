@@ -5,6 +5,7 @@
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../domain/entities/volunteer.dart';
+import '../../core/constants/firebase_constants.dart';
 
 class VolunteerModel extends Volunteer {
   VolunteerModel({
@@ -27,6 +28,7 @@ class VolunteerModel extends Volunteer {
     super.university,
     super.profileImage,
     super.hasTshirt = false,
+    super.miniCampCompleted = false,
   });
 
   // From Firestore
@@ -52,6 +54,7 @@ class VolunteerModel extends Volunteer {
       educationalLevel: data['educationalLevel'],
       university: data['university'],
       profileImage: data['profileImage'],
+      miniCampCompleted: data[FirebaseConstants.miniCampCompletedField] ?? false,
     );
   }
 
@@ -69,12 +72,13 @@ class VolunteerModel extends Volunteer {
       'secondaryCommitteeId': secondaryCommitteeId,
       'secondaryCommitteeName': secondaryCommitteeName,
       'hasInterview': hasInterview,
-      'hasTshirt': hasTshirt ?? false,
+      'hasTshirt': hasTshirt,
       'birthDate': birthDate,
       'gender': gender,
       'educationalLevel': educationalLevel,
       'university': university,
       'profileImage': profileImage,
+      FirebaseConstants.miniCampCompletedField: miniCampCompleted,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.now(),
     };
@@ -104,6 +108,7 @@ class VolunteerModel extends Volunteer {
       educationalLevel: map['educationalLevel'],
       university: map['university'],
       profileImage: map['profileImage'],
+      miniCampCompleted: map[FirebaseConstants.miniCampCompletedField] ?? false,
     );
   }
 
@@ -128,6 +133,7 @@ class VolunteerModel extends Volunteer {
       'educationalLevel': educationalLevel,
       'university': university,
       'profileImage': profileImage,
+      FirebaseConstants.miniCampCompletedField: miniCampCompleted,
       'createdAt': createdAt,
     };
   }
@@ -153,6 +159,7 @@ class VolunteerModel extends Volunteer {
     String? educationalLevel,
     String? university,
     String? profileImage,
+    bool? miniCampCompleted,
   }) {
     return VolunteerModel(
       id: id ?? this.id,
@@ -174,6 +181,7 @@ class VolunteerModel extends Volunteer {
       educationalLevel: educationalLevel ?? this.educationalLevel,
       university: university ?? this.university,
       profileImage: profileImage ?? this.profileImage,
+      miniCampCompleted: miniCampCompleted ?? this.miniCampCompleted,
     );
   }
 }

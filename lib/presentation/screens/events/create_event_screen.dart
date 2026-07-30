@@ -27,7 +27,6 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
   String? _selectedMeetingPlace;
   String? _selectedAdministrativeType;
   String? _selectedMeetingTarget; // NEW: For meeting target selection
-  List<dynamic> _committees = [];
 
   final List<String> _eventTypes = [
     FirebaseConstants.typeQafela,
@@ -60,9 +59,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       context,
       listen: false,
     );
-    setState(() {
-      _committees = committeeProvider.committees;
-    });
+    committeeProvider.initCommittees();
   }
 
   bool _needsLocation() {
@@ -218,6 +215,9 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final committeeProvider = context.watch<CommitteeProvider>();
+    final committees = committeeProvider.committees;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text("إضافة حدث جديد"),
@@ -373,7 +373,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                               child: Divider(),
                             ),
                             // Then all committees
-                            ..._committees.map((committee) {
+                            ...committees.map((committee) {
                               return DropdownMenuItem<String>(
                                 value: committee.id,
                                 child: Text(committee.name ?? 'بدون اسم'),

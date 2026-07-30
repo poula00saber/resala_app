@@ -43,6 +43,26 @@ class EvaluationRepository {
         );
   }
 
+  Future<List<EvaluationModel>> getEvaluationsByMonthAndName(
+    String month,
+    String evaluationName,
+  ) async {
+    try {
+      final snapshot = await _firestore
+          .collection(FirebaseConstants.evaluationsCollection)
+          .where('month', isEqualTo: month)
+          .where('evaluationName', isEqualTo: evaluationName)
+          .get();
+
+      return snapshot.docs
+          .map((doc) => EvaluationModel.fromFirestore(doc))
+          .toList();
+    } catch (e) {
+      print('Error getting evaluations by month and name: $e');
+      return [];
+    }
+  }
+
   // Get latest evaluation for a volunteer
   Future<EvaluationModel?> getLatestEvaluation(String volunteerId) async {
     try {

@@ -39,20 +39,44 @@ class PromotionRepository {
           .limit(1)
           .get();
 
+      PromotionRequirement? promotionRequirement;
+
       if (query.docs.isNotEmpty) {
-        // Return existing requirements
-        return PromotionRequirement.fromMap(
-          query.docs.first.data(),
-          query.docs.first.id,
+        final requirementsDoc = query.docs.first;
+        promotionRequirement = PromotionRequirement.fromMap(
+          requirementsDoc.data(),
+          requirementsDoc.id,
         );
       } else {
-        // Create new requirements with default questions
-        return await _createDefaultRequirements(
+        promotionRequirement = await _createDefaultRequirements(
           volunteerId,
           currentLevel,
           nextLevel,
         );
       }
+
+      if (promotionRequirement == null) {
+        return null;
+      }
+
+      final volunteerSnapshot = await _firestore
+          .collection(FirebaseConstants.volunteersCollection)
+          .doc(volunteerId)
+          .get();
+
+      final miniCampCompleted = volunteerSnapshot.data()?[
+            FirebaseConstants.miniCampCompletedField
+          ] ??
+          false;
+
+      final updatedRequirements = promotionRequirement.requirements.map((req) {
+        if (req.description == 'الميني كامب' && miniCampCompleted) {
+          return req.copyWith(isCompleted: true);
+        }
+        return req;
+      }).toList();
+
+      return promotionRequirement.copyWith(requirements: updatedRequirements);
     } catch (e) {
       debugPrint('Error getting promotion requirements: $e');
       return null;
@@ -156,6 +180,34 @@ class PromotionRepository {
             'requirements': updatedRequirements,
             'updatedAt': Timestamp.now(),
           });
+
+      final promotionDoc = await _firestore
+          .collection(FirebaseConstants.promotionRequirementsCollection)
+          .doc(promotionId)
+          .get();
+      final volunteerId = promotionDoc.data()?['volunteerId'] as String?;
+      Map<String, dynamic>? miniCampRequirement;
+
+      for (final item in updatedRequirements) {
+        final reqData = item as dynamic;
+        if (reqData['id'] == requirementId) {
+          miniCampRequirement = reqData;
+          break;
+        }
+      }
+
+      if (volunteerId != null && miniCampRequirement != null) {
+        final description = miniCampRequirement['description'] as String?;
+        if (description == 'الميني كامب') {
+          await _firestore
+              .collection(FirebaseConstants.volunteersCollection)
+              .doc(volunteerId)
+              .update({
+                FirebaseConstants.miniCampCompletedField: isCompleted,
+                'updatedAt': Timestamp.now(),
+              });
+        }
+      }
 
       await OperationLogService.log(
         action: 'update',

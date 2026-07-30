@@ -6,6 +6,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:resala/presentation/screens/evaluations/evaluation_details_screen.dart';
+import '../../providers/evaluation_provider.dart';
+import '../../providers/event_provider.dart';
 import '../../providers/volunteer_provider.dart';
 import '../../themes/app_theme.dart';
 import '../../widgets/whale_loading.dart';
@@ -25,6 +27,7 @@ class _EvaluationsScreenState extends State<EvaluationsScreen> {
   String? _evaluatorCommitteeId;
   String? _evaluatorCommitteeName;
   bool _loadingCommittee = true;
+  bool _isGeneratingBulkEvaluations = false;
 
   @override
   void initState() {
@@ -141,13 +144,65 @@ class _EvaluationsScreenState extends State<EvaluationsScreen> {
             ),
           ),
 
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                SizedBox(
+                  width: 180,
+                  child: ElevatedButton.icon(
+                    onPressed: _isGeneratingBulkEvaluations
+                        ? null
+                        : _createMonthlyAttendanceBulkEvaluations,
+                    icon: const Icon(Icons.fact_check),
+                    label: const Text(
+                      'تقييم الحضور الشهري',
+                      style: TextStyle(fontFamily: 'Cairo'),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primary,
+                      foregroundColor: AppTheme.textLight,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  width: 200,
+                  child: ElevatedButton.icon(
+                    onPressed: _isGeneratingBulkEvaluations
+                        ? null
+                        : _createMonthlyDistributionBulkEvaluations,
+                    icon: const Icon(Icons.percent),
+                    label: const Text(
+                      'تقييم نسبة التوزيع',
+                      style: TextStyle(fontFamily: 'Cairo'),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.secondary,
+                      foregroundColor: AppTheme.textLight,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
           // Volunteers List
           Expanded(
             child: StreamBuilder(
               stream: Provider.of<VolunteerProvider>(
                 context,
                 listen: false,
-              ).searchVolunteers(_searchQuery),
+              ).searchActiveVolunteers(_searchQuery),
               builder: (context, snapshot) {
                 if (_loadingCommittee && !_authService.isAdmin) {
                   return Center(child: WhaleLoading());
@@ -230,6 +285,141 @@ class _EvaluationsScreenState extends State<EvaluationsScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _createMonthlyAttendanceBulkEvaluations() async {
+    if (_isGeneratingBulkEvaluations) return;
+
+    final evaluationProvider = Provider.of<EvaluationProvider>(
+      context,
+      listen: false,
+    );
+    final volunteerProvider = Provider.of<VolunteerProvider>(
+      context,
+      listen: false,
+    );
+    final eventProvider = Provider.of<EventProvider>(context, listen: false);
+
+    setState(() => _isGeneratingBulkEvaluations = true);
+
+    try {
+      final now = DateTime.now();
+      final evaluatedMonthDate = now.month == 1
+          ? DateTime(now.year - 1, 12, 1)
+          : DateTime(now.year, now.month - 1, 1);
+      final monthKey =
+          '${evaluatedMonthDate.year}-${evaluatedMonthDate.month.toString().padLeft(2, '0')}';
+      final evaluationDate = DateTime(now.year, now.month, 1);
+      final volunteers = await volunteerProvider.getActiveVolunteersOnce();
+      final qaflaEvents = eventProvider.getQaflaEvents();
+      final createdCount = await evaluationProvider
+          .createBulkAttendanceEvaluations(
+            volunteers: volunteers,
+            qaflaEvents: qaflaEvents,
+            month: monthKey,
+            evaluationDate: evaluationDate,
+            evaluationName:
+                'حضور قوافل شهر ${_arabicMonthName(evaluatedMonthDate.month)}',
+            evaluatorName: 'شهري',
+          );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              createdCount > 0
+                  ? 'تم إنشاء $createdCount تقييمًا جديدًا'
+                  : 'لا توجد تقييمات جديدة لإضافتها',
+              style: const TextStyle(fontFamily: 'Cairo'),
+            ),
+            backgroundColor: createdCount > 0
+                ? Colors.green
+                : AppTheme.secondary,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isGeneratingBulkEvaluations = false);
+      }
+    }
+  }
+
+  Future<void> _createMonthlyDistributionBulkEvaluations() async {
+    if (_isGeneratingBulkEvaluations) return;
+
+    final evaluationProvider = Provider.of<EvaluationProvider>(
+      context,
+      listen: false,
+    );
+    final volunteerProvider = Provider.of<VolunteerProvider>(
+      context,
+      listen: false,
+    );
+    final eventProvider = Provider.of<EventProvider>(context, listen: false);
+
+    setState(() => _isGeneratingBulkEvaluations = true);
+
+    try {
+      final now = DateTime.now();
+      final evaluatedMonthDate = now.month == 1
+          ? DateTime(now.year - 1, 12, 1)
+          : DateTime(now.year, now.month - 1, 1);
+      final monthKey =
+          '${evaluatedMonthDate.year}-${evaluatedMonthDate.month.toString().padLeft(2, '0')}';
+      final evaluationDate = DateTime(now.year, now.month, 1);
+      final volunteers = await volunteerProvider.getActiveVolunteersOnce();
+      final qaflaEvents = eventProvider.getQaflaEvents();
+      final createdCount = await evaluationProvider
+          .createBulkDistributionEvaluations(
+            volunteers: volunteers,
+            qaflaEvents: qaflaEvents,
+            month: monthKey,
+            evaluationDate: evaluationDate,
+            evaluationName:
+                'نسبة التوزيع شهر ${_arabicMonthName(evaluatedMonthDate.month)}',
+            evaluatorName: 'شهري',
+          );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              createdCount > 0
+                  ? 'تم إنشاء $createdCount تقييمًا جديدًا'
+                  : 'لا توجد تقييمات جديدة لإضافتها',
+              style: const TextStyle(fontFamily: 'Cairo'),
+            ),
+            backgroundColor: createdCount > 0
+                ? Colors.green
+                : AppTheme.secondary,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isGeneratingBulkEvaluations = false);
+      }
+    }
+  }
+
+  String _arabicMonthName(int month) {
+    const months = [
+      'يناير',
+      'فبراير',
+      'مارس',
+      'أبريل',
+      'مايو',
+      'يونيو',
+      'يوليو',
+      'أغسطس',
+      'سبتمبر',
+      'أكتوبر',
+      'نوفمبر',
+      'ديسمبر',
+    ];
+    if (month < 1 || month > 12) return '';
+    return months[month - 1];
   }
 
   Widget _buildVolunteerList(List<dynamic> volunteers) {

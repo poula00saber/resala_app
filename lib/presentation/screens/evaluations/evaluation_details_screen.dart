@@ -26,6 +26,7 @@ class _VolunteerEvaluationDetailsScreenState
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _ageController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
+  final Set<String> _selectedMonths = <String>{};
 
   @override
   void initState() {
@@ -155,7 +156,7 @@ class _VolunteerEvaluationDetailsScreenState
 
                   const SizedBox(height: 16),
 
-                  // Evaluations Table
+                  // Evaluations content
                   Container(
                     decoration: BoxDecoration(
                       color: AppTheme.cardBackground,
@@ -250,6 +251,7 @@ class _VolunteerEvaluationDetailsScreenState
     return StreamBuilder<List<EvaluationModel>>(
       stream: Provider.of<EvaluationProvider>(
         context,
+        listen: false,
       ).getEvaluationsForVolunteer(widget.volunteer.id),
       builder: (context, snapshot) {
         // Handle loading state
@@ -302,9 +304,146 @@ class _VolunteerEvaluationDetailsScreenState
 
         // Safely cast the data
         final evaluations = snapshot.data ?? [];
-        return _buildEvaluationsTable(evaluations);
+        final filteredEvaluations = _applyMonthFilter(evaluations);
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildMonthFilterSection(evaluations),
+            const SizedBox(height: 16),
+            _buildEvaluationsTable(filteredEvaluations),
+          ],
+        );
       },
     );
+  }
+
+  List<EvaluationModel> _applyMonthFilter(List<EvaluationModel> evaluations) {
+    if (_selectedMonths.isEmpty) {
+      return evaluations;
+    }
+
+    return evaluations.where((evaluation) {
+      return _selectedMonths.contains(evaluation.month);
+    }).toList();
+  }
+
+  Widget _buildMonthFilterSection(List<EvaluationModel> evaluations) {
+    final availableMonths =
+        evaluations
+            .map((evaluation) => evaluation.month)
+            .where((month) => month.isNotEmpty)
+            .toSet()
+            .toList()
+          ..sort();
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppTheme.cardBackground,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey[200]!),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'تصفية بالشهر',
+            style: TextStyle(
+              fontFamily: 'Cairo',
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: AppTheme.textDark,
+            ),
+          ),
+          const SizedBox(height: 8),
+          DropdownButtonFormField<String>(
+            value: _selectedMonths.length == 1 ? _selectedMonths.first : null,
+            decoration: const InputDecoration(
+              labelText: 'اختر شهرًا',
+              border: OutlineInputBorder(),
+            ),
+            items: [
+              const DropdownMenuItem<String>(
+                value: null,
+                child: Text('الكل', style: TextStyle(fontFamily: 'Cairo')),
+              ),
+              ...availableMonths.map(
+                (month) => DropdownMenuItem<String>(
+                  value: month,
+                  child: Text(
+                    _formatMonthLabel(month),
+                    style: const TextStyle(fontFamily: 'Cairo'),
+                  ),
+                ),
+              ),
+            ],
+            onChanged: (value) {
+              setState(() {
+                _selectedMonths.clear();
+                if (value != null) {
+                  _selectedMonths.add(value);
+                }
+              });
+            },
+          ),
+          if (availableMonths.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            const Text(
+              'اختيار متعدد',
+              style: TextStyle(
+                fontFamily: 'Cairo',
+                fontSize: 12,
+                color: AppTheme.secondary,
+              ),
+            ),
+            ...availableMonths.map((month) {
+              return CheckboxListTile(
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+                title: Text(
+                  _formatMonthLabel(month),
+                  style: const TextStyle(fontFamily: 'Cairo'),
+                ),
+                value: _selectedMonths.contains(month),
+                onChanged: (selected) {
+                  setState(() {
+                    if (selected == true) {
+                      _selectedMonths.add(month);
+                    } else {
+                      _selectedMonths.remove(month);
+                    }
+                  });
+                },
+              );
+            }),
+          ],
+        ],
+      ),
+    );
+  }
+
+  String _formatMonthLabel(String monthKey) {
+    try {
+      final date = DateTime.parse('$monthKey-01');
+      const arabicMonths = [
+        'يناير',
+        'فبراير',
+        'مارس',
+        'أبريل',
+        'مايو',
+        'يونيو',
+        'يوليو',
+        'أغسطس',
+        'سبتمبر',
+        'أكتوبر',
+        'نوفمبر',
+        'ديسمبر',
+      ];
+      return '${arabicMonths[date.month - 1]} ${date.year}';
+    } catch (_) {
+      return monthKey;
+    }
   }
 
   Widget _buildEvaluationsTable(List<EvaluationModel> evaluations) {

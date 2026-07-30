@@ -253,4 +253,5 @@ class FirebaseConstants {
   static const String educationalLevelField = 'educationalLevel';
   static const String universityField = 'university';
   static const String profileImageField = 'profileImage';
+  static const String miniCampCompletedField = 'miniCampCompleted';
 }

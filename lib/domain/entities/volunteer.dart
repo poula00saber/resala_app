@@ -23,6 +23,7 @@ class Volunteer {
   final String? university;
   final String? profileImage;
   final bool hasTshirt;
+  final bool miniCampCompleted;
 
   Volunteer({
     required this.id,
@@ -44,5 +45,6 @@ class Volunteer {
     this.university,
     this.profileImage,
     this.hasTshirt = false,
+    this.miniCampCompleted = false,
   });
 }
