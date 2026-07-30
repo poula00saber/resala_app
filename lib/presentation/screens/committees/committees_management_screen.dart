@@ -809,20 +809,40 @@ class _CommitteesManagementScreenState
                           ),
                           items: (() {
                             final items = <DropdownMenuItem<String?>>[];
-                            items.add(const DropdownMenuItem<String?>(
-                              value: null,
-                              child: Text('بدون ليدر', style: TextStyle(fontFamily: 'Cairo')),
-                            ));
-                            items.addAll(volunteers.map((v) => DropdownMenuItem<String?>(
+                            items.add(
+                              const DropdownMenuItem<String?>(
+                                value: null,
+                                child: Text(
+                                  'بدون ليدر',
+                                  style: TextStyle(fontFamily: 'Cairo'),
+                                ),
+                              ),
+                            );
+                            items.addAll(
+                              volunteers.map(
+                                (v) => DropdownMenuItem<String?>(
                                   value: v.id,
-                                  child: Text(v.name, style: const TextStyle(fontFamily: 'Cairo')),
-                                )));
+                                  child: Text(
+                                    v.name,
+                                    style: const TextStyle(fontFamily: 'Cairo'),
+                                  ),
+                                ),
+                              ),
+                            );
 
-                            if (selectedLeaderId != null && !volunteers.any((v) => v.id == selectedLeaderId)) {
-                              items.add(DropdownMenuItem<String?>(
-                                value: selectedLeaderId,
-                                child: Text(committee.leaderName ?? 'Selected', style: const TextStyle(fontFamily: 'Cairo')),
-                              ));
+                            if (selectedLeaderId != null &&
+                                !volunteers.any(
+                                  (v) => v.id == selectedLeaderId,
+                                )) {
+                              items.add(
+                                DropdownMenuItem<String?>(
+                                  value: selectedLeaderId,
+                                  child: Text(
+                                    committee.leaderName ?? 'Selected',
+                                    style: const TextStyle(fontFamily: 'Cairo'),
+                                  ),
+                                ),
+                              );
                             }
 
                             return items;
@@ -859,20 +879,40 @@ class _CommitteesManagementScreenState
                           ),
                           items: (() {
                             final items = <DropdownMenuItem<String?>>[];
-                            items.add(const DropdownMenuItem<String?>(
-                              value: null,
-                              child: Text('بدون نائب', style: TextStyle(fontFamily: 'Cairo')),
-                            ));
-                            items.addAll(volunteers.map((v) => DropdownMenuItem<String?>(
+                            items.add(
+                              const DropdownMenuItem<String?>(
+                                value: null,
+                                child: Text(
+                                  'بدون نائب',
+                                  style: TextStyle(fontFamily: 'Cairo'),
+                                ),
+                              ),
+                            );
+                            items.addAll(
+                              volunteers.map(
+                                (v) => DropdownMenuItem<String?>(
                                   value: v.id,
-                                  child: Text(v.name, style: const TextStyle(fontFamily: 'Cairo')),
-                                )));
+                                  child: Text(
+                                    v.name,
+                                    style: const TextStyle(fontFamily: 'Cairo'),
+                                  ),
+                                ),
+                              ),
+                            );
 
-                            if (selectedCoLeaderId != null && !volunteers.any((v) => v.id == selectedCoLeaderId)) {
-                              items.add(DropdownMenuItem<String?>(
-                                value: selectedCoLeaderId,
-                                child: Text(committee.coLeaderName ?? 'Selected', style: const TextStyle(fontFamily: 'Cairo')),
-                              ));
+                            if (selectedCoLeaderId != null &&
+                                !volunteers.any(
+                                  (v) => v.id == selectedCoLeaderId,
+                                )) {
+                              items.add(
+                                DropdownMenuItem<String?>(
+                                  value: selectedCoLeaderId,
+                                  child: Text(
+                                    committee.coLeaderName ?? 'Selected',
+                                    style: const TextStyle(fontFamily: 'Cairo'),
+                                  ),
+                                ),
+                              );
                             }
 
                             return items;

@@ -549,6 +549,47 @@ class _InventorySectionView extends StatelessWidget {
     );
   }
 
+  Future<void> _showEditSubcategoryDialog(
+    BuildContext context,
+    InventoryProvider provider,
+    String sectionId,
+    InventorySubcategoryModel subcategory,
+  ) async {
+    final controller = TextEditingController(text: subcategory.name);
+
+    await showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text(
+          'تعديل القسم الفرعي',
+          style: TextStyle(fontFamily: 'Cairo'),
+        ),
+        content: TextField(
+          controller: controller,
+          textAlign: TextAlign.right,
+          decoration: const InputDecoration(labelText: 'اسم القسم الفرعي'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('إلغاء', style: TextStyle(fontFamily: 'Cairo')),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              provider.updateSubcategoryName(
+                sectionId: sectionId,
+                subcategoryId: subcategory.id,
+                newName: controller.text,
+              );
+              Navigator.pop(dialogContext);
+            },
+            child: const Text('حفظ', style: TextStyle(fontFamily: 'Cairo')),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _showAddItemDialog(
     BuildContext context,
     InventoryProvider provider,
@@ -591,7 +632,22 @@ class _InventorySectionView extends StatelessWidget {
                         .map(
                           (subcategory) => DropdownMenuItem(
                             value: subcategory.id,
-                            child: Text(subcategory.name),
+                            child: GestureDetector(
+                              behavior: HitTestBehavior.opaque,
+                              onLongPress: () {
+                                // Allow renaming the chosen subcategory directly from the dropdown list.
+                                _showEditSubcategoryDialog(
+                                  dialogContext,
+                                  provider,
+                                  targetSectionId,
+                                  subcategory,
+                                );
+                              },
+                              child: Align(
+                                alignment: Alignment.centerRight,
+                                child: Text(subcategory.name),
+                              ),
+                            ),
                           ),
                         )
                         .toList(),
@@ -909,7 +965,7 @@ class _InventorySectionView extends StatelessWidget {
               : ListView.separated(
                   shrinkWrap: true,
                   itemCount: visibleHistory.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 8),
+                  separatorBuilder: (context, index) => const SizedBox(height: 8),
                   itemBuilder: (context, index) {
                     final entry = visibleHistory[index];
                     return Container(

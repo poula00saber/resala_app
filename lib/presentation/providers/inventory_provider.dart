@@ -188,6 +188,38 @@ class InventoryProvider extends ChangeNotifier {
     unawaited(_persist());
   }
 
+  void updateSubcategoryName({
+    required String sectionId,
+    required String subcategoryId,
+    required String newName,
+  }) {
+    final trimmedName = newName.trim();
+    if (trimmedName.isEmpty) return;
+
+    final sectionIndex = _sections.indexWhere(
+      (section) => section.id == sectionId,
+    );
+    if (sectionIndex == -1) return;
+
+    final section = _sections[sectionIndex];
+    final subIndex = section.subcategories.indexWhere(
+      (sub) => sub.id == subcategoryId,
+    );
+    if (subIndex == -1) return;
+
+    final subcategory = section.subcategories[subIndex];
+    if (subcategory.name == trimmedName) return;
+
+    final updatedSubcategories = [...section.subcategories];
+    updatedSubcategories[subIndex] = subcategory.copyWith(name: trimmedName);
+
+    _sections[sectionIndex] = section.copyWith(
+      subcategories: updatedSubcategories,
+    );
+    notifyListeners();
+    unawaited(_persist());
+  }
+
   void addItem({
     required String sectionId,
     required String subcategoryId,
